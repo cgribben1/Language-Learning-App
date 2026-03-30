@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>French Story Trainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css?v=20260330-enterfix">
+</head>
+<body>
+  <div class="page-shell">
+    <main class="main-panel single-column">
+      <section id="lesson-card" class="card lesson-card">
+        <div class="lesson-header">
+          <div>
+            <h1 id="lesson-title">Choose your story.</h1>
+          </div>
+          <div class="progress-box hidden">
+            <span id="progress-current">0</span>
+            <span class="progress-divider">/</span>
+            <span id="progress-total">0</span>
+          </div>
+        </div>
+
+        <div id="setup-panel" class="setup-panel">
+          <p class="hero-copy">
+            Generate a connected story or dialogue, then translate each English sentence into French with feedback on what you wrote.
+          </p>
+
+          <form id="lesson-form" class="lesson-form">
+            <label class="form-field">
+              <span>Difficulty</span>
+              <select id="difficulty" name="difficulty">
+                <option value="A1">A1</option>
+                <option value="A2" selected>A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+                <option value="C1">C1</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Mode</span>
+              <select id="lesson-type" name="lesson_type">
+                <option value="story" selected>Story</option>
+                <option value="dialogue">Dialogue</option>
+                <option value="film_scene">Film scene</option>
+                <option value="auto">Auto</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Lesson length</span>
+              <select id="lesson-length" name="lesson_length">
+                <option value="short">Short</option>
+                <option value="medium" selected>Medium</option>
+                <option value="long">Long</option>
+              </select>
+            </label>
+
+            <label class="form-field toggle-label">
+              <span>Correct answer accents</span>
+              <select id="show-accents" name="show_accents">
+                <option value="show" selected>Show accents</option>
+                <option value="hide">Hide accents</option>
+              </select>
+            </label>
+
+            <label class="form-field form-field-full">
+              <span>Theme</span>
+              <small class="field-help">Choose a theme and/or linguistic topic to focus on</small>
+              <input id="theme" name="theme" value="mythological mystery" maxlength="80">
+            </label>
+
+            <button id="generate-btn" type="submit">Generate lesson</button>
+          </form>
+
+          <div class="status-row">
+            <div class="status-pill" id="backend-status">Checking backend...</div>
+            <div class="status-pill subtle" id="provider-status">Loading...</div>
+          </div>
+        </div>
+
+        <div id="prompt-panel" class="prompt-panel hidden">
+          <p class="context-note" id="context-note">Translate the following sentence...</p>
+          <div class="prompt-header-row">
+            <p class="english-prompt" id="english-prompt"></p>
+            <div class="hint-toolbar">
+              <button id="toggle-hints-btn" class="ghost-btn" type="button">Show vocab hints</button>
+            </div>
+          </div>
+
+          <div id="vocab-hints" class="vocab-hints hidden"></div>
+
+          <div id="answer-entry" class="answer-entry-form">
+            <label class="answer-box">
+              <input id="answer-input" type="text" placeholder="Type your translation here..." enterkeyhint="done" autocomplete="off" spellcheck="false">
+            </label>
+
+            <div class="action-row">
+              <button id="check-btn" type="button">Check answer</button>
+              <button id="skip-btn" class="ghost-btn" type="button">Reveal and skip</button>
+              <p class="keyboard-hint">Press <kbd>Enter</kbd> to check your answer.</p>
+            </div>
+          </div>
+        </div>
+
+        <section id="story-so-far-card" class="story-so-far-card hidden">
+          <div class="story-so-far-header">
+            <h3>The story so far...</h3>
+          </div>
+          <div id="story-so-far-list" class="saved-vocab-list story-so-far-list"></div>
+        </section>
+
+        <section id="feedback-card" class="feedback-card hidden">
+          <div class="feedback-heading">
+            <div>
+              <p id="feedback-label" class="card-label">Feedback</p>
+              <h3 id="verdict-text">Waiting for your answer</h3>
+            </div>
+            <div class="score-grid score-grid-single">
+              <div class="score-card">
+                <span>Accuracy</span>
+                <strong id="correctness-score">0</strong>
+                <div class="score-bar" aria-hidden="true">
+                  <div id="correctness-bar" class="score-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="comparison-grid">
+            <div>
+              <p class="mini-label">Your answer</p>
+              <p id="learner-answer" class="comparison-text quoted-text"></p>
+            </div>
+            <div>
+              <p class="mini-label">Correct sentence</p>
+              <p id="correct-french" class="comparison-text quoted-text"></p>
+              <div id="phrase-explainer" class="phrase-explainer hidden">
+                <div class="phrase-explainer-header">
+                  <p class="mini-label">Selected vocab</p>
+                  <button id="close-phrase-btn" class="phrase-close-btn" type="button" aria-label="Close vocab details">x</button>
+                </div>
+                <h4 id="phrase-title"></h4>
+                <p id="phrase-meaning" class="phrase-detail"></p>
+                <p id="phrase-note" class="phrase-detail subtle-detail"></p>
+                <div class="action-row">
+                  <button id="add-phrase-btn" class="ghost-btn" type="button">Add to vocab list</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feedback-columns">
+            <div>
+              <p class="mini-label">Feedback notes</p>
+              <ul id="notes-list"></ul>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <p class="keyboard-hint">Press <kbd>Enter</kbd> to continue.</p>
+          </div>
+        </section>
+
+        <section id="final-panel" class="final-panel hidden">
+          <p class="card-label">Story complete!</p>
+          <h2 id="final-title">Your full story</h2>
+          <div class="final-story-grid">
+            <div class="final-story-block">
+              <p class="mini-label">English story</p>
+              <p id="final-english-story" class="final-story-text"></p>
+            </div>
+            <div class="final-story-block">
+              <p class="mini-label">French story</p>
+              <p id="final-french-story" class="final-story-text"></p>
+            </div>
+          </div>
+          <div class="action-row">
+            <button id="restart-btn" type="button">Create another story!</button>
+          </div>
+        </section>
+
+        <div id="empty-state" class="empty-state hidden">
+          <p>Lesson complete. Adjust the settings above if you want a fresh story or dialogue.</p>
+        </div>
+      </section>
+
+      <div class="reference-grid">
+        <section class="card vocab-card">
+          <div class="vocab-header">
+            <div>
+              <p class="card-label">Saved vocabulary</p>
+              <h3>Your vocab list</h3>
+            </div>
+            <button id="export-btn" class="ghost-btn" type="button">Flashcard export</button>
+          </div>
+          <div id="saved-vocab-list" class="saved-vocab-list"></div>
+        </section>
+
+        <section class="card vocab-card">
+          <div class="vocab-header">
+            <div>
+              <p class="card-label">Reminders</p>
+              <h3>Common errors to watch</h3>
+            </div>
+          </div>
+          <div id="reminders-list" class="saved-vocab-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="/static/app.js?v=20260330-enterfix"></script>
+</body>
+</html>
