@@ -2147,8 +2147,6 @@ function renderSavedVocab(items) {
         <strong class="saved-vocab-french">${item.french}</strong>
         <span class="saved-vocab-english">${item.english}</span>
       </div>
-      ${item.note ? `<p class="saved-vocab-note">${item.note}</p>` : ""}
-      ${item.source_sentence ? `<p class="saved-vocab-source">${item.source_sentence}</p>` : ""}
     `;
     el.savedVocabList.appendChild(div);
   });
