@@ -180,24 +180,28 @@
             </div>
 
             <div class="feedback-comparison-stack">
-              <div class="feedback-sentence-block">
+              <div class="feedback-sentence-group">
                 <p id="your-answer-label" class="mini-label">Your answer</p>
-                <p id="learner-answer" class="comparison-text quoted-text"></p>
+                <div class="feedback-sentence-block">
+                  <p id="learner-answer" class="comparison-text quoted-text"></p>
+                </div>
               </div>
 
-              <div class="feedback-sentence-block">
+              <div class="feedback-sentence-group">
                 <p id="correct-sentence-label" class="mini-label">Correct sentence</p>
-                <p id="correct-french" class="comparison-text quoted-text"></p>
-                <div id="phrase-explainer" class="phrase-explainer hidden">
-                  <div class="phrase-explainer-header">
-                    <p class="mini-label">Selected vocab</p>
-                    <button id="close-phrase-btn" class="phrase-close-btn" type="button" aria-label="Close vocab details">x</button>
-                  </div>
-                  <h4 id="phrase-title"></h4>
-                  <p id="phrase-meaning" class="phrase-detail"></p>
-                  <p id="phrase-note" class="phrase-detail subtle-detail"></p>
-                  <div class="action-row">
-                    <button id="add-phrase-btn" class="ghost-btn" type="button">Add to vocab list</button>
+                <div class="feedback-sentence-block">
+                  <p id="correct-french" class="comparison-text quoted-text"></p>
+                  <div id="phrase-explainer" class="phrase-explainer hidden">
+                    <div class="phrase-explainer-header">
+                      <p class="mini-label">Selected vocab</p>
+                      <button id="close-phrase-btn" class="phrase-close-btn" type="button" aria-label="Close vocab details">x</button>
+                    </div>
+                    <h4 id="phrase-title"></h4>
+                    <p id="phrase-meaning" class="phrase-detail"></p>
+                    <p id="phrase-note" class="phrase-detail subtle-detail"></p>
+                    <div class="action-row">
+                      <button id="add-phrase-btn" class="ghost-btn" type="button">Add to vocab list</button>
+                    </div>
                   </div>
                 </div>
               </div>

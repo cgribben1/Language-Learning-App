@@ -488,6 +488,7 @@ button:disabled {
   line-height: 1.35;
   white-space: nowrap;
   color: var(--muted);
+  margin-right: 10px;
 }
 
 .inline-status {
@@ -648,6 +649,11 @@ kbd {
 .feedback-flow {
   display: grid;
   gap: 8px;
+}
+
+.feedback-sentence-group {
+  display: grid;
+  gap: 4px;
 }
 
 .feedback-sentence-block {
