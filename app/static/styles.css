@@ -566,7 +566,6 @@ kbd {
 }
 
 .prompt-panel,
-.feedback-card,
 .final-panel,
 .generating-panel,
 .checking-panel,
@@ -586,6 +585,19 @@ kbd {
 .story-so-far-card {
   display: grid;
   gap: 14px;
+  padding: 10px 0 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.feedback-card {
+  display: grid;
+  gap: 18px;
+  padding: 10px 0 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .story-so-far-header {
