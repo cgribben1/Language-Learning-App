@@ -1425,7 +1425,7 @@ body.bauhaus-colors .score-bar-fill {
   padding: 12px 14px;
   border-radius: 18px;
   border: 1px solid rgba(62, 41, 28, 0.12);
-  background: #fffdf9 !important;
+  background: rgba(244, 235, 221, 0.92) !important;
   box-shadow: 0 18px 40px rgba(38, 29, 17, 0.16);
   display: grid;
   gap: 8px;
@@ -1494,7 +1494,7 @@ body.bauhaus-colors #correct-french .inline-phrase-btn:focus-visible {
 body.bauhaus-colors .phrase-explainer,
 body.bauhaus-colors .phrase-explainer .ghost-btn,
 body.bauhaus-colors .phrase-close-btn {
-  background: #fffdf9 !important;
+  background: rgba(244, 235, 221, 0.92) !important;
 }
 
 body.bauhaus-colors .keyboard-hint,
