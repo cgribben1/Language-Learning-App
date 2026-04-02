@@ -232,6 +232,7 @@ h1 {
 .answer-entry-form {
   display: grid;
   gap: 10px;
+  margin-top: -2px;
 }
 
 .answer-toolbar-row {
@@ -368,7 +369,7 @@ button:disabled {
 }
 
 .ghost-btn {
-  background: rgba(255, 248, 239, 0.65);
+  background: #fffdf9;
   color: var(--accent-dark);
   border: 1px solid rgba(178, 74, 45, 0.18);
 }
@@ -398,7 +399,7 @@ button:disabled {
 
 .prompt-header-row {
   align-items: center;
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 
 .keyboard-hint {
@@ -779,7 +780,7 @@ kbd {
 .vocab-hint {
   padding: 12px 14px;
   border-radius: 14px;
-  background: #fffdf9;
+  background: #ffffff;
   border: 1px solid rgba(62, 41, 28, 0.08);
   min-width: 0;
 }
@@ -1085,7 +1086,7 @@ body.bauhaus-colors button {
 }
 
 body.bauhaus-colors .ghost-btn {
-  background: rgba(242, 226, 196, 0.76);
+  background: #fffdf9;
   color: #1a1a1a;
   border-color: rgba(26, 26, 26, 0.16);
 }
