@@ -552,7 +552,7 @@ kbd {
 }
 
 .lesson-card-checking {
-  min-height: 78vh;
+  min-height: 72vh;
 }
 
 .setup-panel,
@@ -593,8 +593,8 @@ kbd {
 
 .feedback-card {
   display: grid;
-  gap: 18px;
-  padding: 18px;
+  gap: 12px;
+  padding: 14px 16px;
   border: 1px solid rgba(62, 41, 28, 0.1);
   border-radius: 20px;
   background: #fffdf9;
@@ -602,8 +602,8 @@ kbd {
 
 .feedback-question-block {
   display: grid;
-  gap: 6px;
-  padding-top: 12px;
+  gap: 4px;
+  padding-top: 10px;
   border-top: 1px solid rgba(62, 41, 28, 0.08);
 }
 
@@ -622,7 +622,7 @@ kbd {
 .final-story-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 12px;
 }
 
 .score-grid-single {
@@ -633,7 +633,7 @@ kbd {
   padding: 0;
   border: none;
   border-radius: 0;
-  background: transparent;
+  background: transparent !important;
   box-shadow: none;
 }
 
@@ -655,21 +655,30 @@ kbd {
 .comparison-text,
 .final-story-text {
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.55;
   color: var(--ink);
 }
 
 .quoted-text {
-  min-height: 3.4em;
+  min-height: 2.6em;
 }
 
 .score-bar {
   width: 100%;
   height: 8px;
-  margin-top: 10px;
+  margin-top: 8px;
   border-radius: 999px;
   background: rgba(38, 29, 17, 0.1);
   overflow: hidden;
+}
+
+#notes-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+#notes-list li + li {
+  margin-top: 6px;
 }
 
 .score-bar-fill {
@@ -1276,6 +1285,10 @@ body.bauhaus-colors .feedback-card {
 }
 
 body.bauhaus-colors .generating-panel {
+  background: rgba(244, 235, 221, 0.92);
+}
+
+body.bauhaus-colors .checking-panel {
   background: rgba(244, 235, 221, 0.92);
 }
 
