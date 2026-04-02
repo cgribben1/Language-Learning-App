@@ -237,7 +237,7 @@ h1 {
 .answer-toolbar-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-bottom: 2px;
 }
@@ -393,6 +393,7 @@ button:disabled {
 .hint-toolbar {
   justify-content: flex-end;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .prompt-header-row {
@@ -407,8 +408,15 @@ button:disabled {
 }
 
 .prompt-keyboard-hint {
+  margin: 0 auto 0 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.hint-shortcut-copy {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   line-height: 1.35;
   white-space: nowrap;
 }
@@ -638,6 +646,7 @@ kbd {
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(255, 248, 238, 1), rgba(242, 183, 5, 0.9) 56%, rgba(166, 41, 13, 0.78));
   box-shadow: 0 0 38px rgba(242, 183, 5, 0.3);
+  animation: moonPulse 3.2s ease-in-out infinite;
 }
 
 .moon-halo {
@@ -657,6 +666,7 @@ kbd {
   left: 34px;
   width: 180px;
   transform: rotate(-7deg);
+  animation: ribbonFloatOne 4.2s ease-in-out infinite;
 }
 
 .story-ribbon-two {
@@ -664,6 +674,7 @@ kbd {
   right: 28px;
   width: 164px;
   transform: rotate(8deg);
+  animation: ribbonFloatTwo 4.8s ease-in-out infinite;
 }
 
 .story-ribbon-three {
@@ -671,6 +682,7 @@ kbd {
   left: 66px;
   width: 144px;
   transform: rotate(-4deg);
+  animation: ribbonFloatThree 4.5s ease-in-out infinite;
 }
 
 .story-book,
@@ -680,6 +692,7 @@ kbd {
   width: 164px;
   height: 110px;
   transform: translateX(-50%);
+  animation: bookBob 3.6s ease-in-out infinite;
 }
 
 .story-book-page,
@@ -724,6 +737,7 @@ kbd {
   border-radius: 50%;
   background: rgba(242, 183, 5, 0.88);
   box-shadow: 0 0 16px rgba(242, 183, 5, 0.34);
+  animation: starTwinkle 2.2s ease-in-out infinite;
 }
 
 .story-star-one,
@@ -747,6 +761,70 @@ kbd {
 .story-star-four {
   top: 126px;
   right: 48px;
+}
+
+.vocab-hints {
+  min-width: 240px;
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(62, 41, 28, 0.1);
+  background: #fffdf9;
+  box-shadow: 0 18px 42px rgba(38, 29, 17, 0.14);
+  display: grid;
+  gap: 10px;
+  z-index: 50;
+}
+
+.vocab-hint {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fffdf9;
+  border: 1px solid rgba(62, 41, 28, 0.08);
+  min-width: 0;
+}
+
+.vocab-hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vocab-hint-row > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@keyframes moonPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.05); }
+}
+
+@keyframes ribbonFloatOne {
+  0%, 100% { transform: rotate(-7deg) translateY(0); }
+  50% { transform: rotate(-5deg) translateY(-4px); }
+}
+
+@keyframes ribbonFloatTwo {
+  0%, 100% { transform: rotate(8deg) translateY(0); }
+  50% { transform: rotate(10deg) translateY(5px); }
+}
+
+@keyframes ribbonFloatThree {
+  0%, 100% { transform: rotate(-4deg) translateY(0); }
+  50% { transform: rotate(-2deg) translateY(-3px); }
+}
+
+@keyframes bookBob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.45; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.12); }
 }
 
 .final-story-block {
@@ -1223,11 +1301,16 @@ body.landing-bauhaus-colors #generate-btn {
     }
 
   .answer-toolbar-row {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .prompt-keyboard-hint {
+    white-space: normal;
+  }
+
+  .hint-shortcut-copy {
     white-space: normal;
   }
 

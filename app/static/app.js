@@ -1599,18 +1599,18 @@ function positionVocabHintsBubble(anchorElement) {
   const bubbleWidth = bubbleRect.width;
   const bubbleHeight = bubbleRect.height;
 
-  let left = anchorRect.left + window.scrollX + (anchorRect.width - bubbleWidth) / 2;
-  left = Math.max(margin + window.scrollX, Math.min(left, window.scrollX + window.innerWidth - bubbleWidth - margin));
+    let left = anchorRect.right - bubbleWidth;
+    left = Math.max(margin, Math.min(left, window.innerWidth - bubbleWidth - margin));
 
-  let top = anchorRect.bottom + window.scrollY + gap;
-  if (top + bubbleHeight > window.scrollY + window.innerHeight - margin) {
-    top = Math.max(window.scrollY + margin, anchorRect.top + window.scrollY - bubbleHeight - gap);
+    let top = anchorRect.bottom + gap;
+    if (top + bubbleHeight > window.innerHeight - margin) {
+      top = Math.max(margin, anchorRect.top - bubbleHeight - gap);
+    }
+
+    el.vocabHints.style.position = "fixed";
+    el.vocabHints.style.left = `${left}px`;
+    el.vocabHints.style.top = `${top}px`;
   }
-
-  el.vocabHints.style.position = "absolute";
-  el.vocabHints.style.left = `${left}px`;
-  el.vocabHints.style.top = `${top}px`;
-}
 
 function scrollWindowToTop() {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
