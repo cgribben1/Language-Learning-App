@@ -1924,7 +1924,7 @@ body.bauhaus-colors .prompt-panel {
 
 body.bauhaus-colors .profile-badge,
 body.bauhaus-colors .app-masthead .book-page {
-  background: linear-gradient(145deg, rgba(166, 41, 13, 0.92), rgba(242, 183, 5, 0.88));
+  background: linear-gradient(145deg, rgba(166, 41, 13, 0.94), rgba(4, 119, 191, 0.92));
   color: #f2e2c4;
 }
 
@@ -2129,8 +2129,8 @@ body.landing-bauhaus-colors #setup-panel input {
 }
 
 body.landing-bauhaus-colors #generate-btn {
-  background: linear-gradient(135deg, #a6290d 0%, #c94b19 24%, #f2b705 62%, #f2e2c4 100%) !important;
-  color: #1a1a1a !important;
+  background: linear-gradient(135deg, #a6290d 0%, #7f2447 38%, #0477bf 100%) !important;
+  color: #fffdf9 !important;
 }
 
 @media (max-width: 980px) {
