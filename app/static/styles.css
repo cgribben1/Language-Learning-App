@@ -1412,6 +1412,72 @@ body.bauhaus-colors .score-bar-fill {
   padding: 0 !important;
   border-radius: 0 !important;
   border: none !important;
+  font-weight: 400 !important;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
+}
+
+.phrase-explainer {
+  position: fixed;
+  z-index: 60;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(62, 41, 28, 0.12);
+  background: #fffdf9 !important;
+  box-shadow: 0 18px 40px rgba(38, 29, 17, 0.16);
+  display: grid;
+  gap: 8px;
+}
+
+.phrase-explainer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.phrase-close-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid rgba(62, 41, 28, 0.1);
+  box-shadow: none;
+  line-height: 1;
+}
+
+#phrase-title {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Fraunces", serif;
+  font-size: 1.04rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.phrase-detail {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.subtle-detail {
+  color: var(--muted);
+}
+
+.phrase-explainer .action-row {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.phrase-explainer .ghost-btn {
+  background: #ffffff !important;
 }
 
 body.bauhaus-colors .reminder-count,
@@ -1423,6 +1489,12 @@ body.bauhaus-colors #correct-french .inline-phrase-btn,
 body.bauhaus-colors #correct-french .inline-phrase-btn:hover,
 body.bauhaus-colors #correct-french .inline-phrase-btn:focus-visible {
   color: var(--ink) !important;
+}
+
+body.bauhaus-colors .phrase-explainer,
+body.bauhaus-colors .phrase-explainer .ghost-btn,
+body.bauhaus-colors .phrase-close-btn {
+  background: #fffdf9 !important;
 }
 
 body.bauhaus-colors .keyboard-hint,
