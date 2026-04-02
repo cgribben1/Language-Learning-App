@@ -1139,7 +1139,7 @@ kbd {
 }
 
 .checking-illustration {
-  margin: -10px auto 0;
+  margin: -24px auto -2px;
 }
 
 .checking-copy {
@@ -1874,6 +1874,15 @@ body.bauhaus-colors .feedback-card {
   background: rgba(244, 235, 221, 0.92) !important;
 }
 
+body.bauhaus-colors .sidebar-wordmark {
+  background: linear-gradient(135deg, rgba(166, 41, 13, 0.18), rgba(4, 119, 191, 0.2));
+  border-color: rgba(38, 29, 17, 0.08);
+  color: rgba(20, 20, 20, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 10px 24px rgba(38, 29, 17, 0.08);
+}
+
 body.bauhaus-colors .feedback-comparison-stack {
   background: transparent;
 }
@@ -1929,20 +1938,37 @@ body.bauhaus-colors .app-masthead .book-page {
 
 body.bauhaus-colors .app-masthead .book-spine,
 body.bauhaus-colors .story-book-spine {
-  background: linear-gradient(180deg, rgba(242, 183, 5, 0.94), rgba(166, 41, 13, 0.88));
+  background: linear-gradient(180deg, rgba(4, 119, 191, 0.92), rgba(166, 41, 13, 0.88));
 }
 
 body.bauhaus-colors .checking-spine {
-  background: linear-gradient(180deg, rgba(242, 183, 5, 0.78), rgba(166, 41, 13, 0.76));
+  background: linear-gradient(180deg, rgba(4, 119, 191, 0.86), rgba(166, 41, 13, 0.8));
+}
+
+body.bauhaus-colors .story-book-page,
+body.bauhaus-colors .checking-page {
+  background: linear-gradient(180deg, rgba(255, 250, 244, 0.98), rgba(246, 231, 210, 0.96));
+  border-color: rgba(38, 29, 17, 0.08);
+  box-shadow: 0 10px 24px rgba(38, 29, 17, 0.08);
 }
 
 body.bauhaus-colors .story-star,
 body.bauhaus-colors .checking-spark {
-  background: rgba(242, 183, 5, 0.88);
+  background: linear-gradient(135deg, rgba(166, 41, 13, 0.94), rgba(4, 119, 191, 0.92));
+  box-shadow:
+    0 0 10px rgba(4, 119, 191, 0.2),
+    0 0 12px rgba(166, 41, 13, 0.16);
 }
 
 body.bauhaus-colors .moon-core {
-  background: radial-gradient(circle at 30% 30%, rgba(255, 248, 238, 1), rgba(242, 183, 5, 0.9) 56%, rgba(166, 41, 13, 0.78));
+  background: radial-gradient(circle at 30% 30%, rgba(255, 248, 238, 1), rgba(4, 119, 191, 0.86) 54%, rgba(166, 41, 13, 0.8));
+  box-shadow:
+    0 0 22px rgba(4, 119, 191, 0.16),
+    0 0 34px rgba(166, 41, 13, 0.14);
+}
+
+body.bauhaus-colors .story-ribbon {
+  background: linear-gradient(90deg, rgba(166, 41, 13, 0.22), rgba(4, 119, 191, 0.42), rgba(166, 41, 13, 0.18));
 }
 
 body.bauhaus-colors .score-bar-fill {
