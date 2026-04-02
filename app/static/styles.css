@@ -319,6 +319,10 @@ label span {
   text-align: center;
 }
 
+#setup-panel #theme {
+  text-align: left;
+}
+
 input,
 select,
 textarea,
