@@ -26,6 +26,7 @@ const state = {
   checkingTipsLessonId: null,
   usedCheckingTipIndexes: {},
   checkingTipQueueByDifficulty: {},
+  savedVocabItems: [],
 };
 
 const el = {
@@ -99,6 +100,25 @@ const el = {
 };
 
 let selectedPhraseData = null;
+
+function normalizeVocabValue(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isVocabItemAlreadySaved(english, targetWord) {
+  const normalizedEnglish = normalizeVocabValue(english);
+  const normalizedTarget = normalizeVocabValue(targetWord);
+  return state.savedVocabItems.some((item) => (
+    normalizeVocabValue(item.english) === normalizedEnglish &&
+    normalizeVocabValue(item.french) === normalizedTarget
+  ));
+}
 
 const CHECKING_TIPS_BY_LEVEL = {
   A1: [
@@ -2087,16 +2107,23 @@ function renderHints() {
     const div = document.createElement("div");
     div.className = "vocab-hint";
     const frenchDisplay = hint.display_french || hint.french;
+    const alreadySaved = isVocabItemAlreadySaved(hint.english, frenchDisplay);
     div.innerHTML = `
       <div class="vocab-hint-row">
         <div><strong>${frenchDisplay}</strong> -> ${hint.english}</div>
-        <button class="ghost-btn vocab-hint-save-btn" type="button">Add</button>
+        <button class="ghost-btn vocab-hint-save-btn" type="button">${alreadySaved ? "Added already" : "Add"}</button>
       </div>
     `;
     const saveBtn = div.querySelector(".vocab-hint-save-btn");
+    saveBtn.disabled = alreadySaved;
     saveBtn.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (isVocabItemAlreadySaved(hint.english, frenchDisplay)) {
+        saveBtn.textContent = "Added already";
+        saveBtn.disabled = true;
+        return;
+      }
       await addHintToVocab(hint);
       saveBtn.textContent = "Added";
       saveBtn.disabled = true;
@@ -2120,6 +2147,10 @@ function renderHints() {
 async function addHintToVocab(hint) {
   const sentence = currentSentence();
   if (!sentence) {
+    return;
+  }
+
+  if (isVocabItemAlreadySaved(hint.english, hint.display_french || hint.french)) {
     return;
   }
 
@@ -2304,6 +2335,9 @@ async function explainPhrase(phrase, anchorElement) {
   el.phraseTitle.textContent = data.selected_text || phrase;
   el.phraseMeaning.textContent = data.english_meaning;
   el.phraseNote.textContent = data.usage_note || data.save_note || "";
+  const alreadySaved = isVocabItemAlreadySaved(selectedPhraseData.english, selectedPhraseData.french);
+  el.addPhraseBtn.textContent = alreadySaved ? "Added already" : "Add to vocab list";
+  el.addPhraseBtn.disabled = alreadySaved;
   el.phraseExplainer.classList.remove("hidden");
   el.phraseExplainer.style.visibility = "hidden";
   requestAnimationFrame(() => {
@@ -2313,6 +2347,7 @@ async function explainPhrase(phrase, anchorElement) {
 }
 
 function renderSavedVocab(items) {
+  state.savedVocabItems = Array.isArray(items) ? items : [];
   el.savedVocabList.innerHTML = "";
   if (el.sidebarVocabCount) {
     el.sidebarVocabCount.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
@@ -2630,6 +2665,11 @@ function revealAndSkip() {
 
 async function addSelectedPhraseToVocab() {
   if (!selectedPhraseData) return;
+  if (isVocabItemAlreadySaved(selectedPhraseData.english, selectedPhraseData.french)) {
+    el.addPhraseBtn.textContent = "Added already";
+    el.addPhraseBtn.disabled = true;
+    return;
+  }
   await api("/api/vocab", {
     method: "POST",
     body: JSON.stringify({
@@ -2638,7 +2678,8 @@ async function addSelectedPhraseToVocab() {
     }),
   });
   await loadVocab();
-  closePhraseExplainer();
+  el.addPhraseBtn.textContent = "Added";
+  el.addPhraseBtn.disabled = true;
 }
 
 async function exportVocab() {

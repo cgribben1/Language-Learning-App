@@ -1226,7 +1226,10 @@ kbd {
 .checking-book,
 .checking-page,
 .checking-spine,
-.checking-spark {
+.checking-spark,
+.checking-quill,
+.checking-quill-feather,
+.checking-quill-shaft {
   position: absolute;
 }
 
@@ -1336,6 +1339,49 @@ kbd {
   animation: starTwinkle 2.2s steps(3, end) infinite;
 }
 
+.checking-quill {
+  top: 74px;
+  right: 86px;
+  width: 72px;
+  height: 34px;
+  transform: rotate(-28deg);
+  animation: quillWrite 1.9s steps(4, end) infinite;
+  transform-origin: 18% 82%;
+}
+
+.checking-quill-feather {
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 18px;
+  border-radius: 0;
+  clip-path: polygon(0 50%, 18% 12%, 74% 0, 100% 30%, 72% 100%, 16% 86%);
+  background: linear-gradient(135deg, rgba(166, 41, 13, 0.94), rgba(4, 119, 191, 0.92));
+  box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.1);
+}
+
+.checking-quill-shaft {
+  left: 26px;
+  top: 14px;
+  width: 42px;
+  height: 4px;
+  border-radius: 0;
+  background: rgba(38, 29, 17, 0.88);
+  box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.08);
+}
+
+.checking-quill-shaft::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: -2px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 8px solid rgba(38, 29, 17, 0.88);
+}
+
 .story-star-one,
 .checking-spark-one {
   top: 58px;
@@ -1436,6 +1482,15 @@ kbd {
 @keyframes starTwinkle {
   0%, 100% { opacity: 0.45; transform: scale(0.92); }
   50% { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes quillWrite {
+  0%, 100% {
+    transform: rotate(-28deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotate(-24deg) translate3d(-8px, 4px, 0);
+  }
 }
 
 .final-story-block {
