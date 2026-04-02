@@ -1209,11 +1209,14 @@ body.bauhaus-colors .vocab-hint,
 body.bauhaus-colors .phrase-explainer,
 body.bauhaus-colors .final-story-box,
 body.bauhaus-colors .comparison-card,
-body.bauhaus-colors .feedback-card,
 body.bauhaus-colors .checking-panel,
 body.bauhaus-colors .generating-panel,
 body.bauhaus-colors .side-panel-btn {
   background-color: rgba(242, 226, 196, 0.8);
+}
+
+body.bauhaus-colors .feedback-card {
+  background: transparent !important;
 }
 
 body.bauhaus-colors .generating-panel {
