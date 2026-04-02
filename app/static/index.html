@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>French Story Trainer</title>
+  <title>StoryTime.ai</title>
   <meta name="google" content="notranslate">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css?v=20260402-question-toolbar-167">
+  <link rel="stylesheet" href="/static/styles.css?v=20260402-language-toggle-168">
 </head>
   <body class="bauhaus-colors">
   <div class="page-shell">
@@ -19,10 +19,20 @@
           <div>
             <h1 id="lesson-title">Choose your story.</h1>
           </div>
-          <div class="progress-box hidden">
-            <span id="progress-current">0</span>
-            <span class="progress-divider">/</span>
-            <span id="progress-total">0</span>
+          <div class="lesson-header-right">
+            <div id="language-switch" class="language-switch" aria-label="Language selection">
+              <button id="language-french-btn" class="lang-flag-btn active" type="button" data-language="french" aria-label="French mode" title="French">
+                <span aria-hidden="true">🇫🇷</span>
+              </button>
+              <button id="language-spanish-btn" class="lang-flag-btn" type="button" data-language="spanish" aria-label="Spanish mode" title="Spanish">
+                <span aria-hidden="true">🇪🇸</span>
+              </button>
+            </div>
+            <div class="progress-box hidden">
+              <span id="progress-current">0</span>
+              <span class="progress-divider">/</span>
+              <span id="progress-total">0</span>
+            </div>
           </div>
         </div>
 
@@ -359,6 +369,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-  <script src="/static/app.js?v=20260402-question-toolbar-167"></script>
+  <script src="/static/app.js?v=20260402-language-toggle-168"></script>
 </body>
 </html>

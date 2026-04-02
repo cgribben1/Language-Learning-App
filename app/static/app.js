@@ -1,4 +1,5 @@
 const state = {
+  language: "french",
   lesson: null,
   currentIndex: 0,
   hintsVisible: false,
@@ -33,6 +34,9 @@ const el = {
   lessonForm: document.querySelector("#lesson-form"),
   lessonTitle: document.querySelector("#lesson-title"),
   heroCopy: document.querySelector("#hero-copy"),
+  languageSwitch: document.querySelector("#language-switch"),
+  languageFrenchBtn: document.querySelector("#language-french-btn"),
+  languageSpanishBtn: document.querySelector("#language-spanish-btn"),
   progressBox: document.querySelector(".progress-box"),
   progressCurrent: document.querySelector("#progress-current"),
   progressTotal: document.querySelector("#progress-total"),
@@ -215,6 +219,17 @@ const GENERATING_STORY_LINES = [
   "Adding just enough mischief, wonder, and momentum.",
   "Tucking the next twist neatly between the pages.",
 ];
+
+const LANGUAGE_COPY = {
+  french: {
+    name: "French",
+    hero: "Generate a connected story or dialogue, then translate each English sentence into French with feedback on what you wrote.",
+  },
+  spanish: {
+    name: "Spanish",
+    hero: "Generate a connected story or dialogue, then translate each English sentence into Spanish with feedback on what you wrote.",
+  },
+};
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -1137,6 +1152,26 @@ function currentLessonId() {
   return state.lesson?.lesson_id || null;
 }
 
+function currentLanguage() {
+  return state.lesson?.language || state.language || "french";
+}
+
+function updateLanguageToggle() {
+  const activeLanguage = currentLanguage();
+  el.languageFrenchBtn?.classList.toggle("active", activeLanguage === "french");
+  el.languageSpanishBtn?.classList.toggle("active", activeLanguage === "spanish");
+}
+
+function setLanguage(language) {
+  state.language = language === "spanish" ? "spanish" : "french";
+  updateLanguageToggle();
+  if (isSetupVisible()) {
+    renderSetupView();
+    loadVocab();
+    loadReminders();
+  }
+}
+
 function currentDifficulty() {
   return state.lesson?.difficulty || document.querySelector("#difficulty")?.value || "A2";
 }
@@ -1464,8 +1499,7 @@ function isGeneratingStoryVisible() {
 }
 
 function renderSetupView(message = "") {
-  const heroCopyText =
-    "Generate a connected story or dialogue, then translate each English sentence into French with feedback on what you wrote.";
+  const heroCopyText = LANGUAGE_COPY[currentLanguage()]?.hero || LANGUAGE_COPY.french.hero;
   document.body.classList.add("landing-bauhaus-colors");
   clearPromptTyping();
   clearFeedbackTyping();
@@ -1479,6 +1513,7 @@ function renderSetupView(message = "") {
   el.lessonCard.classList.remove("hidden");
   el.lessonCard.classList.remove("lesson-card-checking");
   el.lessonHeader.classList.remove("hidden");
+  el.languageSwitch?.classList.remove("hidden");
   el.progressBox.classList.add("hidden");
   hideLessonScreens();
   el.setupPanel.classList.remove("hidden");
@@ -1508,6 +1543,7 @@ function renderGeneratingStoryScreen() {
   el.lessonCard.classList.remove("hidden");
   el.lessonCard.classList.add("lesson-card-checking");
   el.lessonHeader.classList.add("hidden");
+  el.languageSwitch?.classList.add("hidden");
   el.storySoFarCard.classList.add("hidden");
   el.storySoFarList.innerHTML = "";
   hideLessonScreens();
@@ -1859,6 +1895,7 @@ function renderLesson(preserveStoryFlight = false) {
   el.lessonCard.classList.remove("hidden");
   el.lessonCard.classList.remove("lesson-card-checking");
   el.lessonHeader.classList.remove("hidden");
+  el.languageSwitch?.classList.add("hidden");
   el.progressBox.classList.remove("hidden");
   hideLessonScreens();
   el.emptyState.classList.add("hidden");
@@ -2101,6 +2138,7 @@ async function explainPhrase(phrase, anchorElement) {
     method: "POST",
     body: JSON.stringify({
       english_sentence: sentence.english,
+      language: currentLanguage(),
       french_sentence: sentence.french,
       selected_phrase: phrase,
       difficulty: state.lesson.difficulty,
@@ -2195,7 +2233,7 @@ async function loadConfig() {
 }
 
 async function loadVocab() {
-  const data = await api("/api/vocab");
+  const data = await api(`/api/vocab?language=${encodeURIComponent(currentLanguage())}`);
   renderSavedVocab(data.items);
 }
 
@@ -2229,7 +2267,7 @@ function renderReminders(items) {
 }
 
 async function loadReminders() {
-  const data = await api("/api/reminders");
+  const data = await api(`/api/reminders?language=${encodeURIComponent(currentLanguage())}`);
   renderReminders(data.items);
 }
 
@@ -2274,6 +2312,7 @@ async function generateLesson(event) {
       long: 12,
     };
     const payload = {
+      language: currentLanguage(),
       difficulty: document.querySelector("#difficulty").value,
       lesson_type: document.querySelector("#lesson-type").value,
       theme: document.querySelector("#theme").value.trim() || "mythological mystery",
@@ -2324,6 +2363,7 @@ async function evaluateCurrentAnswer() {
     const feedback = await api("/api/evaluate", {
       method: "POST",
       body: JSON.stringify({
+        language: currentLanguage(),
         english: sentence.english,
         target_french: sentence.french,
         learner_answer: learnerAnswer,
@@ -2441,14 +2481,17 @@ async function addSelectedPhraseToVocab() {
   if (!selectedPhraseData) return;
   await api("/api/vocab", {
     method: "POST",
-    body: JSON.stringify(selectedPhraseData),
+    body: JSON.stringify({
+      ...selectedPhraseData,
+      language: currentLanguage(),
+    }),
   });
   await loadVocab();
   closePhraseExplainer();
 }
 
 async function exportVocab() {
-  const csv = await api("/api/vocab/export");
+  const csv = await api(`/api/vocab/export?language=${encodeURIComponent(currentLanguage())}`);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -2471,6 +2514,8 @@ el.addPhraseBtn.addEventListener("click", addSelectedPhraseToVocab);
 el.closePhraseBtn.addEventListener("click", closePhraseExplainer);
 el.exportBtn.addEventListener("click", exportVocab);
 el.restartBtn.addEventListener("click", () => renderSetupView());
+el.languageFrenchBtn?.addEventListener("click", () => setLanguage("french"));
+el.languageSpanishBtn?.addEventListener("click", () => setLanguage("spanish"));
 el.appMasthead.addEventListener("click", () => renderSetupView());
 el.sidebarHomeBtn.addEventListener("click", () => renderSetupView());
 el.appMasthead.addEventListener("keydown", (event) => {
@@ -2587,5 +2632,6 @@ loadConfig();
 loadVocab();
 loadReminders();
 renderStorySoFar();
+updateLanguageToggle();
 renderSetupView();
 watchForDevReload();

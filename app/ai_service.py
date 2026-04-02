@@ -103,6 +103,22 @@ FRENCH_FUNCTION_WORDS = {
     "vont", "se", "sa", "son", "c", "ca", "ça",
 }
 
+SPANISH_FUNCTION_WORDS = {
+    "yo", "tu", "tú", "el", "él", "ella", "usted", "nosotros", "nosotras", "vosotros", "vosotras",
+    "ustedes", "ellos", "ellas", "me", "te", "se", "nos", "os", "lo", "la", "los", "las", "le", "les",
+    "un", "una", "unos", "unas", "el", "la", "los", "las", "del", "al", "de", "a", "en", "con", "sin",
+    "por", "para", "sobre", "bajo", "entre", "antes", "despues", "después", "durante", "desde", "hasta",
+    "y", "o", "u", "pero", "porque", "que", "como", "cuando", "mientras", "si", "ya", "todavia", "todavía",
+    "hay", "es", "son", "soy", "eres", "somos", "sois", "estoy", "estas", "estás", "esta", "está", "estan",
+    "están", "estamos", "voy", "vas", "va", "vamos", "vais", "van", "tengo", "tienes", "tiene", "tenemos",
+    "tienen", "hago", "haces", "hace", "hacen",
+}
+
+LANGUAGE_NAMES = {
+    "french": "French",
+    "spanish": "Spanish",
+}
+
 
 def counter_overlap(reference_tokens: list[str], candidate_tokens: list[str]) -> tuple[int, int]:
     reference_counts = Counter(reference_tokens)
@@ -250,23 +266,42 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
     target = normalize_french(request.target_french)
     triggers: list[dict[str, str]] = []
 
-    if "entre dans" in target and "entre dans" not in learner and "entre " in learner:
-        triggers.append(
-            {
-                "key": "entrer_dans_location",
-                "label": "Use 'dans' after entrer",
-                "explanation": "In French, entering a place is usually phrased with 'entrer dans ...', as in 'j'entre dans un cafe'.",
-            }
-        )
+    if request.language == "spanish":
+        if "entra en" in target and "entra en" not in learner and "entra " in learner:
+            triggers.append(
+                {
+                    "key": "entrar_en_location",
+                    "label": "Use 'en' after entrar",
+                    "explanation": "In Spanish, entering a place is often phrased with 'entrar en ...', as in 'entro en un café'.",
+                }
+            )
 
-    if not feedback.is_correct and " de " in target and " de " not in learner and " du " not in learner:
-        triggers.append(
-            {
-                "key": "missing_small_link_word",
-                "label": "Watch the small linking words",
-                "explanation": "Short words like 'de', 'dans', 'a', and articles often carry the grammar. They are easy to miss but matter a lot.",
-            }
-        )
+        if not feedback.is_correct and " de " in target and " de " not in learner and " del " not in learner:
+            triggers.append(
+                {
+                    "key": "missing_small_link_word",
+                    "label": "Watch the small linking words",
+                    "explanation": "Short words like 'de', 'en', 'a', and articles often carry the grammar. They are easy to miss but matter a lot.",
+                }
+            )
+    else:
+        if "entre dans" in target and "entre dans" not in learner and "entre " in learner:
+            triggers.append(
+                {
+                    "key": "entrer_dans_location",
+                    "label": "Use 'dans' after entrer",
+                    "explanation": "In French, entering a place is usually phrased with 'entrer dans ...', as in 'j'entre dans un cafe'.",
+                }
+            )
+
+        if not feedback.is_correct and " de " in target and " de " not in learner and " du " not in learner:
+            triggers.append(
+                {
+                    "key": "missing_small_link_word",
+                    "label": "Watch the small linking words",
+                    "explanation": "Short words like 'de', 'dans', 'a', and articles often carry the grammar. They are easy to miss but matter a lot.",
+                }
+            )
 
     unique: dict[str, dict[str, str]] = {}
     for item in triggers:
@@ -431,6 +466,13 @@ FRENCH_SIGNAL_WORDS = {
     "ils", "elles", "mon", "ma", "mes", "petit", "petite", "grand", "grande", "jeune", "garcon", "garçon",
     "heros", "héros", "mer", "montagne", "maison", "lumiere", "lumière", "temple", "sort", "entre",
 }
+SPANISH_SIGNAL_WORDS = {
+    "el", "la", "los", "las", "un", "una", "unos", "unas", "de", "del", "al", "en", "con", "sin", "por",
+    "para", "sobre", "pero", "y", "o", "es", "son", "yo", "tu", "tú", "el", "él", "ella", "nosotros",
+    "vosotros", "ustedes", "ellos", "ellas", "pequeno", "pequeño", "pequena", "pequeña", "joven", "nino",
+    "niño", "nina", "niña", "heroe", "héroe", "mar", "montana", "montaña", "casa", "luz", "lampara",
+    "lámpara", "templo", "sale", "entra",
+}
 
 
 class AIService:
@@ -447,8 +489,12 @@ class AIService:
         self.lesson_jobs: dict[str, dict[str, Any]] = {}
         self.lesson_jobs_lock = Lock()
         self.lesson_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="storytime-lessons")
-        self.phrase_dictionary = {
-            normalize_french(key): value for key, value in load_phrase_dictionary().items()
+        self.phrase_dictionaries = {
+            language: {
+                normalize_french(key): value
+                for key, value in load_phrase_dictionary(language).items()
+            }
+            for language in ("french", "spanish")
         }
         self.verb_base_forms = {
             "suis": "être",
@@ -606,7 +652,51 @@ class AIService:
         }
         return guidance[difficulty]
 
-    def _difficulty_guardrails(self, difficulty: str) -> str:
+    def _language_name(self, language: str) -> str:
+        return LANGUAGE_NAMES.get(language, "French")
+
+    def _target_signal_words(self, language: str) -> set[str]:
+        return SPANISH_SIGNAL_WORDS if language == "spanish" else FRENCH_SIGNAL_WORDS
+
+    def _function_words(self, language: str) -> set[str]:
+        return SPANISH_FUNCTION_WORDS if language == "spanish" else FRENCH_FUNCTION_WORDS
+
+    def _difficulty_guidance_for_language(self, difficulty: str, language: str) -> str:
+        if language != "spanish":
+            return self._difficulty_guidance(difficulty)
+
+        guidance = {
+            "A1": (
+                "Target a true beginner level. Use very short, concrete, high-frequency sentences only. "
+                "Prefer present tense almost all the time. Keep to one clause per sentence wherever possible. "
+                "Use very common verbs such as ser, estar, tener, ir, hacer, querer, poder, gustar, ver, venir, hablar, and tomar. "
+                "Use very common everyday nouns only. Avoid literary wording, abstract vocabulary, idioms, metaphor, passive voice, and unusual set phrases. "
+                "Avoid relative clauses, long subordinate clauses, conditionals, and tense backshifts. "
+                "If in doubt, make the Spanish simpler, shorter, and more repetitive."
+            ),
+            "A2": (
+                "Target a cautious elementary level. Use short, clear, everyday sentences with mostly common vocabulary. "
+                "You may use simple past or near-future references, but syntax must stay easy to parse. "
+                "Prefer one main idea per sentence. Keep connectors basic, such as y, pero, luego, porque, and cuando. "
+                "Avoid dense phrasing, rare idioms, literary language, and long nested clauses."
+            ),
+            "B1": (
+                "Target an intermediate but still accessible level. Use natural connected sentences with a moderate range of tenses and slightly richer vocabulary, "
+                "but keep everything practical, readable, and clearly teachable. "
+                "Do not drift into advanced literary or highly idiomatic phrasing."
+            ),
+            "B2": (
+                "Target an upper-intermediate level. Use more nuanced, idiomatic, and detailed language, with richer transitions and more natural phrasing, "
+                "while still keeping the lesson teachable and not overly ornate."
+            ),
+            "C1": (
+                "Target an advanced level. Use fluent, precise, and sophisticated language with natural complexity, "
+                "while remaining coherent, teachable, and not unnecessarily obscure."
+            ),
+        }
+        return guidance[difficulty]
+
+    def _difficulty_guardrails(self, difficulty: str, language: str = "french") -> str:
         guardrails = {
             "A1": (
                 "A1 hard limits:\n"
@@ -636,7 +726,29 @@ class AIService:
                 "- Advanced should mean fluent and precise, not obscure or unnecessarily difficult."
             ),
         }
-        return guardrails[difficulty]
+        if language != "spanish":
+            return guardrails[difficulty]
+
+        localized = {
+            "A1": (
+                "A1 hard limits:\n"
+                "- Average Spanish sentence length should feel short and beginner-friendly.\n"
+                "- Most sentences should be understandable with school-level everyday vocabulary.\n"
+                "- Do not rely on the subjunctive, complex conditional structures, or dense reported speech.\n"
+                "- Do not use advanced connectors or heavy clause chaining.\n"
+                "- The learner should not need advanced grammar knowledge to produce a reasonable answer."
+            ),
+            "A2": (
+                "A2 hard limits:\n"
+                "- Keep the wording clearly easier than a typical B1 textbook passage.\n"
+                "- Limited use of past or future is fine, but keep the sentence architecture simple.\n"
+                "- Do not overload any one sentence with several grammar challenges at once."
+            ),
+            "B1": guardrails["B1"].replace("French", "Spanish"),
+            "B2": guardrails["B2"],
+            "C1": guardrails["C1"],
+        }
+        return localized[difficulty]
 
     def _lesson_type_guidance(self, lesson_type: str, theme: str) -> str:
         if lesson_type == "story":
@@ -820,14 +932,15 @@ class AIService:
         target_normalized = normalize_french(request.target_french)
         learner_tokens = learner_normalized.split()
         target_tokens = target_normalized.split()
+        function_words = self._function_words(request.language)
 
         if not learner_tokens:
             return 0, False, False
 
-        target_content_tokens = [token for token in target_tokens if token not in FRENCH_FUNCTION_WORDS]
-        learner_content_tokens = [token for token in learner_tokens if token not in FRENCH_FUNCTION_WORDS]
-        target_function_tokens = [token for token in target_tokens if token in FRENCH_FUNCTION_WORDS]
-        learner_function_tokens = [token for token in learner_tokens if token in FRENCH_FUNCTION_WORDS]
+        target_content_tokens = [token for token in target_tokens if token not in function_words]
+        learner_content_tokens = [token for token in learner_tokens if token not in function_words]
+        target_function_tokens = [token for token in target_tokens if token in function_words]
+        learner_function_tokens = [token for token in learner_tokens if token in function_words]
 
         content_matched, content_total = counter_overlap(target_content_tokens, learner_content_tokens)
         function_matched, function_total = counter_overlap(target_function_tokens, learner_function_tokens)
@@ -850,6 +963,13 @@ class AIService:
             if token in {"de", "du", "des", "dans", "a", "à", "au", "aux", "ne", "pas", "y", "en"}
             and token not in learner_function_tokens
         ]
+        if request.language == "spanish":
+            critical_function_words = {"de", "del", "a", "al", "en", "se", "lo", "la"}
+            missing_critical = [
+                token for token in target_function_tokens
+                if token in critical_function_words
+                and token not in learner_function_tokens
+            ]
         score -= min(18, len(missing_critical) * 6)
         score -= min(24, self._count_local_contraction_mismatches(request) * 12)
 
@@ -870,11 +990,18 @@ class AIService:
         target_tokens = [normalize_french(token) for token in re.split(r"\s+", request.target_french.strip()) if token]
         mismatch_count = 0
 
-        contraction_expectations = {
-            "au": {("a", "la"), ("a", "le"), ("a", "les")},
-            "aux": {("a", "les"), ("a", "des")},
-            "du": {("de", "la"), ("de", "le"), ("de", "les")},
-        }
+        contraction_expectations = (
+            {
+                "al": {("a", "el")},
+                "del": {("de", "el")},
+            }
+            if request.language == "spanish"
+            else {
+                "au": {("a", "la"), ("a", "le"), ("a", "les")},
+                "aux": {("a", "les"), ("a", "des")},
+                "du": {("de", "la"), ("de", "le"), ("de", "les")},
+            }
+        )
 
         for index, token in enumerate(target_tokens[:-1]):
             expected_pairs = contraction_expectations.get(token)
@@ -1036,7 +1163,7 @@ class AIService:
             ]
             if len(mismatches) == 1:
                 learner_raw, learner_norm, target_raw, target_norm = mismatches[0]
-                if target_norm in FRENCH_FUNCTION_WORDS or learner_norm in FRENCH_FUNCTION_WORDS:
+                if target_norm in self._function_words(request.language) or learner_norm in self._function_words(request.language):
                     return {
                         **payload,
                         "mistakes": [f'Use "{target_raw}" here, not "{learner_raw}".'],
@@ -1054,11 +1181,18 @@ class AIService:
         learner_tokens = [normalize_french(token) for token in learner_raw_tokens]
         target_tokens = [normalize_french(token) for token in target_raw_tokens]
 
-        contraction_expectations = {
-            "au": {("a", "la"), ("a", "le"), ("a", "les")},
-            "aux": {("a", "les"), ("a", "des")},
-            "du": {("de", "la"), ("de", "le"), ("de", "les")},
-        }
+        contraction_expectations = (
+            {
+                "al": {("a", "el")},
+                "del": {("de", "el")},
+            }
+            if request.language == "spanish"
+            else {
+                "au": {("a", "la"), ("a", "le"), ("a", "les")},
+                "aux": {("a", "les"), ("a", "des")},
+                "du": {("de", "la"), ("de", "le"), ("de", "les")},
+            }
+        )
 
         for index, token in enumerate(target_tokens[:-1]):
             expected_pairs = contraction_expectations.get(token)
@@ -1072,6 +1206,10 @@ class AIService:
                 learner_pair = (learner_tokens[learner_index], learner_tokens[learner_index + 1])
                 learner_next = learner_tokens[learner_index + 2]
                 if learner_next == next_target and learner_pair in expected_pairs:
+                    if token == "al":
+                        return f'Use "{target_phrase_raw}" here; "a + el" becomes "al".'
+                    if token == "del":
+                        return f'Use "{target_phrase_raw}" here; "de + el" becomes "del".'
                     if token == "au":
                         return f'Use "{target_phrase_raw}" here; "à + le/la/les" contracts differently.'
                     if token == "aux":
@@ -1151,26 +1289,36 @@ class AIService:
         ]
         return cleaned
 
-    def _infer_noun_article(self, sentence_text: str, hint_text: str) -> str | None:
+    def _infer_noun_article(self, sentence_text: str, hint_text: str, language: str = "french") -> str | None:
         sentence_tokens = tokenize_french_context(sentence_text)
         hint_tokens = tokenize_french_context(hint_text)
         if not sentence_tokens or not hint_tokens:
             return None
 
-        masculine_determiners = {
-            "un", "le", "du", "au", "ce", "cet", "mon", "ton", "son", "notre", "votre", "leur"
-        }
-        feminine_determiners = {
-            "une", "la", "cette", "ma", "ta", "sa", "notre", "votre", "leur"
-        }
-        neutral_skip = {
-            "de", "d", "des", "les", "mes", "tes", "ses", "ces", "quelques", "plusieurs",
-            "petit", "petite", "petits", "petites", "grand", "grande", "grands", "grandes",
-            "bon", "bonne", "bons", "bonnes", "vieux", "vieille", "vieux", "vieilles",
-            "jeune", "jeunes", "beau", "belle", "beaux", "belles", "nouveau", "nouvelle",
-            "nouveaux", "nouvelles", "mauvais", "mauvaise", "mauvaises", "chaud", "chaude",
-            "chauds", "chaudes", "ancien", "ancienne", "anciens", "anciennes", "autre", "autres",
-        }
+        if language == "spanish":
+            masculine_determiners = {"un", "el", "del", "al", "este", "ese", "aquel", "mi", "tu", "su", "nuestro", "vuestro"}
+            feminine_determiners = {"una", "la", "esta", "esa", "aquella", "mi", "tu", "su", "nuestra", "vuestra"}
+            neutral_skip = {
+                "de", "los", "las", "mis", "tus", "sus", "estos", "estas", "esos", "esas", "aquellos", "aquellas",
+                "pequeno", "pequeño", "pequena", "pequeña", "pequenos", "pequeños", "pequenas", "pequeñas",
+                "grande", "grandes", "bueno", "buena", "buenos", "buenas", "viejo", "vieja", "viejos", "viejas",
+                "joven", "jovenes", "jóvenes", "otro", "otra", "otros", "otras",
+            }
+        else:
+            masculine_determiners = {
+                "un", "le", "du", "au", "ce", "cet", "mon", "ton", "son", "notre", "votre", "leur"
+            }
+            feminine_determiners = {
+                "une", "la", "cette", "ma", "ta", "sa", "notre", "votre", "leur"
+            }
+            neutral_skip = {
+                "de", "d", "des", "les", "mes", "tes", "ses", "ces", "quelques", "plusieurs",
+                "petit", "petite", "petits", "petites", "grand", "grande", "grands", "grandes",
+                "bon", "bonne", "bons", "bonnes", "vieux", "vieille", "vieux", "vieilles",
+                "jeune", "jeunes", "beau", "belle", "beaux", "belles", "nouveau", "nouvelle",
+                "nouveaux", "nouvelles", "mauvais", "mauvaise", "mauvaises", "chaud", "chaude",
+                "chauds", "chaudes", "ancien", "ancienne", "anciens", "anciennes", "autre", "autres",
+            }
 
         for index in range(len(sentence_tokens) - len(hint_tokens) + 1):
             if sentence_tokens[index:index + len(hint_tokens)] != hint_tokens:
@@ -1190,12 +1338,12 @@ class AIService:
 
         return None
 
-    def _apply_local_hint_display_rules(self, sentences: list[LessonSentence]) -> list[LessonSentence]:
+    def _apply_local_hint_display_rules(self, sentences: list[LessonSentence], language: str = "french") -> list[LessonSentence]:
         for sentence in sentences:
             updated_hints: list[VocabHint] = []
             for hint in sentence.vocab_hints:
                 display_french = (hint.display_french or "").strip()
-                inferred_article = self._infer_noun_article(sentence.french, hint.french)
+                inferred_article = self._infer_noun_article(sentence.french, hint.french, language)
 
                 if inferred_article and (not display_french or display_french == hint.french):
                     updated_hints.append(
@@ -1219,9 +1367,9 @@ class AIService:
 
         return sentences
 
-    def _enrich_vocab_hints(self, sentences: list[LessonSentence], difficulty: str) -> list[LessonSentence]:
+    def _enrich_vocab_hints(self, sentences: list[LessonSentence], difficulty: str, language: str = "french") -> list[LessonSentence]:
         if not self.client or not any(sentence.vocab_hints for sentence in sentences):
-            return self._apply_local_hint_display_rules(sentences)
+            return self._apply_local_hint_display_rules(sentences, language)
 
         schema = {
             "name": "vocab_hint_display_enrichment",
@@ -1312,7 +1460,7 @@ class AIService:
             )
             payload = json.loads(response.output_text)
         except Exception:
-            return self._apply_local_hint_display_rules(sentences)
+            return self._apply_local_hint_display_rules(sentences, language)
 
         hints_by_step = {
             item["step"]: item.get("vocab_hints", [])
@@ -1333,9 +1481,9 @@ class AIService:
                 pass
             enriched_sentences.append(sentence)
 
-        return self._apply_local_hint_display_rules(enriched_sentences)
+        return self._apply_local_hint_display_rules(enriched_sentences, language)
 
-    def _align_sentence_pairs(self, sentences: list[LessonSentence], difficulty: str) -> list[LessonSentence]:
+    def _align_sentence_pairs(self, sentences: list[LessonSentence], difficulty: str, language: str = "french") -> list[LessonSentence]:
         if not self.client or not sentences:
             return sentences
 
@@ -1381,12 +1529,12 @@ class AIService:
                     {
                         "role": "system",
                         "content": (
-                            "You verify alignment between learner-facing English prompts and their target French answers. "
-                            "Your job is to repair any mismatch between the English prompt and the French target answer. "
+                            f"You verify alignment between learner-facing English prompts and their target {self._language_name(language)} answers. "
+                            f"Your job is to repair any mismatch between the English prompt and the {self._language_name(language)} target answer. "
                             "The english field must be clear natural English only. "
-                            "The french field must be clear natural French only. "
+                            f"The french field must be clear natural {self._language_name(language)} only. "
                             "Revise whichever field is wrong or weaker, but prefer the smallest change that produces a clean, fully aligned pair. "
-                            "If the English and French do not match exactly in meaning, fix the pair so they do. "
+                            f"If the English and {self._language_name(language)} do not match exactly in meaning, fix the pair so they do. "
                             "Be strict about hidden meaning details: if one side includes an extra object, location detail, relationship, or descriptive phrase, the other side must include it too. "
                             "Do not accept 'close enough' alignment. The learner should be able to translate the English prompt into the French answer without surprise. "
                             "Do not drop or add meaning-bearing details such as articles, number, negation, possession, size words, color words, or other modifiers. "
@@ -1420,9 +1568,9 @@ class AIService:
             aligned = [LessonSentence(**item) for item in payload["sentences"]]
             for original, revised in zip(sentences, aligned, strict=False):
                 revised.step = original.step
-                if self._looks_like_french_text(revised.english) and self._looks_like_english_text(original.english):
+                if self._looks_like_target_language_text(revised.english, language) and self._looks_like_english_text(original.english):
                     revised.english = original.english
-                if self._looks_like_english_text(revised.french) and self._looks_like_french_text(original.french):
+                if self._looks_like_english_text(revised.french) and self._looks_like_target_language_text(original.french, language):
                     revised.french = original.french
             return aligned
         except Exception:
@@ -1433,6 +1581,14 @@ class AIService:
         tokens = normalized.split()
         score = sum(1 for token in tokens if token in signal_words)
         return score
+
+    def _looks_like_target_language_text(self, text: str, language: str = "french") -> bool:
+        lowered = text.lower()
+        accent_bonus = 2 if re.search(r"[Ã Ã¢Ã§Ã©Ã¨ÃªÃ«Ã®Ã¯Ã´Ã»Ã¹Ã¼Ã¿Å“Ã¦Ã¡Ã­Ã³ÃºÃ±]", lowered) else 0
+        apostrophe_bonus = 1 if language == "french" and re.search(r"\b[cdjlmnstqu]['â€™]", lowered) else 0
+        target_score = self._language_signal_score(text, self._target_signal_words(language)) + accent_bonus + apostrophe_bonus
+        english_score = self._language_signal_score(text, ENGLISH_SIGNAL_WORDS)
+        return target_score >= max(2, english_score + 1)
 
     def _looks_like_french_text(self, text: str) -> bool:
         lowered = text.lower()
@@ -1447,13 +1603,13 @@ class AIService:
         french_score = self._language_signal_score(text, FRENCH_SIGNAL_WORDS)
         return english_score >= max(2, french_score + 1)
 
-    def _repair_sentence_language_roles(self, sentences: list[LessonSentence]) -> list[LessonSentence]:
+    def _repair_sentence_language_roles(self, sentences: list[LessonSentence], language: str = "french") -> list[LessonSentence]:
         repaired: list[LessonSentence] = []
         for sentence in sentences:
             english = (sentence.english or "").strip()
             french = (sentence.french or "").strip()
 
-            if english and french and self._looks_like_french_text(english) and self._looks_like_english_text(french):
+            if english and french and self._looks_like_target_language_text(english, language) and self._looks_like_english_text(french):
                 sentence.english, sentence.french = french, english
 
             repaired.append(sentence)
@@ -1469,22 +1625,28 @@ class AIService:
             cleaned = theme.strip().title() or "Story"
         return cleaned
 
-    def _lesson_system_prompt(self) -> str:
+    def _lesson_system_prompt(self, language: str = "french") -> str:
+        language_name = self._language_name(language)
+        adjective_example = (
+            "For adjective hints, the note should include both forms, such as 'adjective: masculine alto, feminine alta'. "
+            if language == "spanish"
+            else "For adjective hints, the note should include both forms, such as 'adjective: masculine grand, feminine grande'. "
+        )
         return (
-            "You create high-quality French learning material. "
+            f"You create high-quality {language_name} learning material. "
             "You must obey every user configuration exactly; none of them are optional suggestions. "
-            "Return connected English prompts with target French translations. "
+            f"Return connected English prompts with target {language_name} translations. "
             "The output must be one continuous lesson, not disconnected sentences. "
             "Match CEFR level exactly. "
-            "Use natural modern French. "
+            f"Use natural modern {language_name}. "
             "The lesson title must be in English. "
             "The lesson title must not include any CEFR or difficulty label such as A1, A2, B1, B2, C1, beginner, intermediate, or advanced. "
-            "Always include proper French accents in the target French and vocab hints. "
+            f"Always include proper {language_name} accents in the target sentence and vocab hints. "
             "For each sentence, include 0 to 4 useful vocab hints for unusual, blocking, or non-obvious words. "
             "Be generous when a sentence contains multiple genuinely difficult words or phrases. "
-            "In each vocab hint, the 'english' field must be an English gloss, the 'french' field must be the French word or phrase, and the 'note' field must be written in English. "
+            f"In each vocab hint, the 'english' field must be an English gloss, the 'french' field must be the {language_name} word or phrase, and the 'note' field must be written in English. "
             "For noun hints, the note should include grammatical gender, such as 'noun, masculine' or 'noun, feminine'. "
-            "For adjective hints, the note should include both forms, such as 'adjective: masculine grand, feminine grande'. "
+            + adjective_example +
             "For other parts of speech, keep the note short and useful only if it helps the learner. "
             "If the requested lesson type is dialogue, every line must visibly remain dialogue. "
             "If the requested lesson type is story, every line must visibly remain narration. "
@@ -1493,32 +1655,34 @@ class AIService:
         )
 
     def _lesson_constraints(self, request: LessonRequest) -> str:
+        language_name = self._language_name(request.language)
         return (
             "Create one lesson using these non-negotiable settings:\n"
+            f"- Language: {language_name}\n"
             f"- Difficulty: {request.difficulty}\n"
             f"- Theme: {request.theme}\n"
             f"- Lesson type: {request.lesson_type}\n"
             f"- Sentence count: exactly {request.sentence_count}\n\n"
             "Hard constraints:\n"
-            f"- {self._difficulty_guidance(request.difficulty)}\n"
-            f"- {self._difficulty_guardrails(request.difficulty)}\n"
+            f"- {self._difficulty_guidance_for_language(request.difficulty, request.language)}\n"
+            f"- {self._difficulty_guardrails(request.difficulty, request.language)}\n"
             f"- {self._lesson_type_guidance(request.lesson_type, request.theme)}\n"
             f"- The lesson title must reflect the theme '{request.theme}' and MUST be written in English.\n"
             "- The lesson title must not include the difficulty level or any CEFR tag.\n"
             f"- Produce exactly {request.sentence_count} sentences, no more and no fewer.\n"
             "- The English field must be the learner-facing prompt.\n"
-            "- The French field must be the natural target answer for that exact English prompt.\n"
+            f"- The French field must contain the natural target {language_name} answer for that exact English prompt.\n"
             "- In every vocab hint, the english gloss and note must be written in English only.\n"
-            "- In every vocab hint, the french field must contain the French word or phrase only.\n"
+            f"- In every vocab hint, the french field must contain the {language_name} word or phrase only.\n"
             "- For noun hints, the note must include gender in English.\n"
             "- For adjective hints, the note must include both masculine and feminine forms.\n"
-            "- If the requested level is low, choose simpler French even if that makes the lesson less stylistically rich.\n"
+            f"- If the requested level is low, choose simpler {language_name} even if that makes the lesson less stylistically rich.\n"
             "- Every sentence must connect logically to the one before it.\n"
             "- Avoid generic filler. Make the theme obvious in the wording, setting, and actions.\n"
             "- For story mode, if the theme points to a known existing narrative world or tradition, adapt a recognizable existing story or episode instead of inventing a bland generic plot.\n"
             "- If using dialogue, keep speaker labels consistent in both languages.\n"
             "- If using a film scene, keep the same setting and dramatic situation throughout.\n"
-            "- If a sentence contains two or more genuinely difficult French words or phrases, include hints for more than one of them instead of only choosing a single hint."
+            f"- If a sentence contains two or more genuinely difficult {language_name} words or phrases, include hints for more than one of them instead of only choosing a single hint."
         )
 
     def _lesson_sentence_schema(self, min_items: int, max_items: int) -> dict[str, Any]:
@@ -1558,6 +1722,7 @@ class AIService:
         requested_count = job["request"].sentence_count
         return LessonResponse(
             lesson_id=job["lesson_id"],
+            language=job["request"].language,
             title=job["title"],
             difficulty=job["request"].difficulty,
             theme=job["request"].theme,
@@ -1642,7 +1807,7 @@ class AIService:
                 reasoning_effort=self.lesson_reasoning_effort,
             ),
             input=[
-                {"role": "system", "content": self._lesson_system_prompt()},
+                {"role": "system", "content": self._lesson_system_prompt(request.language)},
                 {
                     "role": "user",
                     "content": (
@@ -1659,9 +1824,9 @@ class AIService:
         payload = json.loads(response.output_text)
         first_sentence = LessonSentence(**payload["sentence"])
         first_sentence.step = 1
-        first_sentence = self._repair_sentence_language_roles([first_sentence])[0]
-        first_sentence = self._align_sentence_pairs([first_sentence], request.difficulty)[0]
-        first_sentence = self._enrich_vocab_hints([first_sentence], request.difficulty)[0]
+        first_sentence = self._repair_sentence_language_roles([first_sentence], request.language)[0]
+        first_sentence = self._align_sentence_pairs([first_sentence], request.difficulty, request.language)[0]
+        first_sentence = self._enrich_vocab_hints([first_sentence], request.difficulty, request.language)[0]
         return self._sanitize_lesson_title(payload["title"], request.theme), first_sentence
 
     def _generate_lesson_openai_remaining(
@@ -1691,7 +1856,7 @@ class AIService:
                 reasoning_effort=self.lesson_reasoning_effort,
             ),
             input=[
-                {"role": "system", "content": self._lesson_system_prompt()},
+                {"role": "system", "content": self._lesson_system_prompt(request.language)},
                 {
                     "role": "user",
                     "content": (
@@ -1714,9 +1879,9 @@ class AIService:
         sentences = [LessonSentence(**item) for item in payload["sentences"]]
         for step, sentence in enumerate(sentences, start=2):
             sentence.step = step
-        sentences = self._repair_sentence_language_roles(sentences)
-        sentences = self._align_sentence_pairs(sentences, request.difficulty)
-        return self._enrich_vocab_hints(sentences, request.difficulty)
+        sentences = self._repair_sentence_language_roles(sentences, request.language)
+        sentences = self._align_sentence_pairs(sentences, request.difficulty, request.language)
+        return self._enrich_vocab_hints(sentences, request.difficulty, request.language)
 
     def _generate_lesson_openai(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
         schema = {
@@ -1812,11 +1977,12 @@ class AIService:
 
         payload = json.loads(response.output_text)
         sentences = [LessonSentence(**item) for item in payload["sentences"]]
-        sentences = self._repair_sentence_language_roles(sentences)
-        sentences = self._align_sentence_pairs(sentences, request.difficulty)
-        sentences = self._enrich_vocab_hints(sentences, request.difficulty)
+        sentences = self._repair_sentence_language_roles(sentences, request.language)
+        sentences = self._align_sentence_pairs(sentences, request.difficulty, request.language)
+        sentences = self._enrich_vocab_hints(sentences, request.difficulty, request.language)
         return LessonResponse(
             lesson_id=lesson_id,
+            language=request.language,
             title=self._sanitize_lesson_title(payload["title"], request.theme),
             difficulty=request.difficulty,
             theme=request.theme,
@@ -1879,8 +2045,8 @@ class AIService:
                     {
                         "role": "system",
                         "content": (
-                            "You are a precise but encouraging French tutor. "
-                            "Evaluate a learner's French translation of an English sentence. "
+                            f"You are a precise but encouraging {self._language_name(request.language)} tutor. "
+                            f"Evaluate a learner's {self._language_name(request.language)} translation of an English sentence. "
                             "Treat missing accents as fully acceptable if the sentence is otherwise correct, and do not mention missing accents in the feedback. "
                             "This includes cedillas such as 'c' versus 'ç'. "
                             "Treat capitalization differences in the learner's input as fully acceptable and do not mention capitalization in the feedback. "
@@ -1908,8 +2074,8 @@ class AIService:
                             "Do not nitpick between two clearly natural, common phrasings that mean the same thing. "
                             "If the learner's French is already natural, do not offer a tiny stylistic swap as correction. "
                             "Prefer under-correcting to over-correcting on small style differences. "
-                            "Treat the target French and supplied vocab hints as canonical lesson language. "
-                            "Do not criticize, replace, or second-guess vocabulary that appears in the target French or vocab hints unless it is genuinely ungrammatical. "
+                            f"Treat the target {self._language_name(request.language)} and supplied vocab hints as canonical lesson language. "
+                            f"Do not criticize, replace, or second-guess vocabulary that appears in the target {self._language_name(request.language)} or vocab hints unless it is genuinely ungrammatical. "
                             "Write every feedback field in English only, including the verdict, tips, mistakes, and encouraging note. "
                             "Do not write any feedback notes in French unless you are quoting a French example sentence or phrase. "
                             "Do not mention missing accents, accent marks, or diacritics anywhere in the feedback. "
@@ -1924,7 +2090,7 @@ class AIService:
                             "Do not return two notes that point to the same underlying correction with different wording. "
                             "If several comments would all be fixed by the same corrected word or phrase, return only one of them. "
                             "Never give two lexical notes about the same target word or phrase. "
-                            "Anchor every correction to the target French, not to an incorrect learner phrase. "
+                            f"Anchor every correction to the target {self._language_name(request.language)}, not to an incorrect learner phrase. "
                             "Do not invent grammar patterns from the learner's wrong wording if those patterns are absent from the target sentence. "
                             "Also return learner_token_labels for the learner answer tokens split by spaces. "
                             "Return exactly one label per learner token, in order. "
@@ -1945,7 +2111,7 @@ class AIService:
                         "content": (
                             f"Difficulty: {request.difficulty}\n"
                             f"English prompt: {request.english}\n"
-                            f"Target French: {request.target_french}\n"
+                            f"Target {self._language_name(request.language)}: {request.target_french}\n"
                             f"Context note: {request.context_note}\n"
                             f"Canonical vocab hints: {', '.join(f'{hint.french} = {hint.english}' for hint in request.vocab_hints) or 'None'}\n"
                             f"Learner answer: {request.learner_answer}\n"
@@ -2059,23 +2225,24 @@ class AIService:
             **payload,
         )
 
-    def _lookup_phrase_entry(self, phrase: str) -> dict[str, str] | None:
+    def _lookup_phrase_entry(self, phrase: str, language: str = "french") -> dict[str, str] | None:
         normalized = normalize_french(phrase)
         if not normalized:
             return None
-        if normalized in self.phrase_dictionary:
-            return self.phrase_dictionary[normalized]
+        phrase_dictionary = self.phrase_dictionaries.get(language, {})
+        if normalized in phrase_dictionary:
+            return phrase_dictionary[normalized]
 
         lemma = self.verb_base_forms.get(normalized)
-        if lemma and normalize_french(lemma) in self.phrase_dictionary:
-            entry = self.phrase_dictionary[normalize_french(lemma)]
+        if lemma and normalize_french(lemma) in phrase_dictionary:
+            entry = phrase_dictionary[normalize_french(lemma)]
             return {
                 "english_meaning": entry["english_meaning"],
                 "usage_note": f"{entry['usage_note']} This form comes from '{lemma}'.",
             }
 
-        if normalized.endswith("s") and normalized[:-1] in self.phrase_dictionary:
-            return self.phrase_dictionary[normalized[:-1]]
+        if normalized.endswith("s") and normalized[:-1] in phrase_dictionary:
+            return phrase_dictionary[normalized[:-1]]
 
         return None
 
@@ -2085,6 +2252,7 @@ class AIService:
         for hint in request.vocab_hints:
             if normalize_french(hint.french) == selected_normalized:
                 return PhraseExplainResponse(
+                    language=request.language,
                     french_phrase=request.selected_phrase,
                     english_meaning=hint.english,
                     usage_note=hint.note or "Useful vocabulary from this sentence.",
@@ -2092,9 +2260,10 @@ class AIService:
                     source="dictionary",
                 )
 
-        dictionary_entry = self._lookup_phrase_entry(request.selected_phrase)
+        dictionary_entry = self._lookup_phrase_entry(request.selected_phrase, request.language)
         if dictionary_entry is not None:
             return PhraseExplainResponse(
+                language=request.language,
                 french_phrase=request.selected_phrase,
                 english_meaning=dictionary_entry["english_meaning"],
                 usage_note=dictionary_entry.get("usage_note", ""),
@@ -2104,10 +2273,11 @@ class AIService:
 
         phrase_tokens = tokenize_french_context(request.selected_phrase)
         if len(phrase_tokens) > 1:
-            token_entries = [self._lookup_phrase_entry(token) for token in phrase_tokens]
+            token_entries = [self._lookup_phrase_entry(token, request.language) for token in phrase_tokens]
             known_tokens = [entry["english_meaning"] for entry in token_entries if entry is not None]
             if known_tokens:
                 return PhraseExplainResponse(
+                    language=request.language,
                     french_phrase=request.selected_phrase,
                     english_meaning=" / ".join(known_tokens),
                     usage_note="Combined from the local dictionary because this exact phrase was not stored yet.",
@@ -2116,6 +2286,7 @@ class AIService:
                 )
 
         return PhraseExplainResponse(
+            language=request.language,
             french_phrase=request.selected_phrase,
             english_meaning=f"Sentence-specific meaning of '{request.selected_phrase}'",
             usage_note="No exact entry was found in the local dictionary yet, so use the surrounding sentence for context.",
@@ -2171,6 +2342,7 @@ class AIService:
         )
         payload = json.loads(response.output_text)
         return PhraseExplainResponse(
+            language=request.language,
             french_phrase=request.selected_phrase,
             source="openai",
             **payload,

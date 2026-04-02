@@ -1,0 +1,66 @@
+{
+  "casa": {
+    "english_meaning": "house / home",
+    "usage_note": "Very common everyday noun."
+  },
+  "mar": {
+    "english_meaning": "sea",
+    "usage_note": "Common in travel and myth settings."
+  },
+  "montaña": {
+    "english_meaning": "mountain",
+    "usage_note": "Useful location noun."
+  },
+  "héroe": {
+    "english_meaning": "hero",
+    "usage_note": "Common in myths and adventure stories."
+  },
+  "templo": {
+    "english_meaning": "temple",
+    "usage_note": "Useful in myth and history themes."
+  },
+  "luz": {
+    "english_meaning": "light",
+    "usage_note": "Common noun; can mean physical light."
+  },
+  "lámpara": {
+    "english_meaning": "lamp",
+    "usage_note": "Common physical object."
+  },
+  "en efectivo": {
+    "english_meaning": "in cash",
+    "usage_note": "Fixed phrase for paying with cash."
+  },
+  "al mercado": {
+    "english_meaning": "to the market",
+    "usage_note": "Shows the required contraction al."
+  },
+  "entra en": {
+    "english_meaning": "goes into / enters",
+    "usage_note": "Common pattern for entering a place."
+  },
+  "sale de": {
+    "english_meaning": "leaves / goes out of",
+    "usage_note": "Useful movement phrase."
+  },
+  "pequeño": {
+    "english_meaning": "small",
+    "usage_note": "Masculine adjective; feminine is pequeña."
+  },
+  "pequeña": {
+    "english_meaning": "small",
+    "usage_note": "Feminine adjective; masculine is pequeño."
+  },
+  "joven": {
+    "english_meaning": "young",
+    "usage_note": "Same form for masculine and feminine singular."
+  },
+  "viejo": {
+    "english_meaning": "old",
+    "usage_note": "Masculine adjective; feminine is vieja."
+  },
+  "vieja": {
+    "english_meaning": "old",
+    "usage_note": "Feminine adjective; masculine is viejo."
+  }
+}
