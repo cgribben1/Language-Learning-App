@@ -252,7 +252,7 @@ h1 {
 .answer-entry-form {
   display: grid;
   gap: 10px;
-  margin-top: -8px;
+  margin-top: -16px;
 }
 
 .answer-toolbar-row {
@@ -260,7 +260,7 @@ h1 {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-bottom: 2px;
+  margin-bottom: -4px;
 }
 
 .answer-box {
@@ -423,7 +423,7 @@ button:disabled {
 
 .prompt-header-row {
   align-items: center;
-  margin: 0 0 2px;
+  margin: 0 0 -6px;
 }
 
 .keyboard-hint {
@@ -805,7 +805,7 @@ kbd {
 .vocab-hint {
   padding: 12px 14px;
   border-radius: 14px;
-  background: #ffffff;
+  background: #ffffff !important;
   border: 1px solid rgba(62, 41, 28, 0.08);
   min-width: 0;
 }
@@ -1148,6 +1148,10 @@ body.bauhaus-colors .checking-panel,
 body.bauhaus-colors .generating-panel,
 body.bauhaus-colors .side-panel-btn {
   background-color: rgba(242, 226, 196, 0.8);
+}
+
+body.bauhaus-colors .vocab-hint {
+  background: #ffffff !important;
 }
 
 body.bauhaus-colors .side-panel {

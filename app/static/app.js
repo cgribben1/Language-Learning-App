@@ -1564,7 +1564,7 @@ function positionFloatingBubble(anchorElement, bubbleElement) {
   }
 
   const margin = 16;
-  const gap = 14;
+  const gap = 22;
   const anchorRect = anchorElement.getBoundingClientRect();
   const bubbleRect = bubbleElement.getBoundingClientRect();
   const bubbleWidth = bubbleRect.width;
