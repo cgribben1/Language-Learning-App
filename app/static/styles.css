@@ -628,6 +628,51 @@ kbd {
   min-width: 0;
 }
 
+.saved-vocab-item,
+.reminder-item,
+.empty-vocab {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.saved-vocab-item > div,
+.reminder-item > div,
+.empty-vocab > div {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.saved-vocab-item strong,
+.saved-vocab-item em,
+.saved-vocab-item span,
+.reminder-item strong,
+.reminder-item em,
+.reminder-item span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.reminder-item > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reference-grid .vocab-card {
+  overflow: hidden;
+}
+
+.reference-grid .saved-vocab-list {
+  align-content: start;
+}
+
 .story-so-far-card {
   display: grid;
   gap: 14px;
