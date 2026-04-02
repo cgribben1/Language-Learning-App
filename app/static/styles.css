@@ -395,6 +395,9 @@ button:disabled {
   justify-content: flex-end;
   flex-shrink: 0;
   margin-left: auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
 
 .prompt-header-row {
