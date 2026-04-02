@@ -420,6 +420,7 @@ button:disabled {
   font-size: 0.68rem;
   line-height: 1.35;
   white-space: nowrap;
+  color: var(--muted);
 }
 
 .inline-status {
