@@ -9,8 +9,10 @@ const state = {
   feedbackTypingTimer: null,
   contentAnimationTimers: [],
   panelAnimationTimer: null,
+  correctnessAnimationFrame: null,
   nextTransitionInProgress: false,
   storyFlightCleanupTimer: null,
+  storyFlightFinishTimer: null,
   lessonPollTimer: null,
   lessonPollInFlight: false,
   checkingEllipsisTimer: null,
@@ -448,6 +450,10 @@ function clearStoryFlight() {
   if (state.storyFlightCleanupTimer) {
     clearTimeout(state.storyFlightCleanupTimer);
     state.storyFlightCleanupTimer = null;
+  }
+  if (state.storyFlightFinishTimer) {
+    clearTimeout(state.storyFlightFinishTimer);
+    state.storyFlightFinishTimer = null;
   }
   document.querySelectorAll(".story-flight-clone").forEach((node) => node.remove());
   document.querySelectorAll(".story-sentence-pending, .story-sentence-landed").forEach((node) => {
@@ -1401,7 +1407,12 @@ function animateCorrectnessMeter(score) {
   const target = Math.max(0, Math.min(100, Number(score) || 0));
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  if (state.correctnessAnimationFrame) {
+    cancelAnimationFrame(state.correctnessAnimationFrame);
+    state.correctnessAnimationFrame = null;
+  }
   el.correctnessBar.classList.remove("score-bar-fill-animate");
+  void el.correctnessBar.offsetWidth;
   el.correctnessBar.style.width = "0%";
   el.correctnessScore.textContent = "0";
 
@@ -1416,21 +1427,20 @@ function animateCorrectnessMeter(score) {
 
   const tick = (now) => {
     const progress = Math.min(1, (now - start) / duration);
-    const eased = progress < 0.72
-      ? 4 * progress * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    const eased = 1 - Math.pow(1 - progress, 3);
     const current = target * eased;
-      el.correctnessBar.style.width = `${current}%`;
-      el.correctnessScore.textContent = String(Math.round(current));
-      if (progress < 1) {
-        requestAnimationFrame(tick);
-        return;
-      }
-      el.correctnessBar.style.width = `${target}%`;
-      el.correctnessScore.textContent = String(Math.round(target));
-    };
+    el.correctnessBar.style.width = `${current}%`;
+    el.correctnessScore.textContent = String(Math.round(current));
+    if (progress < 1) {
+      state.correctnessAnimationFrame = requestAnimationFrame(tick);
+      return;
+    }
+    el.correctnessBar.style.width = `${target}%`;
+    el.correctnessScore.textContent = String(Math.round(target));
+    state.correctnessAnimationFrame = null;
+  };
 
-    requestAnimationFrame(tick);
+  state.correctnessAnimationFrame = requestAnimationFrame(tick);
 }
 
 function isFeedbackVisible() {
@@ -2363,18 +2373,12 @@ function animateCurrentSentenceIntoStory() {
     const ghost = document.createElement("div");
     ghost.className = "story-flight-clone";
     ghost.textContent = formatCorrectSentence(sentence.french);
-    ghost.style.left = `${sourceRect.left + 12}px`;
-    ghost.style.top = `${sourceRect.top + 10}px`;
+    ghost.style.left = `${sourceRect.left + 8}px`;
+    ghost.style.top = `${sourceRect.top + 6}px`;
     ghost.style.width = `${Math.min(Math.max(sourceRect.width - 24, 180), 560)}px`;
+    ghost.style.opacity = "0.98";
+    ghost.style.transform = "scale(1)";
     document.body.appendChild(ghost);
-
-    requestAnimationFrame(() => {
-      ghost.style.left = `${Math.max(12, targetRect.left - 10)}px`;
-      ghost.style.top = `${targetRect.top - 8}px`;
-      ghost.style.width = `${Math.max(targetRect.width + 20, 120)}px`;
-      ghost.style.opacity = "0.16";
-      ghost.style.transform = "scale(0.94)";
-    });
 
     const finishFlight = () => {
       ghost.remove();
@@ -2384,10 +2388,21 @@ function animateCurrentSentenceIntoStory() {
         target.classList.remove("story-sentence-landed");
         state.storyFlightCleanupTimer = null;
       }, 420);
+      state.storyFlightFinishTimer = null;
       state.nextTransitionInProgress = false;
     };
 
+    requestAnimationFrame(() => {
+      void ghost.offsetWidth;
+      ghost.style.left = `${Math.max(12, targetRect.left - 10)}px`;
+      ghost.style.top = `${targetRect.top - 8}px`;
+      ghost.style.width = `${Math.max(targetRect.width + 20, 120)}px`;
+      ghost.style.opacity = "0.12";
+      ghost.style.transform = "scale(0.92)";
+    });
+
     ghost.addEventListener("transitionend", finishFlight, { once: true });
+    state.storyFlightFinishTimer = setTimeout(finishFlight, 520);
   });
 }
 
