@@ -1304,22 +1304,20 @@ kbd {
 .story-book-left,
 .checking-page-left {
   left: 0;
-  transform: perspective(140px) rotateY(10deg);
-  transform-origin: right center;
+  transform: translateY(0);
 }
 
 .story-book-right,
 .checking-page-right {
   right: 0;
-  transform: perspective(140px) rotateY(-10deg);
-  transform-origin: left center;
+  transform: translateY(0);
 }
 
 .story-book-spine,
 .checking-spine {
   left: 50%;
   top: 8px;
-  width: 10px;
+  width: 8px;
   height: 88px;
   transform: translateX(-50%);
   border-radius: 0;
