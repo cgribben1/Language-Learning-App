@@ -682,6 +682,47 @@ kbd {
   border-top: 1px solid rgba(62, 41, 28, 0.1);
 }
 
+.story-flight-clone {
+  position: fixed;
+  z-index: 80;
+  pointer-events: none;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(232, 219, 198, 0.96);
+  border: 1px solid rgba(62, 41, 28, 0.12);
+  box-shadow: 0 14px 34px rgba(38, 29, 17, 0.16);
+  color: var(--ink);
+  font-family: "Fraunces", serif;
+  line-height: 1.46;
+  opacity: 0.96;
+  transform: scale(1);
+  transition:
+    left 460ms cubic-bezier(0.2, 0.88, 0.24, 1),
+    top 460ms cubic-bezier(0.2, 0.88, 0.24, 1),
+    width 460ms cubic-bezier(0.2, 0.88, 0.24, 1),
+    opacity 460ms ease,
+    transform 460ms cubic-bezier(0.2, 0.88, 0.24, 1);
+}
+
+.story-sentence-pending {
+  opacity: 0.18;
+}
+
+.story-sentence-landed {
+  animation: storySentenceLand 420ms ease;
+}
+
+@keyframes storySentenceLand {
+  0% {
+    opacity: 0.4;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .comparison-grid,
 .feedback-columns,
 .score-grid,

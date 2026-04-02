@@ -1420,16 +1420,17 @@ function animateCorrectnessMeter(score) {
       ? 4 * progress * progress * progress
       : 1 - Math.pow(-2 * progress + 2, 3) / 2;
     const current = target * eased;
-    el.correctnessBar.style.width = `${current}%`;
-    el.correctnessScore.textContent = String(Math.round(current));
-    if (progress < 1) {
-      requestAnimationFrame(tick);
-      return;
-    }
-    el.correctnessBar.classList.add("score-bar-fill-animate");
-  };
+      el.correctnessBar.style.width = `${current}%`;
+      el.correctnessScore.textContent = String(Math.round(current));
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      el.correctnessBar.style.width = `${target}%`;
+      el.correctnessScore.textContent = String(Math.round(target));
+    };
 
-  requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
 }
 
 function isFeedbackVisible() {
