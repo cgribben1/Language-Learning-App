@@ -277,7 +277,7 @@ h1 {
 
 #setup-panel .form-field {
   justify-self: center;
-  width: min(100%, 320px);
+  width: min(100%, 360px);
 }
 
 .form-field-full,
@@ -286,17 +286,17 @@ h1 {
 }
 
 #setup-panel .form-field-full {
-  justify-self: center;
-  width: min(100%, 560px);
+  justify-self: stretch;
+  width: 100%;
 }
 
 #setup-panel .lesson-form button {
-  justify-self: center;
-  width: min(100%, 560px);
+  justify-self: stretch;
+  width: 100%;
 }
 
 .toggle-label select {
-  max-width: 220px;
+  max-width: none;
 }
 
 label span {
