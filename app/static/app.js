@@ -1453,6 +1453,8 @@ function isGeneratingStoryVisible() {
 }
 
 function renderSetupView(message = "") {
+  const heroCopyText =
+    "Generate a connected story or dialogue, then translate each English sentence into French with feedback on what you wrote.";
   document.body.classList.add("landing-bauhaus-colors");
   clearPromptTyping();
   clearFeedbackTyping();
@@ -1471,10 +1473,11 @@ function renderSetupView(message = "") {
   el.setupPanel.classList.remove("hidden");
   el.emptyState.classList.toggle("hidden", !message);
   el.emptyState.innerHTML = `<p>${message || "Choose a difficulty, theme, and lesson mode to generate your first connected sequence."}</p>`;
+  reserveTextBlockHeight(el.heroCopy, heroCopyText);
   animatePlainText(el.lessonTitle, "Choose your story.");
   animatePlainText(
     el.heroCopy,
-    "Generate a connected story or dialogue, then translate each English sentence into French with feedback on what you wrote.",
+    heroCopyText,
     80,
     0.42,
   );
