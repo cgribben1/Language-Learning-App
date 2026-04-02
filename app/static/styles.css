@@ -461,6 +461,7 @@ button:disabled {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
+  padding-right: 10px;
 }
 
 .prompt-header-row {
@@ -679,10 +680,11 @@ kbd {
 .feedback-notes-section {
   padding-top: 10px;
   border-top: 1px solid rgba(62, 41, 28, 0.08);
+  grid-template-columns: 1fr;
 }
 
 .feedback-comparison-stack .feedback-sentence-block {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 18px;
   background: rgba(232, 219, 198, 0.96);
   border: 1px solid rgba(62, 41, 28, 0.12);
@@ -750,7 +752,7 @@ kbd {
 
 #learner-answer,
 #correct-french {
-  min-height: 4.3em;
+  min-height: 3.1em;
 }
 
 .answer-word {
@@ -791,10 +793,15 @@ kbd {
 #notes-list {
   margin: 0;
   padding-left: 18px;
+  max-width: none;
 }
 
 #notes-list li + li {
   margin-top: 6px;
+}
+
+#notes-list li {
+  max-width: none;
 }
 
 .score-bar-fill {
