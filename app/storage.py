@@ -9,10 +9,13 @@ from .models import ReminderItem, SaveVocabRequest, SavedVocabItem
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 VOCAB_PATH = DATA_DIR / "saved_vocab.json"
 REMINDERS_PATH = DATA_DIR / "reminders.json"
+PHRASE_DICTIONARY_PATH = DATA_DIR / "french_dictionary.json"
+ADVENTURE_BRAIN_DIR = DATA_DIR / "adventure_brains"
 
 
 def _ensure_data_dir() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    ADVENTURE_BRAIN_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_vocab() -> list[SavedVocabItem]:
@@ -21,6 +24,13 @@ def load_vocab() -> list[SavedVocabItem]:
         return []
     raw = json.loads(VOCAB_PATH.read_text(encoding="utf-8"))
     return [SavedVocabItem(**item) for item in raw]
+
+
+def load_phrase_dictionary() -> dict[str, dict[str, str]]:
+    _ensure_data_dir()
+    if not PHRASE_DICTIONARY_PATH.exists():
+        return {}
+    return json.loads(PHRASE_DICTIONARY_PATH.read_text(encoding="utf-8"))
 
 
 def save_vocab_item(request: SaveVocabRequest) -> list[SavedVocabItem]:
@@ -98,3 +108,10 @@ def record_reminder_hit(
         encoding="utf-8",
     )
     return items
+
+
+def save_adventure_brain(session_id: str, markdown: str) -> Path:
+    _ensure_data_dir()
+    target = ADVENTURE_BRAIN_DIR / f"{session_id}.md"
+    target.write_text(markdown, encoding="utf-8")
+    return target

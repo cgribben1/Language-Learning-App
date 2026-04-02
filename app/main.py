@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import hashlib
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from .adventure_service import AdventureService
 from .ai_service import AIService, detect_reminder_triggers
-from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse
+from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse
 from .storage import load_reminders, load_vocab, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
 
@@ -28,6 +30,20 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 ai_service = AIService()
+adventure_service = AdventureService()
+
+
+def _build_dev_version() -> str:
+    tracked_paths = sorted(
+        list(BASE_DIR.glob("*.py")) +
+        list(STATIC_DIR.glob("*.html")) +
+        list(STATIC_DIR.glob("*.css")) +
+        list(STATIC_DIR.glob("*.js"))
+    )
+    fingerprint = "|".join(
+        f"{path.name}:{path.stat().st_mtime_ns}" for path in tracked_paths if path.exists()
+    )
+    return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()[:12]
 
 
 @app.get("/api/health")
@@ -39,19 +55,41 @@ def health() -> dict[str, str]:
 def config() -> dict[str, object]:
     return {
         "openai_enabled": ai_service.enabled,
+        "adventure_openai_enabled": adventure_service.enabled,
         "difficulties": ["A1", "A2", "B1", "B2", "C1"],
         "lesson_types": ["story", "dialogue", "film_scene", "auto"],
     }
 
 
+@app.get("/api/dev/version")
+def dev_version() -> dict[str, str]:
+    return {"version": _build_dev_version()}
+
+
 @app.post("/api/lesson", response_model=LessonResponse)
 def create_lesson(request: LessonRequest) -> LessonResponse:
-    return ai_service.generate_lesson(request, str(uuid.uuid4()))
+    try:
+        return ai_service.generate_lesson(request, str(uuid.uuid4()))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/lesson/{lesson_id}", response_model=LessonResponse)
+def get_lesson(lesson_id: str) -> LessonResponse:
+    try:
+        return ai_service.get_lesson(lesson_id)
+    except RuntimeError as exc:
+        if str(exc) == "Lesson not found.":
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @app.post("/api/evaluate", response_model=EvaluationResponse)
 def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
-    feedback = ai_service.evaluate_answer(request)
+    try:
+        feedback = ai_service.evaluate_answer(request)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     triggered = detect_reminder_triggers(request, feedback)
     for item in triggered:
         record_reminder_hit(
@@ -67,7 +105,25 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
 
 @app.post("/api/explain-phrase", response_model=PhraseExplainResponse)
 def explain_phrase(request: PhraseExplainRequest) -> PhraseExplainResponse:
-    return ai_service.explain_phrase(request)
+    try:
+        return ai_service.explain_phrase(request)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/api/adventure/start", response_model=AdventureStateResponse)
+def start_adventure(request: AdventureStartRequest) -> AdventureStateResponse:
+    return adventure_service.start_adventure(request)
+
+
+@app.post("/api/adventure/action", response_model=AdventureStateResponse)
+def submit_adventure_action(request: AdventureActionRequest) -> AdventureStateResponse:
+    try:
+        return adventure_service.submit_action(request)
+    except RuntimeError as exc:
+        message = str(exc)
+        status_code = 404 if message == "Adventure session not found." else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
 
 
 @app.get("/api/vocab", response_model=SavedVocabResponse)
@@ -97,3 +153,8 @@ def export_vocab() -> PlainTextResponse:
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/adventure")
+def adventure() -> FileResponse:
+    return FileResponse(STATIC_DIR / "adventure.html")

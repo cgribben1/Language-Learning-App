@@ -3,25 +3,59 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import unicodedata
 import urllib.parse
 import urllib.request
+from concurrent.futures import Future, ThreadPoolExecutor
+from collections import Counter
 from difflib import SequenceMatcher
 from html import unescape
+from threading import Lock
 from typing import Any
 
-from openai import OpenAI
+from openai import APIConnectionError, APIError, APITimeoutError, BadRequestError, OpenAI, RateLimitError
 
-from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, LessonSentence, PhraseExplainRequest, PhraseExplainResponse
+from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, LessonSentence, PhraseExplainRequest, PhraseExplainResponse, VocabHint
+from .storage import load_phrase_dictionary
+
+try:
+    import winreg
+except ImportError:
+    winreg = None
+
+
+def _normalize_orthography_base(text: str) -> str:
+    lowered = unicodedata.normalize("NFKC", (text or "").casefold().strip())
+    for mark in ("'", "’", "‘", "`", "´", "ʼ", "ʹ", "ʾ", "â€™", "Ã¢â‚¬â„¢"):
+        lowered = lowered.replace(mark, "")
+    return lowered
 
 
 def normalize_french(text: str) -> str:
-    lowered = text.lower().strip()
+    lowered = _normalize_orthography_base(text)
     lowered = lowered.replace("'", "").replace("’", "")
     decomposed = unicodedata.normalize("NFD", lowered)
     no_accents = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
     cleaned = "".join(ch if ch.isalnum() or ch.isspace() else " " for ch in no_accents)
     return " ".join(cleaned.split())
+
+
+def load_openai_api_key() -> str | None:
+    env_value = os.getenv("OPENAI_API_KEY")
+    if env_value:
+        return env_value
+
+    if os.name == "nt" and winreg is not None:
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment") as key:
+                stored_value, _ = winreg.QueryValueEx(key, "OPENAI_API_KEY")
+                if stored_value:
+                    return stored_value
+        except OSError:
+            return None
+
+    return None
 
 
 def strip_html(text: str) -> str:
@@ -36,6 +70,45 @@ def tokenize_french_context(text: str) -> list[str]:
     no_accents = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
     cleaned = re.sub(r"[^a-z0-9\s']", " ", no_accents)
     return [token for token in cleaned.split() if token]
+
+
+def normalize_french_keep_accents(text: str) -> str:
+    lowered = text.lower().strip().replace("â€™", "'")
+    lowered = lowered.replace("'", "")
+    cleaned = "".join(ch if ch.isalnum() or ch.isspace() else " " for ch in lowered)
+    return " ".join(cleaned.split())
+
+
+def polish_learner_french(text: str) -> str:
+    cleaned = " ".join((text or "").strip().split())
+    if not cleaned:
+        return ""
+    cleaned = cleaned[0].upper() + cleaned[1:]
+    if not re.search(r"[.!?…]$", cleaned):
+        cleaned += "."
+    return cleaned
+
+
+FRENCH_FUNCTION_WORDS = {
+    "je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+    "me", "te", "se", "m", "t", "s", "le", "la", "les", "l", "un", "une", "des",
+    "du", "de", "d", "au", "aux", "ce", "cet", "cette", "ces", "mon", "ton", "son",
+    "notre", "votre", "leur", "mes", "tes", "ses", "nos", "vos", "leurs", "y", "en",
+    "ne", "n", "pas", "plus", "jamais", "rien", "personne", "que", "qui", "quoi",
+    "dont", "ou", "où", "a", "à", "dans", "sur", "sous", "chez", "pour", "par",
+    "avec", "sans", "vers", "entre", "avant", "apres", "après", "pendant", "depuis",
+    "comme", "mais", "et", "ou", "donc", "car", "ni", "si", "quand", "lorsque",
+    "parce", "que", "afin", "est", "suis", "es", "sommes", "etes", "êtes", "sont",
+    "ai", "as", "a", "avons", "avez", "ont", "vais", "vas", "va", "allons", "allez",
+    "vont", "se", "sa", "son", "c", "ca", "ça",
+}
+
+
+def counter_overlap(reference_tokens: list[str], candidate_tokens: list[str]) -> tuple[int, int]:
+    reference_counts = Counter(reference_tokens)
+    candidate_counts = Counter(candidate_tokens)
+    matched = sum(min(count, candidate_counts[token]) for token, count in reference_counts.items())
+    return matched, sum(reference_counts.values())
 
 
 def lookup_wiktionary_french_entries(phrase: str) -> list[dict[str, Any]]:
@@ -201,40 +274,1449 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
     return list(unique.values())
 
 
+def is_accent_feedback(text: str) -> bool:
+    normalized = normalize_french(text)
+    return any(
+        phrase in normalized
+        for phrase in (
+            "accent",
+            "accents",
+            "diacritic",
+            "diacritics",
+            "acute accent",
+            "grave accent",
+            "circumflex",
+            "cedilla",
+            "trema",
+            "diaeresis",
+        )
+    )
+
+
+def is_capitalization_feedback(text: str) -> bool:
+    normalized = normalize_french(text)
+    return any(
+        phrase in normalized
+        for phrase in (
+            "capitalization",
+            "capitalisation",
+            "missing capitalization",
+            "missing capitalisation",
+            "capital letter",
+            "capitalize",
+            "capitalise",
+            "capitalized",
+            "capitalised",
+            "uppercase",
+            "lowercase",
+            "majuscule",
+            "capitals",
+            "proper noun",
+            "sentence starts",
+        )
+    )
+
+
+def is_punctuation_feedback(text: str) -> bool:
+    normalized = normalize_french(text)
+    return any(
+        phrase in normalized
+        for phrase in (
+            "punctuation",
+            "apostrophe",
+            "apostrophes",
+            "quote mark",
+            "quote marks",
+            "quotation mark",
+            "quotation marks",
+            "comma",
+            "period",
+            "full stop",
+            "question mark",
+            "exclamation mark",
+            "hyphen",
+        )
+    )
+
+
+def is_orthography_only_feedback(text: str) -> bool:
+    normalized = normalize_french(text)
+    quoted = re.findall(r'["\']([^"\']+)["\']', text)
+    normalized_quoted = [normalize_french(item) for item in quoted if normalize_french(item)]
+    same_normalized_pair = (
+        len(normalized_quoted) >= 2
+        and any(
+            left == right
+            for index, left in enumerate(normalized_quoted)
+            for right in normalized_quoted[index + 1:]
+        )
+    )
+    orthography_triggers = (
+        "orthography",
+        "orthographic",
+        "name spelled incorrectly",
+        "spelled incorrectly",
+        "misspelled",
+        "misspelt",
+        "proper form",
+        "spelling",
+        "written form",
+        "correct form",
+    )
+    return same_normalized_pair and any(trigger in normalized for trigger in orthography_triggers)
+
+
+def is_overly_fussy_style_feedback(text: str) -> bool:
+    normalized = " ".join(normalize_french(text).split())
+    return any(
+        phrase in normalized
+        for phrase in (
+            "more idiomatic choice",
+            "more common choice",
+            "slightly more idiomatic choice",
+            "slightly more natural",
+            "a bit more natural",
+            "could be smoother",
+            "sounds unusual",
+            "consider",
+            "you used",
+        )
+    )
+
+
+def note_contradicts_canonical_vocab(text: str, canonical_phrases: list[str]) -> bool:
+    normalized = normalize_french(text)
+    if not any(trigger in normalized for trigger in ("prefer", "word choice", "sounds unusual", "more idiomatic", "more common")):
+        return False
+    return any(phrase and phrase in normalized for phrase in canonical_phrases)
+
+
+def note_conflicts_target_structure(text: str, target_french: str) -> bool:
+    note_normalized = normalize_french(text)
+    target_normalized = normalize_french(target_french)
+    if not note_normalized or not target_normalized:
+        return False
+
+    target_tokens = set(tokenize_french_context(target_french))
+    anchored_after_match = re.search(r"\bafter ['\"]?([a-zà-ÿ]+)['\"]?", note_normalized)
+    if anchored_after_match:
+        anchor = normalize_french(anchored_after_match.group(1))
+        if anchor and anchor not in target_tokens:
+            return True
+
+    anchored_before_match = re.search(r"\bbefore ['\"]?([a-zà-ÿ]+)['\"]?", note_normalized)
+    if anchored_before_match:
+        anchor = normalize_french(anchored_before_match.group(1))
+        if anchor and anchor not in target_tokens:
+            return True
+
+    for function_word in ("chez", "dans", "a", "à", "de", "du", "des", "au", "aux"):
+        if function_word in note_normalized and function_word not in target_tokens and f" {function_word} " not in target_normalized:
+            if any(trigger in note_normalized for trigger in ("after", "before", "use", "add", "article")):
+                return True
+
+    return False
+
+
+ENGLISH_SIGNAL_WORDS = {
+    "the", "a", "an", "and", "or", "but", "with", "without", "near", "in", "on", "under", "over",
+    "to", "from", "of", "for", "is", "are", "was", "were", "be", "have", "has", "had", "do", "does",
+    "go", "goes", "come", "comes", "find", "finds", "see", "sees", "take", "takes", "small", "old",
+    "young", "boy", "girl", "hero", "temple", "mountain", "sea", "task", "home", "light", "lamp",
+}
+
+FRENCH_SIGNAL_WORDS = {
+    "le", "la", "les", "un", "une", "des", "du", "de", "dans", "sur", "sous", "avec", "sans", "près",
+    "pres", "pour", "par", "et", "ou", "mais", "est", "sont", "je", "tu", "il", "elle", "nous", "vous",
+    "ils", "elles", "mon", "ma", "mes", "petit", "petite", "grand", "grande", "jeune", "garcon", "garçon",
+    "heros", "héros", "mer", "montagne", "maison", "lumiere", "lumière", "temple", "sort", "entre",
+}
+
+
 class AIService:
     def __init__(self) -> None:
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = load_openai_api_key()
         self.client = OpenAI(api_key=api_key) if api_key else None
-        self.lesson_model = os.getenv("OPENAI_LESSON_MODEL", "gpt-5")
-        self.eval_model = os.getenv("OPENAI_EVAL_MODEL", "gpt-5")
+        self.lesson_model = os.getenv("OPENAI_LESSON_MODEL", "gpt-5-mini")
+        self.eval_model = os.getenv("OPENAI_EVAL_MODEL", "gpt-5-mini")
+        self.lesson_reasoning_effort = os.getenv("OPENAI_LESSON_REASONING_EFFORT", "minimal")
+        self.eval_reasoning_effort = os.getenv("OPENAI_EVAL_REASONING_EFFORT", "minimal")
+        self.lesson_max_output_tokens = int(os.getenv("OPENAI_LESSON_MAX_OUTPUT_TOKENS", "1200"))
+        self.eval_max_output_tokens = int(os.getenv("OPENAI_EVAL_MAX_OUTPUT_TOKENS", "320"))
+        self.explain_max_output_tokens = int(os.getenv("OPENAI_EXPLAIN_MAX_OUTPUT_TOKENS", "220"))
+        self.lesson_jobs: dict[str, dict[str, Any]] = {}
+        self.lesson_jobs_lock = Lock()
+        self.lesson_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="storytime-lessons")
+        self.phrase_dictionary = {
+            normalize_french(key): value for key, value in load_phrase_dictionary().items()
+        }
+        self.verb_base_forms = {
+            "suis": "être",
+            "es": "être",
+            "est": "être",
+            "sommes": "être",
+            "êtes": "être",
+            "etes": "être",
+            "sont": "être",
+            "ai": "avoir",
+            "as": "avoir",
+            "a": "avoir",
+            "avons": "avoir",
+            "avez": "avoir",
+            "ont": "avoir",
+            "vais": "aller",
+            "vas": "aller",
+            "va": "aller",
+            "allons": "aller",
+            "allez": "aller",
+            "vont": "aller",
+            "viens": "venir",
+            "vient": "venir",
+            "venons": "venir",
+            "venez": "venir",
+            "viennent": "venir",
+            "fais": "faire",
+            "fait": "faire",
+            "faisons": "faire",
+            "faites": "faire",
+            "font": "faire",
+            "peux": "pouvoir",
+            "peut": "pouvoir",
+            "pouvons": "pouvoir",
+            "pouvez": "pouvoir",
+            "peuvent": "pouvoir",
+            "veux": "vouloir",
+            "veut": "vouloir",
+            "voulons": "vouloir",
+            "voulez": "vouloir",
+            "veulent": "vouloir",
+            "dois": "devoir",
+            "doit": "devoir",
+            "devons": "devoir",
+            "devez": "devoir",
+            "doivent": "devoir",
+            "sais": "savoir",
+            "sait": "savoir",
+            "savons": "savoir",
+            "savez": "savoir",
+            "savent": "savoir",
+            "prends": "prendre",
+            "prend": "prendre",
+            "prenons": "prendre",
+            "prenez": "prendre",
+            "prennent": "prendre",
+            "parle": "parler",
+            "parles": "parler",
+            "parlons": "parler",
+            "parlez": "parler",
+            "parlent": "parler",
+            "regarde": "regarder",
+            "regardes": "regarder",
+            "regardons": "regarder",
+            "regardez": "regarder",
+            "regardent": "regarder",
+            "comprends": "comprendre",
+            "comprend": "comprendre",
+            "comprenons": "comprendre",
+            "comprenez": "comprendre",
+            "comprennent": "comprendre",
+            "entre": "entrer",
+            "entres": "entrer",
+            "entrons": "entrer",
+            "entrez": "entrer",
+            "entrent": "entrer",
+            "reste": "rester",
+            "restes": "rester",
+            "restons": "rester",
+            "restez": "rester",
+            "restent": "rester",
+        }
 
     @property
     def enabled(self) -> bool:
         return self.client is not None
 
+    def _require_enabled(self) -> None:
+        if not self.enabled:
+            raise RuntimeError(
+                "OpenAI API access is required. Configure OPENAI_API_KEY and make sure the server can reach the internet."
+            )
+
     def generate_lesson(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
-        if self.enabled:
-            try:
-                return self._generate_lesson_openai(request, lesson_id)
-            except Exception:
-                pass
-        return self._generate_lesson_fallback(request, lesson_id)
+        self._require_enabled()
+        try:
+            return self._generate_lesson_with_background_continuation(request, lesson_id)
+        except Exception as exc:
+            raise RuntimeError(self._format_openai_error("lesson generation", exc)) from exc
+
+    def get_lesson(self, lesson_id: str) -> LessonResponse:
+        with self.lesson_jobs_lock:
+            job = self.lesson_jobs.get(lesson_id)
+        if job is None:
+            raise RuntimeError("Lesson not found.")
+        self._resolve_lesson_job(job)
+        return self._build_lesson_response(job)
 
     def evaluate_answer(self, request: EvaluationRequest) -> EvaluationResponse:
-        if self.enabled:
-            try:
-                return self._evaluate_answer_openai(request)
-            except Exception:
-                pass
-        return self._evaluate_answer_fallback(request)
+        self._require_enabled()
+        try:
+            return self._evaluate_answer_openai(request)
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(self._format_openai_error("answer evaluation", exc)) from exc
 
     def explain_phrase(self, request: PhraseExplainRequest) -> PhraseExplainResponse:
-        if self.enabled:
+        try:
+            return self._explain_phrase_local(request)
+        except Exception as exc:
+            raise RuntimeError(
+                "Phrase explanation failed while looking up the local dictionary."
+            ) from exc
+
+    def _difficulty_guidance(self, difficulty: str) -> str:
+        guidance = {
+            "A1": (
+                "Target a true beginner level. Use very short, concrete, high-frequency sentences only. "
+                "Prefer present tense almost all the time. Keep to one clause per sentence wherever possible. "
+                "Use very common verbs such as etre, avoir, aller, faire, vouloir, pouvoir, aimer, voir, venir, parler, and prendre. "
+                "Use very common everyday nouns only. Avoid literary wording, abstract vocabulary, idioms, metaphor, passive voice, and unusual set phrases. "
+                "Avoid relative clauses, long subordinate clauses, conditionals, and tense backshifts. "
+                "If in doubt, make the French simpler, shorter, and more repetitive."
+            ),
+            "A2": (
+                "Target a cautious elementary level. Use short, clear, everyday sentences with mostly common vocabulary. "
+                "You may use simple past or near-future references, but syntax must stay easy to parse. "
+                "Prefer one main idea per sentence. Keep connectors basic, such as et, mais, puis, parce que, and quand. "
+                "Avoid dense phrasing, rare idioms, literary language, and long nested clauses."
+            ),
+            "B1": (
+                "Target an intermediate but still accessible level. Use natural connected sentences with a moderate range of tenses and slightly richer vocabulary, "
+                "but keep everything practical, readable, and clearly teachable. "
+                "Do not drift into advanced literary or highly idiomatic phrasing."
+            ),
+            "B2": (
+                "Target an upper-intermediate level. Use more nuanced, idiomatic, and detailed language, with richer transitions and more natural phrasing, "
+                "while still keeping the lesson teachable and not overly ornate."
+            ),
+            "C1": (
+                "Target an advanced level. Use fluent, precise, and sophisticated language with natural complexity, "
+                "while remaining coherent, teachable, and not unnecessarily obscure."
+            ),
+        }
+        return guidance[difficulty]
+
+    def _difficulty_guardrails(self, difficulty: str) -> str:
+        guardrails = {
+            "A1": (
+                "A1 hard limits:\n"
+                "- Average French sentence length should feel short and beginner-friendly.\n"
+                "- Most sentences should be understandable with school-level everyday vocabulary.\n"
+                "- Do not rely on imparfait, conditionnel, subjonctif, or complex reported speech.\n"
+                "- Do not use advanced connectors such as cependant, pourtant, toutefois, tandis que, or heavy clause chaining.\n"
+                "- The learner should not need advanced grammar knowledge to produce a reasonable answer."
+            ),
+            "A2": (
+                "A2 hard limits:\n"
+                "- Keep the wording clearly easier than a typical B1 textbook passage.\n"
+                "- Limited use of past or future is fine, but keep the sentence architecture simple.\n"
+                "- Do not overload any one sentence with several grammar challenges at once."
+            ),
+            "B1": (
+                "B1 hard limits:\n"
+                "- Natural variation is good, but keep the lesson comfortably below advanced literary French.\n"
+                "- Each sentence should still be translatable without specialist vocabulary."
+            ),
+            "B2": (
+                "B2 hard limits:\n"
+                "- Richer phrasing is welcome, but do not make the sentences so dense that they feel C1 by default."
+            ),
+            "C1": (
+                "C1 hard limits:\n"
+                "- Advanced should mean fluent and precise, not obscure or unnecessarily difficult."
+            ),
+        }
+        return guardrails[difficulty]
+
+    def _lesson_type_guidance(self, lesson_type: str, theme: str) -> str:
+        if lesson_type == "story":
+            return (
+                "This MUST be a story. Every sentence must advance narrated events. "
+                "Do not turn it into a dialogue. "
+                f"Make the story visibly about '{theme}'. "
+                f"{self._story_source_guidance(theme)}"
+            )
+        if lesson_type == "dialogue":
+            return (
+                "This MUST be a dialogue. Every sentence must be spoken by a character. "
+                "Alternate speakers consistently, and prefix every English and French sentence with speaker labels. "
+                "Do not switch into narration. "
+                f"Make the conversation visibly about '{theme}'."
+            )
+        if lesson_type == "film_scene":
+            return (
+                "This MUST feel like a film scene. Keep one scene, one dramatic situation, and cinematic visual detail throughout. "
+                "You may mix spoken lines and scene beats, but the whole lesson must still feel like the same scene. "
+                f"Make the scene visibly about '{theme}'."
+            )
+        return (
+            "Choose exactly one format that best fits the theme: story, dialogue, or film scene. "
+            "Once chosen, stay in that format for the whole lesson. "
+            f"Make the chosen format visibly about '{theme}'."
+        )
+
+    def _story_source_guidance(self, theme: str) -> str:
+        lowered = theme.lower()
+        known_story_cues = {
+            "myth",
+            "legend",
+            "folktale",
+            "fairy tale",
+            "fairytale",
+            "epic",
+            "odyssey",
+            "iliad",
+            "greek",
+            "roman",
+            "norse",
+            "arthur",
+            "arthurian",
+            "camelot",
+            "shakespeare",
+            "bible",
+            "biblical",
+            "fable",
+            "homer",
+            "trojan",
+            "hercules",
+            "achilles",
+            "odysseus",
+            "ulysses",
+            "theseus",
+            "minotaur",
+            "medusa",
+            "perseus",
+            "orpheus",
+            "pandora",
+            "icarus",
+            "atlantis",
+            "labyrinth",
+        }
+        if any(cue in lowered for cue in known_story_cues):
+            return (
+                "Because this theme points to an existing narrative tradition, base the lesson on a real, recognizable story or episode that already exists, "
+                "rather than inventing a generic placeholder plot. "
+                "For example, a Greek myth theme should clearly echo a specific myth such as Theseus and the Minotaur, Perseus and Medusa, Orpheus, Icarus, or another real myth. "
+                "Keep it simplified to the requested CEFR level, but the underlying plot should still be identifiable."
+            )
+        return (
+            "If the theme clearly points to a well-known existing story, legend, myth, or tale, prefer adapting that recognizable source instead of inventing a generic placeholder plot. "
+            "If it does not point to a known narrative, create an original story that still feels specific rather than generic."
+        )
+
+    def _resolve_fallback_lesson_type(self, request: LessonRequest) -> str:
+        if request.lesson_type != "auto":
+            return request.lesson_type
+
+        theme = request.theme.lower()
+        if any(word in theme for word in {"coffee", "cafe", "restaurant", "interview", "meeting", "shop", "hotel", "date"}):
+            return "dialogue"
+        if any(word in theme for word in {"mystery", "film", "cinema", "thriller", "heist", "monster", "myth", "labyrinth"}):
+            return "film_scene"
+        return "story"
+
+    def _supports_reasoning_controls(self, model: str) -> bool:
+        lowered = model.lower()
+        return lowered.startswith("gpt-5") or lowered.startswith("o")
+
+    def _response_create_options(
+        self,
+        *,
+        model: str,
+        max_output_tokens: int,
+        reasoning_effort: str | None,
+    ) -> dict[str, Any]:
+        options: dict[str, Any] = {
+            "model": model,
+            "max_output_tokens": max_output_tokens,
+        }
+        if reasoning_effort and self._supports_reasoning_controls(model):
+            options["reasoning"] = {"effort": reasoning_effort}
+        return options
+
+    def _responses_create_with_retry(self, *, retries: int = 2, **kwargs: Any) -> Any:
+        last_error: Exception | None = None
+        for attempt in range(retries + 1):
             try:
-                return self._explain_phrase_openai(request)
+                return self.client.responses.create(**kwargs)
+            except RateLimitError as exc:
+                last_error = exc
+                error_body = getattr(exc, "body", {}) or {}
+                error_code = ((error_body.get("error") or {}).get("code")) if isinstance(error_body, dict) else None
+                if error_code == "insufficient_quota" or attempt >= retries:
+                    raise
+            except BadRequestError:
+                raise
+            except (APIConnectionError, APITimeoutError) as exc:
+                last_error = exc
+                if attempt >= retries:
+                    raise
+            except APIError as exc:
+                last_error = exc
+                status_code = getattr(exc, "status_code", None)
+                if status_code and status_code < 500 and status_code != 429:
+                    raise
+                if attempt >= retries:
+                    raise
+
+            time.sleep(0.6 * (attempt + 1))
+
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("OpenAI request failed unexpectedly.")
+
+    def _format_openai_error(self, action: str, exc: Exception) -> str:
+        if isinstance(exc, RateLimitError):
+            error_body = getattr(exc, "body", {}) or {}
+            error_code = ((error_body.get("error") or {}).get("code")) if isinstance(error_body, dict) else None
+            if error_code == "insufficient_quota":
+                return (
+                    f"{action.capitalize()} failed because the OpenAI API quota has been exceeded. "
+                    "Check billing and usage on platform.openai.com."
+                )
+            return (
+                f"{action.capitalize()} was rate-limited by OpenAI. "
+                "Please wait a moment and try again."
+            )
+
+        if isinstance(exc, BadRequestError):
+            return (
+                f"{action.capitalize()} failed because the current OpenAI model or request format was rejected. "
+                "Check the configured model name and request settings."
+            )
+
+        if isinstance(exc, APITimeoutError):
+            return f"{action.capitalize()} timed out while waiting for OpenAI. Please try again."
+
+        if isinstance(exc, APIConnectionError):
+            return f"{action.capitalize()} failed because the server could not reach OpenAI. Check the internet connection and try again."
+
+        if isinstance(exc, APIError):
+            return f"{action.capitalize()} failed because OpenAI returned a temporary server error. Please try again."
+
+        if isinstance(exc, json.JSONDecodeError):
+            return (
+                f"{action.capitalize()} failed because the model returned an invalid structured response. "
+                "Please try again."
+            )
+
+        return (
+            f"{action.capitalize()} failed while calling OpenAI. "
+            "Check the API key, internet connection, and model configuration."
+        )
+
+    def _score_answer_locally(self, request: EvaluationRequest) -> tuple[int, bool, bool]:
+        learner_normalized = normalize_french(request.learner_answer)
+        target_normalized = normalize_french(request.target_french)
+        learner_tokens = learner_normalized.split()
+        target_tokens = target_normalized.split()
+
+        if not learner_tokens:
+            return 0, False, False
+
+        target_content_tokens = [token for token in target_tokens if token not in FRENCH_FUNCTION_WORDS]
+        learner_content_tokens = [token for token in learner_tokens if token not in FRENCH_FUNCTION_WORDS]
+        target_function_tokens = [token for token in target_tokens if token in FRENCH_FUNCTION_WORDS]
+        learner_function_tokens = [token for token in learner_tokens if token in FRENCH_FUNCTION_WORDS]
+
+        content_matched, content_total = counter_overlap(target_content_tokens, learner_content_tokens)
+        function_matched, function_total = counter_overlap(target_function_tokens, learner_function_tokens)
+        token_matched, token_total = counter_overlap(target_tokens, learner_tokens)
+
+        content_ratio = content_matched / content_total if content_total else 1.0
+        function_ratio = function_matched / function_total if function_total else 1.0
+        token_ratio = token_matched / token_total if token_total else 1.0
+        sequence_ratio = SequenceMatcher(None, learner_normalized, target_normalized).ratio()
+
+        score = (
+            45 * content_ratio +
+            20 * function_ratio +
+            20 * token_ratio +
+            15 * sequence_ratio
+        )
+
+        missing_critical = [
+            token for token in target_function_tokens
+            if token in {"de", "du", "des", "dans", "a", "à", "au", "aux", "ne", "pas", "y", "en"}
+            and token not in learner_function_tokens
+        ]
+        score -= min(18, len(missing_critical) * 6)
+        score -= min(24, self._count_local_contraction_mismatches(request) * 12)
+
+        if learner_normalized == target_normalized:
+            score = max(score, 96)
+
+        if content_ratio < 0.55 and function_ratio < 0.7:
+            score = min(score, 58)
+        elif content_ratio < 0.7:
+            score = min(score, 72)
+
+        score = int(max(0, min(100, round(score))))
+        is_correct = learner_normalized == target_normalized or score >= 85
+        return score, is_correct
+
+    def _count_local_contraction_mismatches(self, request: EvaluationRequest) -> int:
+        learner_tokens = [normalize_french(token) for token in re.split(r"\s+", request.learner_answer.strip()) if token]
+        target_tokens = [normalize_french(token) for token in re.split(r"\s+", request.target_french.strip()) if token]
+        mismatch_count = 0
+
+        contraction_expectations = {
+            "au": {("a", "la"), ("a", "le"), ("a", "les")},
+            "aux": {("a", "les"), ("a", "des")},
+            "du": {("de", "la"), ("de", "le"), ("de", "les")},
+        }
+
+        for index, token in enumerate(target_tokens[:-1]):
+            expected_pairs = contraction_expectations.get(token)
+            if not expected_pairs:
+                continue
+
+            next_target = target_tokens[index + 1]
+            for learner_index in range(len(learner_tokens) - 2):
+                learner_pair = (learner_tokens[learner_index], learner_tokens[learner_index + 1])
+                learner_next = learner_tokens[learner_index + 2]
+                if learner_next == next_target and learner_pair in expected_pairs:
+                    mismatch_count += 1
+                    break
+
+        return mismatch_count
+
+    def _is_orthography_equivalent(self, learner_answer: str, target_french: str) -> bool:
+        return normalize_french(learner_answer) == normalize_french(target_french)
+
+    def _apply_naturalness_adjustment(
+        self,
+        request: EvaluationRequest,
+        correctness_score: int,
+        is_correct: bool,
+        naturalness_score: int,
+    ) -> tuple[int, bool]:
+        learner_normalized = normalize_french(request.learner_answer)
+        target_normalized = normalize_french(request.target_french)
+
+        if not is_correct or learner_normalized == target_normalized:
+            return correctness_score, is_correct
+
+        penalty = 0
+        if naturalness_score < 68:
+            penalty += 2
+        if naturalness_score < 58:
+            penalty += 2
+        if naturalness_score < 48:
+            penalty += 2
+
+        adjusted_score = max(0, correctness_score - penalty)
+        adjusted_is_correct = learner_normalized == target_normalized or adjusted_score >= 85
+        return adjusted_score, adjusted_is_correct
+
+    def _sanitize_feedback_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+        cleaned = dict(payload)
+        cleaned["tips"] = [
+            tip
+            for tip in cleaned.get("tips", [])
+            if not is_accent_feedback(tip)
+            and not is_capitalization_feedback(tip)
+            and not is_punctuation_feedback(tip)
+            and not is_orthography_only_feedback(tip)
+        ]
+        cleaned["mistakes"] = [
+            mistake
+            for mistake in cleaned.get("mistakes", [])
+            if not is_accent_feedback(mistake)
+            and not is_capitalization_feedback(mistake)
+            and not is_punctuation_feedback(mistake)
+            and not is_orthography_only_feedback(mistake)
+        ]
+
+        if (
+            is_accent_feedback(cleaned.get("verdict", ""))
+            or is_capitalization_feedback(cleaned.get("verdict", ""))
+            or is_punctuation_feedback(cleaned.get("verdict", ""))
+            or is_orthography_only_feedback(cleaned.get("verdict", ""))
+        ):
+            cleaned["verdict"] = "Correct and natural."
+        if (
+            is_accent_feedback(cleaned.get("encouraging_note", ""))
+            or is_capitalization_feedback(cleaned.get("encouraging_note", ""))
+            or is_punctuation_feedback(cleaned.get("encouraging_note", ""))
+            or is_orthography_only_feedback(cleaned.get("encouraging_note", ""))
+        ):
+            cleaned["encouraging_note"] = ""
+
+        return cleaned
+
+    def _sanitize_token_labels(self, labels: Any, learner_answer: str, target_french: str = "") -> list[str]:
+        learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
+        raw_labels = labels if isinstance(labels, list) else []
+        cleaned_labels = [
+            label for label in raw_labels
+            if label in {"correct", "acceptable", "wrong"}
+        ]
+        if len(cleaned_labels) == len(learner_tokens):
+            target_tokens = [part for part in re.split(r"\s+", target_french.strip()) if part]
+            if len(target_tokens) == len(learner_tokens):
+                for index, (learner_token, target_token) in enumerate(zip(learner_tokens, target_tokens)):
+                    if normalize_french(learner_token) == normalize_french(target_token):
+                        cleaned_labels[index] = "correct"
+            return cleaned_labels
+        return []
+
+    def _build_fallback_token_labels(
+        self,
+        learner_answer: str,
+        target_french: str,
+        *,
+        is_correct: bool,
+    ) -> list[str]:
+        learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
+        if not learner_tokens:
+            return []
+
+        learner_normalized = [normalize_french(token) for token in learner_tokens]
+        target_tokens = [part for part in re.split(r"\s+", target_french.strip()) if part]
+        target_normalized = [normalize_french(token) for token in target_tokens]
+        target_counts = Counter(token for token in target_normalized if token)
+
+        labels: list[str] = []
+        for token in learner_normalized:
+            if not token:
+                labels.append("wrong")
+                continue
+            if target_counts.get(token, 0) > 0:
+                target_counts[token] -= 1
+                labels.append("correct")
+                continue
+            labels.append("correct" if is_correct else "wrong")
+        return labels
+
+    def _ensure_minimal_specific_feedback(
+        self,
+        payload: dict[str, Any],
+        request: EvaluationRequest,
+        *,
+        is_correct: bool,
+    ) -> dict[str, Any]:
+        if is_correct:
+            return payload
+        if payload.get("tips") or payload.get("mistakes"):
+            return payload
+
+        contraction_note = self._build_local_contraction_note(request)
+        if contraction_note:
+            return {
+                **payload,
+                "mistakes": [contraction_note],
+            }
+
+        learner_tokens = [part for part in re.split(r"\s+", request.learner_answer.strip()) if part]
+        target_tokens = [part for part in re.split(r"\s+", request.target_french.strip()) if part]
+        learner_normalized = [normalize_french(token) for token in learner_tokens]
+        target_normalized = [normalize_french(token) for token in target_tokens]
+
+        if len(learner_normalized) == len(target_normalized):
+            mismatches = [
+                (learner_raw, learner_norm, target_raw, target_norm)
+                for learner_raw, learner_norm, target_raw, target_norm in zip(
+                    learner_tokens,
+                    learner_normalized,
+                    target_tokens,
+                    target_normalized,
+                )
+                if learner_norm and target_norm and learner_norm != target_norm
+            ]
+            if len(mismatches) == 1:
+                learner_raw, learner_norm, target_raw, target_norm = mismatches[0]
+                if target_norm in FRENCH_FUNCTION_WORDS or learner_norm in FRENCH_FUNCTION_WORDS:
+                    return {
+                        **payload,
+                        "mistakes": [f'Use "{target_raw}" here, not "{learner_raw}".'],
+                    }
+                return {
+                    **payload,
+                    "mistakes": [f'Use "{target_raw}" here.'],
+                }
+
+        return payload
+
+    def _build_local_contraction_note(self, request: EvaluationRequest) -> str:
+        learner_raw_tokens = [part for part in re.split(r"\s+", request.learner_answer.strip()) if part]
+        target_raw_tokens = [part for part in re.split(r"\s+", request.target_french.strip()) if part]
+        learner_tokens = [normalize_french(token) for token in learner_raw_tokens]
+        target_tokens = [normalize_french(token) for token in target_raw_tokens]
+
+        contraction_expectations = {
+            "au": {("a", "la"), ("a", "le"), ("a", "les")},
+            "aux": {("a", "les"), ("a", "des")},
+            "du": {("de", "la"), ("de", "le"), ("de", "les")},
+        }
+
+        for index, token in enumerate(target_tokens[:-1]):
+            expected_pairs = contraction_expectations.get(token)
+            if not expected_pairs or index + 1 >= len(target_raw_tokens):
+                continue
+
+            target_phrase_raw = f"{target_raw_tokens[index]} {target_raw_tokens[index + 1]}"
+            next_target = target_tokens[index + 1]
+
+            for learner_index in range(len(learner_tokens) - 2):
+                learner_pair = (learner_tokens[learner_index], learner_tokens[learner_index + 1])
+                learner_next = learner_tokens[learner_index + 2]
+                if learner_next == next_target and learner_pair in expected_pairs:
+                    if token == "au":
+                        return f'Use "{target_phrase_raw}" here; "à + le/la/les" contracts differently.'
+                    if token == "aux":
+                        return f'Use "{target_phrase_raw}" here; "à + les" becomes "aux".'
+                    if token == "du":
+                        return f'Use "{target_phrase_raw}" here; "de + le" becomes "du".'
+
+        return ""
+
+    def _apply_required_construction_guard(
+        self,
+        payload: dict[str, Any],
+        request: EvaluationRequest,
+        *,
+        correctness_score: int,
+        is_correct: bool,
+    ) -> tuple[dict[str, Any], int, bool]:
+        issue_present = bool(payload.get("has_required_construction_issue"))
+        note = (payload.get("required_construction_note") or "").strip()
+
+        if not issue_present:
+            return payload, correctness_score, is_correct
+
+        if not note:
+            note = self._build_local_contraction_note(request) or 'Use the target construction here.'
+
+        cleaned = {
+            **payload,
+            "meaning_equivalent": False,
+            "accepted_learner_french": "",
+            "mistakes": [note],
+            "tips": [],
+        }
+        return cleaned, min(correctness_score, 79), False
+
+    def _remove_fussy_style_feedback(
+        self,
+        payload: dict[str, Any],
+        *,
+        correctness_score: int,
+        is_correct: bool,
+    ) -> dict[str, Any]:
+        accepted_learner_french = (payload.get("accepted_learner_french") or "").strip()
+        should_strip = accepted_learner_french or (is_correct and correctness_score >= 85)
+        if not should_strip:
+            return payload
+
+        cleaned = dict(payload)
+        cleaned["tips"] = [tip for tip in cleaned.get("tips", []) if not is_overly_fussy_style_feedback(tip)]
+        cleaned["mistakes"] = [mistake for mistake in cleaned.get("mistakes", []) if not is_overly_fussy_style_feedback(mistake)]
+
+        if is_overly_fussy_style_feedback(cleaned.get("verdict", "")):
+            cleaned["verdict"] = "Correct and natural."
+        return cleaned
+
+    def _remove_canonical_vocab_contradictions(
+        self,
+        payload: dict[str, Any],
+        request: EvaluationRequest,
+    ) -> dict[str, Any]:
+        canonical_phrases = [
+            normalize_french(request.target_french),
+            *[normalize_french(hint.french) for hint in request.vocab_hints],
+        ]
+        canonical_phrases = [phrase for phrase in canonical_phrases if phrase]
+
+        cleaned = dict(payload)
+        cleaned["tips"] = [
+            tip for tip in cleaned.get("tips", [])
+            if not note_contradicts_canonical_vocab(tip, canonical_phrases)
+            and not note_conflicts_target_structure(tip, request.target_french)
+        ]
+        cleaned["mistakes"] = [
+            mistake for mistake in cleaned.get("mistakes", [])
+            if not note_contradicts_canonical_vocab(mistake, canonical_phrases)
+            and not note_conflicts_target_structure(mistake, request.target_french)
+        ]
+        return cleaned
+
+    def _infer_noun_article(self, sentence_text: str, hint_text: str) -> str | None:
+        sentence_tokens = tokenize_french_context(sentence_text)
+        hint_tokens = tokenize_french_context(hint_text)
+        if not sentence_tokens or not hint_tokens:
+            return None
+
+        masculine_determiners = {
+            "un", "le", "du", "au", "ce", "cet", "mon", "ton", "son", "notre", "votre", "leur"
+        }
+        feminine_determiners = {
+            "une", "la", "cette", "ma", "ta", "sa", "notre", "votre", "leur"
+        }
+        neutral_skip = {
+            "de", "d", "des", "les", "mes", "tes", "ses", "ces", "quelques", "plusieurs",
+            "petit", "petite", "petits", "petites", "grand", "grande", "grands", "grandes",
+            "bon", "bonne", "bons", "bonnes", "vieux", "vieille", "vieux", "vieilles",
+            "jeune", "jeunes", "beau", "belle", "beaux", "belles", "nouveau", "nouvelle",
+            "nouveaux", "nouvelles", "mauvais", "mauvaise", "mauvaises", "chaud", "chaude",
+            "chauds", "chaudes", "ancien", "ancienne", "anciens", "anciennes", "autre", "autres",
+        }
+
+        for index in range(len(sentence_tokens) - len(hint_tokens) + 1):
+            if sentence_tokens[index:index + len(hint_tokens)] != hint_tokens:
+                continue
+
+            for back in range(1, 4):
+                look_index = index - back
+                if look_index < 0:
+                    break
+                token = sentence_tokens[look_index]
+                if token in masculine_determiners:
+                    return "un"
+                if token in feminine_determiners:
+                    return "une"
+                if token not in neutral_skip:
+                    break
+
+        return None
+
+    def _apply_local_hint_display_rules(self, sentences: list[LessonSentence]) -> list[LessonSentence]:
+        for sentence in sentences:
+            updated_hints: list[VocabHint] = []
+            for hint in sentence.vocab_hints:
+                display_french = (hint.display_french or "").strip()
+                inferred_article = self._infer_noun_article(sentence.french, hint.french)
+
+                if inferred_article and (not display_french or display_french == hint.french):
+                    updated_hints.append(
+                        VocabHint(
+                            english=hint.english,
+                            french=hint.french,
+                            display_french=f"{inferred_article} {hint.french}",
+                            note=hint.note,
+                        )
+                    )
+                else:
+                    updated_hints.append(
+                        VocabHint(
+                            english=hint.english,
+                            french=hint.french,
+                            display_french=display_french or hint.french,
+                            note=hint.note,
+                        )
+                    )
+            sentence.vocab_hints = updated_hints
+
+        return sentences
+
+    def _enrich_vocab_hints(self, sentences: list[LessonSentence], difficulty: str) -> list[LessonSentence]:
+        if not self.client or not any(sentence.vocab_hints for sentence in sentences):
+            return self._apply_local_hint_display_rules(sentences)
+
+        schema = {
+            "name": "vocab_hint_display_enrichment",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "sentences": {
+                        "type": "array",
+                        "minItems": len(sentences),
+                        "maxItems": len(sentences),
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "step": {"type": "integer"},
+                                "vocab_hints": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": False,
+                                        "properties": {
+                                            "english": {"type": "string"},
+                                            "french": {"type": "string"},
+                                            "display_french": {"type": "string"},
+                                        },
+                                        "required": ["english", "french", "display_french"],
+                                    },
+                                },
+                            },
+                            "required": ["step", "vocab_hints"],
+                        },
+                    }
+                },
+                "required": ["sentences"],
+            },
+        }
+
+        sentence_payload = [
+            {
+                "step": sentence.step,
+                "english": sentence.english,
+                "french": sentence.french,
+                "vocab_hints": [
+                    {
+                        "english": hint.english,
+                        "french": hint.french,
+                        "display_french": hint.display_french or hint.french,
+                    }
+                    for hint in sentence.vocab_hints
+                ],
+            }
+            for sentence in sentences
+        ]
+
+        try:
+            response = self._responses_create_with_retry(
+                **self._response_create_options(
+                    model=self.eval_model,
+                    max_output_tokens=max(320, min(self.eval_max_output_tokens + 220, 700)),
+                    reasoning_effort=self.eval_reasoning_effort,
+                ),
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You normalize the display of French vocabulary hints for a learner app. "
+                            "Keep the english and french fields exactly unchanged. "
+                            "Rewrite only the display_french field. "
+                            "For nouns, display_french must use the indefinite article plus the noun, for example 'une gare' or 'un musée'. "
+                            "For adjectives, if masculine and feminine forms are different, display_french must show both forms, for example 'grand / grande'. "
+                            "For adjectives whose forms are the same, keep just the French form. "
+                            "For verbs and other parts of speech, keep display_french equal to the French form. "
+                            "Do not add explanations, typing advice, accent notes, or English words into display_french. "
+                            "Return one sentence entry for every input sentence, even if it has no hints."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Difficulty: {difficulty}\n"
+                            f"Sentences and hints to enrich:\n{json.dumps(sentence_payload, ensure_ascii=False)}"
+                        ),
+                    },
+                ],
+                text={"format": {"type": "json_schema", **schema}},
+            )
+            payload = json.loads(response.output_text)
+        except Exception:
+            return self._apply_local_hint_display_rules(sentences)
+
+        hints_by_step = {
+            item["step"]: item.get("vocab_hints", [])
+            for item in payload.get("sentences", [])
+            if isinstance(item, dict)
+        }
+
+        enriched_sentences: list[LessonSentence] = []
+        for sentence in sentences:
+            enriched_hints = hints_by_step.get(sentence.step)
+            if enriched_hints is None:
+                enriched_sentences.append(sentence)
+                continue
+
+            try:
+                sentence.vocab_hints = [VocabHint(**hint) for hint in enriched_hints]
             except Exception:
                 pass
-        return self._explain_phrase_fallback(request)
+            enriched_sentences.append(sentence)
+
+        return self._apply_local_hint_display_rules(enriched_sentences)
+
+    def _align_sentence_pairs(self, sentences: list[LessonSentence], difficulty: str) -> list[LessonSentence]:
+        if not self.client or not sentences:
+            return sentences
+
+        schema = {
+            "name": "lesson_pair_alignment",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "sentences": self._lesson_sentence_schema(len(sentences), len(sentences)),
+                },
+                "required": ["sentences"],
+            },
+        }
+
+        payload_sentences = [
+            {
+                "step": sentence.step,
+                "english": sentence.english,
+                "french": sentence.french,
+                "context_note": sentence.context_note,
+                "vocab_hints": [
+                    {
+                        "english": hint.english,
+                        "french": hint.french,
+                        "note": hint.note,
+                    }
+                    for hint in sentence.vocab_hints
+                ],
+            }
+            for sentence in sentences
+        ]
+
+        try:
+            response = self._responses_create_with_retry(
+                **self._response_create_options(
+                    model=self.lesson_model,
+                    max_output_tokens=max(520, min(self.lesson_max_output_tokens, 1200)),
+                    reasoning_effort=self.lesson_reasoning_effort,
+                ),
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You verify alignment between learner-facing English prompts and their target French answers. "
+                            "Your job is to repair any mismatch between the English prompt and the French target answer. "
+                            "The english field must be clear natural English only. "
+                            "The french field must be clear natural French only. "
+                            "Revise whichever field is wrong or weaker, but prefer the smallest change that produces a clean, fully aligned pair. "
+                            "If the English and French do not match exactly in meaning, fix the pair so they do. "
+                            "Be strict about hidden meaning details: if one side includes an extra object, location detail, relationship, or descriptive phrase, the other side must include it too. "
+                            "Do not accept 'close enough' alignment. The learner should be able to translate the English prompt into the French answer without surprise. "
+                            "Do not drop or add meaning-bearing details such as articles, number, negation, possession, size words, color words, or other modifiers. "
+                            "Do not let a broad location phrase in English drift into a more specific French phrase, or vice versa. "
+                            "For example, 'He sees Medusa in the mirror' must align with 'Il voit Méduse dans le miroir', while 'Il voit Méduse dans le reflet du miroir' must align with 'He sees Medusa in the reflection of the mirror'. "
+                            "Likewise, if the French says 'sur l'île', the English should reflect 'on the island', not a broader or different location relation. "
+                            "If the English says 'a' or 'the', do not let the French drift to a different article meaning. "
+                            "If the English includes an adjective like 'small', 'old', or 'red', the French must preserve it. "
+                            "If the French includes a meaning detail that the English is missing, add it to the English. "
+                            "If the English includes a meaning detail that the French is missing, add it to the French. "
+                            "If one side is in the wrong language, translate it into the correct language while preserving meaning. "
+                            "Prefer minimal edits once the pair is fully aligned. "
+                            "Keep the French natural and teachable. "
+                            "Keep the English simple, direct, and learner-friendly. "
+                            "Keep context_note concise and aligned with the final French. "
+                            "Keep vocab_hints aligned with the final French wording. Remove or revise any hint that no longer matches. "
+                            "Return the same number of sentences you received."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Difficulty: {difficulty}\n"
+                            f"Sentence pairs to align:\n{json.dumps(payload_sentences, ensure_ascii=False)}"
+                        ),
+                    },
+                ],
+                text={"format": {"type": "json_schema", **schema}},
+            )
+            payload = json.loads(response.output_text)
+            aligned = [LessonSentence(**item) for item in payload["sentences"]]
+            for original, revised in zip(sentences, aligned, strict=False):
+                revised.step = original.step
+                if self._looks_like_french_text(revised.english) and self._looks_like_english_text(original.english):
+                    revised.english = original.english
+                if self._looks_like_english_text(revised.french) and self._looks_like_french_text(original.french):
+                    revised.french = original.french
+            return aligned
+        except Exception:
+            return sentences
+
+    def _language_signal_score(self, text: str, signal_words: set[str]) -> int:
+        normalized = normalize_french(text)
+        tokens = normalized.split()
+        score = sum(1 for token in tokens if token in signal_words)
+        return score
+
+    def _looks_like_french_text(self, text: str) -> bool:
+        lowered = text.lower()
+        accent_bonus = 2 if re.search(r"[àâçéèêëîïôûùüÿœæ]", lowered) else 0
+        apostrophe_bonus = 1 if re.search(r"\b[cdjlmnstqu]['’]", lowered) else 0
+        french_score = self._language_signal_score(text, FRENCH_SIGNAL_WORDS) + accent_bonus + apostrophe_bonus
+        english_score = self._language_signal_score(text, ENGLISH_SIGNAL_WORDS)
+        return french_score >= max(2, english_score + 1)
+
+    def _looks_like_english_text(self, text: str) -> bool:
+        english_score = self._language_signal_score(text, ENGLISH_SIGNAL_WORDS)
+        french_score = self._language_signal_score(text, FRENCH_SIGNAL_WORDS)
+        return english_score >= max(2, french_score + 1)
+
+    def _repair_sentence_language_roles(self, sentences: list[LessonSentence]) -> list[LessonSentence]:
+        repaired: list[LessonSentence] = []
+        for sentence in sentences:
+            english = (sentence.english or "").strip()
+            french = (sentence.french or "").strip()
+
+            if english and french and self._looks_like_french_text(english) and self._looks_like_english_text(french):
+                sentence.english, sentence.french = french, english
+
+            repaired.append(sentence)
+
+        return repaired
+
+    def _sanitize_lesson_title(self, title: str, theme: str) -> str:
+        cleaned = (title or "").strip()
+        cleaned = re.sub(r"\b(?:A1|A2|B1|B2|C1|C2)\b\s*[:-]?\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\(\s*(?:A1|A2|B1|B2|C1|C2)\s*\)", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" -:")
+        if not cleaned:
+            cleaned = theme.strip().title() or "Story"
+        return cleaned
+
+    def _lesson_system_prompt(self) -> str:
+        return (
+            "You create high-quality French learning material. "
+            "You must obey every user configuration exactly; none of them are optional suggestions. "
+            "Return connected English prompts with target French translations. "
+            "The output must be one continuous lesson, not disconnected sentences. "
+            "Match CEFR level exactly. "
+            "Use natural modern French. "
+            "The lesson title must be in English. "
+            "The lesson title must not include any CEFR or difficulty label such as A1, A2, B1, B2, C1, beginner, intermediate, or advanced. "
+            "Always include proper French accents in the target French and vocab hints. "
+            "For each sentence, include 0 to 4 useful vocab hints for unusual, blocking, or non-obvious words. "
+            "Be generous when a sentence contains multiple genuinely difficult words or phrases. "
+            "In each vocab hint, the 'english' field must be an English gloss, the 'french' field must be the French word or phrase, and the 'note' field must be written in English. "
+            "For noun hints, the note should include grammatical gender, such as 'noun, masculine' or 'noun, feminine'. "
+            "For adjective hints, the note should include both forms, such as 'adjective: masculine grand, feminine grande'. "
+            "For other parts of speech, keep the note short and useful only if it helps the learner. "
+            "If the requested lesson type is dialogue, every line must visibly remain dialogue. "
+            "If the requested lesson type is story, every line must visibly remain narration. "
+            "If the requested lesson type is film_scene, every line must feel cinematic and stay in the same scene. "
+            "Do not ignore the theme. The theme must be obvious in the title and throughout the lesson."
+        )
+
+    def _lesson_constraints(self, request: LessonRequest) -> str:
+        return (
+            "Create one lesson using these non-negotiable settings:\n"
+            f"- Difficulty: {request.difficulty}\n"
+            f"- Theme: {request.theme}\n"
+            f"- Lesson type: {request.lesson_type}\n"
+            f"- Sentence count: exactly {request.sentence_count}\n\n"
+            "Hard constraints:\n"
+            f"- {self._difficulty_guidance(request.difficulty)}\n"
+            f"- {self._difficulty_guardrails(request.difficulty)}\n"
+            f"- {self._lesson_type_guidance(request.lesson_type, request.theme)}\n"
+            f"- The lesson title must reflect the theme '{request.theme}' and MUST be written in English.\n"
+            "- The lesson title must not include the difficulty level or any CEFR tag.\n"
+            f"- Produce exactly {request.sentence_count} sentences, no more and no fewer.\n"
+            "- The English field must be the learner-facing prompt.\n"
+            "- The French field must be the natural target answer for that exact English prompt.\n"
+            "- In every vocab hint, the english gloss and note must be written in English only.\n"
+            "- In every vocab hint, the french field must contain the French word or phrase only.\n"
+            "- For noun hints, the note must include gender in English.\n"
+            "- For adjective hints, the note must include both masculine and feminine forms.\n"
+            "- If the requested level is low, choose simpler French even if that makes the lesson less stylistically rich.\n"
+            "- Every sentence must connect logically to the one before it.\n"
+            "- Avoid generic filler. Make the theme obvious in the wording, setting, and actions.\n"
+            "- For story mode, if the theme points to a known existing narrative world or tradition, adapt a recognizable existing story or episode instead of inventing a bland generic plot.\n"
+            "- If using dialogue, keep speaker labels consistent in both languages.\n"
+            "- If using a film scene, keep the same setting and dramatic situation throughout.\n"
+            "- If a sentence contains two or more genuinely difficult French words or phrases, include hints for more than one of them instead of only choosing a single hint."
+        )
+
+    def _lesson_sentence_schema(self, min_items: int, max_items: int) -> dict[str, Any]:
+        return {
+            "type": "array",
+            "minItems": min_items,
+            "maxItems": max_items,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "step": {"type": "integer"},
+                    "english": {"type": "string"},
+                    "french": {"type": "string"},
+                    "context_note": {"type": "string"},
+                    "vocab_hints": {
+                        "type": "array",
+                        "maxItems": 4,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "english": {"type": "string"},
+                                "french": {"type": "string"},
+                                "note": {"type": "string"},
+                            },
+                            "required": ["english", "french", "note"],
+                        },
+                    },
+                },
+                "required": ["step", "english", "french", "context_note", "vocab_hints"],
+            },
+        }
+
+    def _build_lesson_response(self, job: dict[str, Any]) -> LessonResponse:
+        sentences = [LessonSentence(**sentence.model_dump()) if isinstance(sentence, LessonSentence) else LessonSentence(**sentence) for sentence in job["sentences"]]
+        requested_count = job["request"].sentence_count
+        return LessonResponse(
+            lesson_id=job["lesson_id"],
+            title=job["title"],
+            difficulty=job["request"].difficulty,
+            theme=job["request"].theme,
+            lesson_type=job["request"].lesson_type,
+            source="openai",
+            requested_sentence_count=requested_count,
+            available_sentence_count=len(sentences),
+            is_complete=job["status"] == "ready" and len(sentences) >= requested_count,
+            status=job["status"],
+            error_message=job["error_message"],
+            sentences=sentences,
+        )
+
+    def _resolve_lesson_job(self, job: dict[str, Any]) -> None:
+        future: Future[list[LessonSentence]] | None = job.get("future")
+        if future is None or job["status"] != "generating" or not future.done():
+            return
+
+        try:
+            remaining_sentences = future.result()
+        except Exception as exc:
+            job["status"] = "failed"
+            job["error_message"] = (
+                "The lesson started, but the remaining sentences failed to generate. "
+                "Please try generating a new lesson."
+            )
+            job["future"] = None
+            job["background_exception"] = exc
+            return
+
+        job["sentences"].extend(remaining_sentences)
+        job["status"] = "ready"
+        job["error_message"] = ""
+        job["future"] = None
+
+    def _generate_lesson_with_background_continuation(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
+        title, first_sentence = self._generate_lesson_openai_initial(request)
+        job: dict[str, Any] = {
+            "lesson_id": lesson_id,
+            "request": request,
+            "title": title,
+            "sentences": [first_sentence],
+            "status": "generating",
+            "error_message": "",
+            "future": None,
+        }
+
+        remaining_count = request.sentence_count - 1
+        if remaining_count <= 0:
+            job["status"] = "ready"
+        else:
+            job["future"] = self.lesson_executor.submit(
+                self._generate_lesson_openai_remaining,
+                request,
+                title,
+                first_sentence,
+            )
+
+        with self.lesson_jobs_lock:
+            self.lesson_jobs[lesson_id] = job
+        return self._build_lesson_response(job)
+
+    def _generate_lesson_openai_initial(self, request: LessonRequest) -> tuple[str, LessonSentence]:
+        schema = {
+            "name": "lesson_first_step",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "title": {"type": "string"},
+                    "sentence": self._lesson_sentence_schema(1, 1)["items"],
+                },
+                "required": ["title", "sentence"],
+            },
+        }
+
+        response = self._responses_create_with_retry(
+            **self._response_create_options(
+                model=self.lesson_model,
+                max_output_tokens=max(320, min(self.lesson_max_output_tokens, 520)),
+                reasoning_effort=self.lesson_reasoning_effort,
+            ),
+            input=[
+                {"role": "system", "content": self._lesson_system_prompt()},
+                {
+                    "role": "user",
+                    "content": (
+                        f"{self._lesson_constraints(request)}\n\n"
+                        "Return only the lesson title and sentence 1 for now.\n"
+                        "Sentence 1 must feel like a strong opening and leave room for the lesson to continue naturally.\n"
+                        "The sentence.step value must be exactly 1."
+                    ),
+                },
+            ],
+            text={"format": {"type": "json_schema", **schema}},
+        )
+
+        payload = json.loads(response.output_text)
+        first_sentence = LessonSentence(**payload["sentence"])
+        first_sentence.step = 1
+        first_sentence = self._repair_sentence_language_roles([first_sentence])[0]
+        first_sentence = self._align_sentence_pairs([first_sentence], request.difficulty)[0]
+        first_sentence = self._enrich_vocab_hints([first_sentence], request.difficulty)[0]
+        return self._sanitize_lesson_title(payload["title"], request.theme), first_sentence
+
+    def _generate_lesson_openai_remaining(
+        self,
+        request: LessonRequest,
+        title: str,
+        first_sentence: LessonSentence,
+    ) -> list[LessonSentence]:
+        remaining_count = request.sentence_count - 1
+        schema = {
+            "name": "lesson_remaining_steps",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "sentences": self._lesson_sentence_schema(remaining_count, remaining_count),
+                },
+                "required": ["sentences"],
+            },
+        }
+
+        response = self._responses_create_with_retry(
+            **self._response_create_options(
+                model=self.lesson_model,
+                max_output_tokens=self.lesson_max_output_tokens,
+                reasoning_effort=self.lesson_reasoning_effort,
+            ),
+            input=[
+                {"role": "system", "content": self._lesson_system_prompt()},
+                {
+                    "role": "user",
+                    "content": (
+                        f"{self._lesson_constraints(request)}\n\n"
+                        f"The lesson title is already fixed as: {title}\n"
+                        "Sentence 1 has already been shown to the learner. Continue from it without rewriting it.\n"
+                        f"Sentence 1 English: {first_sentence.english}\n"
+                        f"Sentence 1 French: {first_sentence.french}\n"
+                        f"Sentence 1 context note: {first_sentence.context_note}\n\n"
+                        f"Return exactly the remaining {remaining_count} sentences only.\n"
+                        f"The next sentence must start at step 2 and the last must end at step {request.sentence_count}.\n"
+                        "Keep the same characters, situation, tone, and format. Do not reset the scene or conversation."
+                    ),
+                },
+            ],
+            text={"format": {"type": "json_schema", **schema}},
+        )
+
+        payload = json.loads(response.output_text)
+        sentences = [LessonSentence(**item) for item in payload["sentences"]]
+        for step, sentence in enumerate(sentences, start=2):
+            sentence.step = step
+        sentences = self._repair_sentence_language_roles(sentences)
+        sentences = self._align_sentence_pairs(sentences, request.difficulty)
+        return self._enrich_vocab_hints(sentences, request.difficulty)
 
     def _generate_lesson_openai(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
         schema = {
@@ -280,29 +1762,48 @@ class AIService:
         }
 
         response = self.client.responses.create(
-            model=self.lesson_model,
+            **self._response_create_options(
+                model=self.lesson_model,
+                max_output_tokens=self.lesson_max_output_tokens,
+                reasoning_effort=self.lesson_reasoning_effort,
+            ),
             input=[
                 {
                     "role": "system",
                     "content": (
                         "You create high-quality French learning material. "
+                        "You must obey every user configuration exactly; none of them are optional suggestions. "
                         "Return a sequence of connected English prompts with target French translations. "
-                        "Keep the sentences tightly connected as one story or dialogue, not random unrelated lines. "
+                        "The output must be one continuous lesson, not disconnected sentences. "
                         "Match CEFR level exactly. "
                         "Use natural modern French. "
                         "Always include proper French accents in the target French and vocab hints. "
-                        "For each sentence, include only 0 to 3 useful vocab hints for unusual or blocking words."
+                        "For each sentence, include only 0 to 3 useful vocab hints for unusual or blocking words. "
+                        "If the requested lesson type is dialogue, every line must visibly remain dialogue. "
+                        "If the requested lesson type is story, every line must visibly remain narration. "
+                        "If the requested lesson type is film_scene, every line must feel cinematic and stay in the same scene. "
+                        "Do not ignore the theme. The theme must be obvious in the title and throughout the lesson."
                     ),
                 },
                 {
                     "role": "user",
                     "content": (
-                        f"Create a {request.lesson_type} lesson at {request.difficulty} level "
-                        f"with theme '{request.theme}'. "
-                        f"Make exactly {request.sentence_count} sequential sentences. "
-                        "The English should be the learner-facing prompt. "
-                        "The French should be a natural target answer. "
-                        "Prefer everyday French unless the theme requires special vocabulary."
+                        "Create one lesson using these non-negotiable settings:\n"
+                        f"- Difficulty: {request.difficulty}\n"
+                        f"- Theme: {request.theme}\n"
+                        f"- Lesson type: {request.lesson_type}\n"
+                        f"- Sentence count: exactly {request.sentence_count}\n\n"
+                        "Hard constraints:\n"
+                        f"- {self._difficulty_guidance(request.difficulty)}\n"
+                        f"- {self._lesson_type_guidance(request.lesson_type, request.theme)}\n"
+                        f"- The lesson title must reflect the theme '{request.theme}'.\n"
+                        f"- Produce exactly {request.sentence_count} sentences, no more and no fewer.\n"
+                        "- The English field must be the learner-facing prompt.\n"
+                        "- The French field must be the natural target answer for that exact English prompt.\n"
+                        "- Every sentence must connect logically to the one before it.\n"
+                        "- Avoid generic filler. Make the theme obvious in the wording, setting, and actions.\n"
+                        "- If using dialogue, keep speaker labels consistent in both languages.\n"
+                        "- If using a film scene, keep the same setting and dramatic situation throughout."
                     ),
                 },
             ],
@@ -311,9 +1812,12 @@ class AIService:
 
         payload = json.loads(response.output_text)
         sentences = [LessonSentence(**item) for item in payload["sentences"]]
+        sentences = self._repair_sentence_language_roles(sentences)
+        sentences = self._align_sentence_pairs(sentences, request.difficulty)
+        sentences = self._enrich_vocab_hints(sentences, request.difficulty)
         return LessonResponse(
             lesson_id=lesson_id,
-            title=payload["title"],
+            title=self._sanitize_lesson_title(payload["title"], request.theme),
             difficulty=request.difficulty,
             theme=request.theme,
             lesson_type=request.lesson_type,
@@ -329,69 +1833,294 @@ class AIService:
                 "type": "object",
                 "additionalProperties": False,
                 "properties": {
-                    "is_correct": {"type": "boolean"},
-                    "correctness_score": {"type": "integer", "minimum": 0, "maximum": 100},
+                    "meaning_equivalent": {"type": "boolean"},
+                    "has_required_construction_issue": {"type": "boolean"},
+                    "required_construction_note": {"type": "string"},
                     "naturalness_score": {"type": "integer", "minimum": 0, "maximum": 100},
-                    "accent_issues_only": {"type": "boolean"},
                     "verdict": {"type": "string"},
+                    "accepted_learner_french": {"type": "string"},
                     "suggested_french": {"type": "string"},
                     "more_common_french": {"type": "string"},
                     "tips": {"type": "array", "items": {"type": "string"}},
                     "mistakes": {"type": "array", "items": {"type": "string"}},
+                    "learner_token_labels": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": ["correct", "acceptable", "wrong"]},
+                    },
                     "encouraging_note": {"type": "string"},
                 },
                 "required": [
-                    "is_correct",
-                    "correctness_score",
+                    "meaning_equivalent",
+                    "has_required_construction_issue",
+                    "required_construction_note",
                     "naturalness_score",
-                    "accent_issues_only",
                     "verdict",
+                    "accepted_learner_french",
                     "suggested_french",
                     "more_common_french",
                     "tips",
                     "mistakes",
+                    "learner_token_labels",
                     "encouraging_note",
                 ],
             },
         }
 
-        response = self.client.responses.create(
-            model=self.eval_model,
-            input=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a precise but encouraging French tutor. "
-                        "Evaluate a learner's French translation of an English sentence. "
-                        "Treat missing accents as acceptable if the sentence is otherwise correct, but mention them. "
-                        "Accept valid paraphrases. "
-                        "Be especially alert to cases where the learner's answer is understandable and correct, "
-                        "but a more idiomatic or more common French wording exists. "
-                        "Keep tips concise and practical."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": (
-                        f"Difficulty: {request.difficulty}\n"
-                        f"English prompt: {request.english}\n"
-                        f"Target French: {request.target_french}\n"
-                        f"Context note: {request.context_note}\n"
-                        f"Learner answer: {request.learner_answer}\n"
-                        "Judge meaning, grammar, and naturalness."
-                    ),
-                },
-            ],
-            text={"format": {"type": "json_schema", **schema}},
-        )
+        payload = None
+        last_output_text = ""
+        for attempt in range(2):
+            response = self._responses_create_with_retry(
+                **self._response_create_options(
+                    model=self.eval_model,
+                    max_output_tokens=self.eval_max_output_tokens + (80 if attempt else 0),
+                    reasoning_effort=self.eval_reasoning_effort,
+                ),
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a precise but encouraging French tutor. "
+                            "Evaluate a learner's French translation of an English sentence. "
+                            "Treat missing accents as fully acceptable if the sentence is otherwise correct, and do not mention missing accents in the feedback. "
+                            "This includes cedillas such as 'c' versus 'ç'. "
+                            "Treat capitalization differences in the learner's input as fully acceptable and do not mention capitalization in the feedback. "
+                            "Ignore uppercase versus lowercase completely, including in names and sentence starts. "
+                            "Do not tell the learner to capitalize anything. "
+                            "Treat punctuation differences in the learner's input as fully acceptable unless they change meaning. "
+                            "Do not mention apostrophes, punctuation, quote style, commas, or sentence-final punctuation in feedback. "
+                            "Ignore orthography-only differences other than genuine spelling mistakes. "
+                            "Never give a note that is only about accents, punctuation, capitalization, or the accented form of a proper name. "
+                            "If a learner writes an unaccented form like 'Thesee' for 'Thésée', treat that as acceptable orthography, not as an error. "
+                            "If the learner answer differs from the target only by accents, capitalization, apostrophes, or punctuation, treat it as fully correct. "
+                            "Do not reduce correctness, naturalness, or confidence for those differences. "
+                            "In that case, return no corrective tips or mistakes, use a fully positive verdict, and label the learner tokens as correct. "
+                            "Accept valid paraphrases. "
+                            "The learner does not need to use the exact same vocabulary as the target or the vocab hints. "
+                            "If the learner uses a different but valid synonym or paraphrase that preserves the same meaning, treat it as correct in meaning. "
+                            "Do not criticize a learner just for choosing a different valid word than the vocab hint suggested. "
+                            "However, if the target uses a required French construction, contraction, or fixed phrase and the learner breaks it, do not mark the answer as meaning-equivalent. "
+                            "Examples include mandatory contractions like au, aux, du, and fixed constructions like en espèces. "
+                            "When that happens, set has_required_construction_issue to true and write one short English note in required_construction_note explaining the needed target construction. "
+                            "When there is no such issue, set has_required_construction_issue to false and required_construction_note to an empty string. "
+                            "If the learner uses a different but fully acceptable French wording, set accepted_learner_french to a polished version of the learner's wording with proper accents and punctuation. "
+                            "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_french to an empty string. "
+                            "Only raise naturalness or idiomaticity issues when the learner's wording sounds clearly awkward, noticeably non-native, or distinctly less natural than standard everyday French. "
+                            "Do not nitpick between two clearly natural, common phrasings that mean the same thing. "
+                            "If the learner's French is already natural, do not offer a tiny stylistic swap as correction. "
+                            "Prefer under-correcting to over-correcting on small style differences. "
+                            "Treat the target French and supplied vocab hints as canonical lesson language. "
+                            "Do not criticize, replace, or second-guess vocabulary that appears in the target French or vocab hints unless it is genuinely ungrammatical. "
+                            "Write every feedback field in English only, including the verdict, tips, mistakes, and encouraging note. "
+                            "Do not write any feedback notes in French unless you are quoting a French example sentence or phrase. "
+                            "Do not mention missing accents, accent marks, or diacritics anywhere in the feedback. "
+                            "Be very concise. "
+                            "Verdict must be short, ideally 2 to 9 words. "
+                            "Each tip or mistake must be a single short sentence, ideally under 12 words. "
+                            "Prefer clear issues over long explanations. "
+                            "Do not repeat the same correction in both tips and mistakes. "
+                            "If article, gender, or one small grammar word is the issue, mention it once only. "
+                            "Do not produce two notes that restate the same problem in different words. "
+                            "It is fine to return multiple notes when they cover distinct issues. "
+                            "Do not return two notes that point to the same underlying correction with different wording. "
+                            "If several comments would all be fixed by the same corrected word or phrase, return only one of them. "
+                            "Never give two lexical notes about the same target word or phrase. "
+                            "Anchor every correction to the target French, not to an incorrect learner phrase. "
+                            "Do not invent grammar patterns from the learner's wrong wording if those patterns are absent from the target sentence. "
+                            "Also return learner_token_labels for the learner answer tokens split by spaces. "
+                            "Return exactly one label per learner token, in order. "
+                            "Use 'correct' for tokens that are right as written. "
+                            "Use 'acceptable' sparingly, only when a token is clearly acceptable but noticeably not the target phrasing. "
+                            "Use 'wrong' for incorrect tokens. "
+                            "If the learner answer is valid overall, prefer 'correct' unless marking a token as merely 'acceptable' would genuinely help the learner. "
+                            "Do not overuse 'acceptable' for ordinary synonyms or simple valid rephrasings. "
+                            "For example, if a simpler verb still preserves the meaning naturally, prefer 'correct' rather than 'acceptable'. "
+                            "Do not mark genuinely wrong tokens as acceptable. "
+                            "Keep the encouraging note very short, or leave it empty if unnecessary. "
+                            "Keep tips concise and practical. "
+                            "Do not try to assign a correctness score; a local rubric will handle that."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Difficulty: {request.difficulty}\n"
+                            f"English prompt: {request.english}\n"
+                            f"Target French: {request.target_french}\n"
+                            f"Context note: {request.context_note}\n"
+                            f"Canonical vocab hints: {', '.join(f'{hint.french} = {hint.english}' for hint in request.vocab_hints) or 'None'}\n"
+                            f"Learner answer: {request.learner_answer}\n"
+                            f"Learner tokens (split by spaces): {json.dumps([part for part in re.split(r'\\s+', request.learner_answer.strip()) if part], ensure_ascii=False)}\n"
+                            "Judge meaning, grammar, and naturalness."
+                        ),
+                    },
+                ],
+                text={"format": {"type": "json_schema", **schema}},
+            )
+            last_output_text = response.output_text or ""
+            try:
+                payload = json.loads(response.output_text)
+                break
+            except json.JSONDecodeError:
+                if attempt == 1:
+                    snippet = " ".join(last_output_text.split())
+                    if len(snippet) > 1200:
+                        snippet = snippet[:1200] + "...[truncated]"
+                    raise RuntimeError(
+                        "Answer evaluation failed because the model returned an invalid structured response. "
+                        f"Raw model output: {snippet}"
+                    )
+                time.sleep(0.35)
 
-        payload = json.loads(response.output_text)
+        if payload is None:
+            raise RuntimeError("Answer evaluation failed to return structured JSON.")
+        payload = self._sanitize_feedback_payload(payload)
+        learner_normalized = normalize_french(request.learner_answer)
+        target_normalized = normalize_french(request.target_french)
+        orthography_equivalent = self._is_orthography_equivalent(
+            request.learner_answer,
+            request.target_french,
+        )
+        correctness_score, is_correct = self._score_answer_locally(request)
+        correctness_score, is_correct = self._apply_naturalness_adjustment(
+            request,
+            correctness_score,
+            is_correct,
+            int(payload.get("naturalness_score", 0)),
+        )
+        if orthography_equivalent:
+            payload = {
+                **payload,
+                "meaning_equivalent": True,
+                "naturalness_score": max(90, int(payload.get("naturalness_score", 90))),
+                "verdict": "Correct and natural.",
+                "accepted_learner_french": polish_learner_french(request.learner_answer),
+                "suggested_french": request.target_french,
+                "more_common_french": request.target_french,
+                "tips": [],
+                "mistakes": [],
+                "learner_token_labels": ["correct" for token in re.split(r"\s+", request.learner_answer.strip()) if token],
+                "encouraging_note": "",
+            }
+            correctness_score = max(correctness_score, 100)
+            is_correct = True
+        payload, correctness_score, is_correct = self._apply_required_construction_guard(
+            payload,
+            request,
+            correctness_score=correctness_score,
+            is_correct=is_correct,
+        )
+        if payload.get("meaning_equivalent"):
+            correctness_score = max(correctness_score, 90)
+            is_correct = True
+        if is_correct and not (payload.get("accepted_learner_french") or "").strip():
+            payload["accepted_learner_french"] = polish_learner_french(request.learner_answer)
+        accepted_learner_normalized = normalize_french(payload.get("accepted_learner_french", ""))
+        if accepted_learner_normalized and accepted_learner_normalized == learner_normalized:
+            payload = {
+                **payload,
+                "meaning_equivalent": True,
+                "verdict": "Correct and natural.",
+                "tips": [],
+                "mistakes": [],
+                "learner_token_labels": ["correct" for token in re.split(r"\s+", request.learner_answer.strip()) if token],
+                "encouraging_note": "",
+            }
+            correctness_score = max(correctness_score, 100)
+            is_correct = True
+        if not payload.get("meaning_equivalent") and not is_correct:
+            payload["accepted_learner_french"] = ""
+        payload = self._remove_fussy_style_feedback(
+            payload,
+            correctness_score=correctness_score,
+            is_correct=is_correct,
+        )
+        payload = self._remove_canonical_vocab_contradictions(payload, request)
+        payload = self._ensure_minimal_specific_feedback(
+            payload,
+            request,
+            is_correct=is_correct,
+        )
+        payload["learner_token_labels"] = self._sanitize_token_labels(
+            payload.get("learner_token_labels"),
+            request.learner_answer,
+            request.target_french,
+        ) or self._build_fallback_token_labels(
+            request.learner_answer,
+            request.target_french,
+            is_correct=is_correct,
+        )
         return EvaluationResponse(
+            is_correct=is_correct,
+            correctness_score=correctness_score,
             learner_normalized=normalize_french(request.learner_answer),
             target_normalized=normalize_french(request.target_french),
             reminders_triggered=[],
             source="openai",
             **payload,
+        )
+
+    def _lookup_phrase_entry(self, phrase: str) -> dict[str, str] | None:
+        normalized = normalize_french(phrase)
+        if not normalized:
+            return None
+        if normalized in self.phrase_dictionary:
+            return self.phrase_dictionary[normalized]
+
+        lemma = self.verb_base_forms.get(normalized)
+        if lemma and normalize_french(lemma) in self.phrase_dictionary:
+            entry = self.phrase_dictionary[normalize_french(lemma)]
+            return {
+                "english_meaning": entry["english_meaning"],
+                "usage_note": f"{entry['usage_note']} This form comes from '{lemma}'.",
+            }
+
+        if normalized.endswith("s") and normalized[:-1] in self.phrase_dictionary:
+            return self.phrase_dictionary[normalized[:-1]]
+
+        return None
+
+    def _explain_phrase_local(self, request: PhraseExplainRequest) -> PhraseExplainResponse:
+        selected_normalized = normalize_french(request.selected_phrase)
+
+        for hint in request.vocab_hints:
+            if normalize_french(hint.french) == selected_normalized:
+                return PhraseExplainResponse(
+                    french_phrase=request.selected_phrase,
+                    english_meaning=hint.english,
+                    usage_note=hint.note or "Useful vocabulary from this sentence.",
+                    save_note=f"From: {request.english_sentence}",
+                    source="dictionary",
+                )
+
+        dictionary_entry = self._lookup_phrase_entry(request.selected_phrase)
+        if dictionary_entry is not None:
+            return PhraseExplainResponse(
+                french_phrase=request.selected_phrase,
+                english_meaning=dictionary_entry["english_meaning"],
+                usage_note=dictionary_entry.get("usage_note", ""),
+                save_note=f"From: {request.english_sentence}",
+                source="dictionary",
+            )
+
+        phrase_tokens = tokenize_french_context(request.selected_phrase)
+        if len(phrase_tokens) > 1:
+            token_entries = [self._lookup_phrase_entry(token) for token in phrase_tokens]
+            known_tokens = [entry["english_meaning"] for entry in token_entries if entry is not None]
+            if known_tokens:
+                return PhraseExplainResponse(
+                    french_phrase=request.selected_phrase,
+                    english_meaning=" / ".join(known_tokens),
+                    usage_note="Combined from the local dictionary because this exact phrase was not stored yet.",
+                    save_note=f"From: {request.english_sentence}",
+                    source="dictionary",
+                )
+
+        return PhraseExplainResponse(
+            french_phrase=request.selected_phrase,
+            english_meaning=f"Sentence-specific meaning of '{request.selected_phrase}'",
+            usage_note="No exact entry was found in the local dictionary yet, so use the surrounding sentence for context.",
+            save_note=f"From: {request.english_sentence}",
+            source="dictionary",
         )
 
     def _explain_phrase_openai(self, request: PhraseExplainRequest) -> PhraseExplainResponse:
@@ -412,7 +2141,11 @@ class AIService:
 
         hint_text = "; ".join(f"{hint.french} = {hint.english}" for hint in request.vocab_hints)
         response = self.client.responses.create(
-            model=self.eval_model,
+            **self._response_create_options(
+                model=self.eval_model,
+                max_output_tokens=self.explain_max_output_tokens,
+                reasoning_effort=self.eval_reasoning_effort,
+            ),
             input=[
                 {
                     "role": "system",
@@ -581,6 +2314,109 @@ class AIService:
             sentences=sentences,
         )
 
+    def _generate_lesson_fallback_strict(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
+        fallback_type = self._resolve_fallback_lesson_type(request)
+        level_key = "B1" if request.difficulty in {"B1", "B2", "C1"} else "A1"
+        theme = request.theme
+        fallback_lessons: dict[str, dict[str, dict[str, Any]]] = {
+            "story": {
+                "A1": {
+                    "title": f"{theme.title()} Story",
+                    "sentences": [
+                        {"step": 1, "english": f"I arrive at a place connected to {theme}.", "french": f"J'arrive dans un endroit lié à {theme}.", "context_note": "Simple present narration tied directly to the chosen theme.", "vocab_hints": []},
+                        {"step": 2, "english": "I notice one important detail right away.", "french": "Je remarque tout de suite un détail important.", "context_note": "Simple observation in sequence.", "vocab_hints": []},
+                        {"step": 3, "english": "A person comes over and speaks to me.", "french": "Une personne s'approche et me parle.", "context_note": "Basic sequential action.", "vocab_hints": []},
+                        {"step": 4, "english": f"We talk about {theme}.", "french": f"Nous parlons de {theme}.", "context_note": "Theme is stated explicitly so it cannot be ignored.", "vocab_hints": []},
+                        {"step": 5, "english": "I ask a simple question.", "french": "Je pose une question simple.", "context_note": "Common present-tense action.", "vocab_hints": []},
+                        {"step": 6, "english": "The answer changes what I want to do next.", "french": "La réponse change ce que je veux faire ensuite.", "context_note": "Cause and effect in simple language.", "vocab_hints": []},
+                        {"step": 7, "english": "I make a decision and move forward.", "french": "Je prends une décision et j'avance.", "context_note": "Simple concluding action.", "vocab_hints": []},
+                        {"step": 8, "english": "At the end, the situation feels clearer.", "french": "À la fin, la situation semble plus claire.", "context_note": "Natural closing line.", "vocab_hints": []},
+                    ],
+                },
+                "B1": {
+                    "title": f"The {theme.title()} Mystery",
+                    "sentences": [
+                        {"step": 1, "english": f"On my way home, I get pulled into something connected to {theme}.", "french": f"En rentrant chez moi, je me retrouve mêlé à quelque chose lié à {theme}.", "context_note": "B1 narration with a fronted phrase and explicit theme anchoring.", "vocab_hints": []},
+                        {"step": 2, "english": "At first, I think it is ordinary, but one detail feels wrong.", "french": "Au début, je pense que c'est ordinaire, mais un détail me semble bizarre.", "context_note": "Contrast and reaction.", "vocab_hints": []},
+                        {"step": 3, "english": "Someone explains part of the situation, but not enough.", "french": "Quelqu'un m'explique une partie de la situation, mais pas assez.", "context_note": "Partial explanation keeps the sequence moving.", "vocab_hints": []},
+                        {"step": 4, "english": f"The more we discuss {theme}, the stranger the situation becomes.", "french": f"Plus nous discutons de {theme}, plus la situation devient étrange.", "context_note": "Comparative structure tied to theme.", "vocab_hints": []},
+                        {"step": 5, "english": "I follow the lead because I want to understand what is happening.", "french": "Je suis cette piste parce que je veux comprendre ce qui se passe.", "context_note": "Natural motivation and continuation.", "vocab_hints": []},
+                        {"step": 6, "english": "What I discover changes the meaning of the earlier clues.", "french": "Ce que je découvre change le sens des indices précédents.", "context_note": "Cause and reinterpretation.", "vocab_hints": []},
+                        {"step": 7, "english": "For a moment, I hesitate, because the answer is more serious than I expected.", "french": "Pendant un instant, j'hésite, parce que la réponse est plus grave que je ne l'imaginais.", "context_note": "B1 hesitation and emotional reaction.", "vocab_hints": []},
+                        {"step": 8, "english": "In the end, I leave with a completely different view of the whole event.", "french": "Finalement, je repars avec une vision complètement différente de tout l'événement.", "context_note": "Reflective ending.", "vocab_hints": []},
+                    ],
+                },
+            },
+            "dialogue": {
+                "A1": {
+                    "title": f"{theme.title()} Conversation",
+                    "sentences": [
+                        {"step": 1, "english": f"Anna: Hello. Are you here for {theme}?", "french": f"Anna : Bonjour. Tu es là pour {theme} ?", "context_note": "Dialogue format with explicit speaker labels.", "vocab_hints": []},
+                        {"step": 2, "english": "Lucas: Yes, but I do not know what to do first.", "french": "Lucas : Oui, mais je ne sais pas quoi faire d'abord.", "context_note": "Reply from the second speaker.", "vocab_hints": []},
+                        {"step": 3, "english": "Anna: Start here. It is easy.", "french": "Anna : Commence ici. C'est facile.", "context_note": "Short A1 instruction in dialogue form.", "vocab_hints": []},
+                        {"step": 4, "english": f"Lucas: Good. Can you explain this part about {theme}?", "french": f"Lucas : D'accord. Tu peux expliquer cette partie sur {theme} ?", "context_note": "Theme is repeated inside the conversation.", "vocab_hints": []},
+                        {"step": 5, "english": "Anna: Of course. Watch me first.", "french": "Anna : Bien sûr. Regarde-moi d'abord.", "context_note": "Short spoken instruction.", "vocab_hints": []},
+                        {"step": 6, "english": "Lucas: That helps a lot. Thank you.", "french": "Lucas : Ça m'aide beaucoup. Merci.", "context_note": "Simple spoken reaction.", "vocab_hints": []},
+                        {"step": 7, "english": "Anna: No problem. Now try it yourself.", "french": "Anna : Pas de problème. Maintenant, essaie tout seul.", "context_note": "Encouraging spoken line.", "vocab_hints": []},
+                        {"step": 8, "english": "Lucas: I think I understand now.", "french": "Lucas : Je crois que je comprends maintenant.", "context_note": "Dialogue ending.", "vocab_hints": []},
+                    ],
+                },
+                "B1": {
+                    "title": f"{theme.title()} Exchange",
+                    "sentences": [
+                        {"step": 1, "english": f"Maya: So this is what everyone meant when they talked about {theme}.", "french": f"Maya : Donc, c'est de cela que tout le monde parlait à propos de {theme}.", "context_note": "Dialogue opening with explicit thematic anchor.", "vocab_hints": []},
+                        {"step": 2, "english": "Noah: Yes, although it looks much stranger in real life than I expected.", "french": "Noah : Oui, même si cela paraît beaucoup plus étrange en vrai que je ne l'imaginais.", "context_note": "Natural B1 spoken response.", "vocab_hints": []},
+                        {"step": 3, "english": "Maya: Do you think we should trust what we were told?", "french": "Maya : Tu crois qu'on devrait croire ce qu'on nous a dit ?", "context_note": "Question in natural spoken French.", "vocab_hints": []},
+                        {"step": 4, "english": f"Noah: Not completely. The details about {theme} do not fit together.", "french": f"Noah : Pas complètement. Les détails sur {theme} ne vont pas ensemble.", "context_note": "Theme remains explicit and central.", "vocab_hints": []},
+                        {"step": 5, "english": "Maya: Then we need one clear answer before we go any further.", "french": "Maya : Alors, il nous faut une réponse claire avant d'aller plus loin.", "context_note": "Spoken planning line.", "vocab_hints": []},
+                        {"step": 6, "english": "Noah: Fine. Ask the question, and I will watch their reaction.", "french": "Noah : D'accord. Pose la question, et je regarderai leur réaction.", "context_note": "Future action in dialogue format.", "vocab_hints": []},
+                        {"step": 7, "english": "Maya: If they hesitate, we will know they are hiding something.", "french": "Maya : S'ils hésitent, nous saurons qu'ils cachent quelque chose.", "context_note": "Conditional structure in spoken form.", "vocab_hints": []},
+                        {"step": 8, "english": "Noah: In that case, we leave immediately.", "french": "Noah : Dans ce cas-là, on part tout de suite.", "context_note": "Tense ending in dialogue form.", "vocab_hints": []},
+                    ],
+                },
+            },
+            "film_scene": {
+                "A1": {
+                    "title": f"{theme.title()} Scene",
+                    "sentences": [
+                        {"step": 1, "english": f"The room is quiet, and everything points to {theme}.", "french": f"La pièce est calme, et tout fait penser à {theme}.", "context_note": "Simple cinematic setup tied to theme.", "vocab_hints": []},
+                        {"step": 2, "english": "A door opens slowly behind me.", "french": "Une porte s'ouvre lentement derrière moi.", "context_note": "Visual scene beat.", "vocab_hints": []},
+                        {"step": 3, "english": "Someone whispers my name.", "french": "Quelqu'un murmure mon nom.", "context_note": "Short dramatic beat.", "vocab_hints": []},
+                        {"step": 4, "english": f"I turn around and see the real sign of {theme}.", "french": f"Je me retourne et je vois le vrai signe de {theme}.", "context_note": "Theme appears inside the scene action.", "vocab_hints": []},
+                        {"step": 5, "english": "For one second, nobody moves.", "french": "Pendant une seconde, personne ne bouge.", "context_note": "Suspenseful stillness.", "vocab_hints": []},
+                        {"step": 6, "english": "Then the light changes, and the scene feels different.", "french": "Puis la lumière change, et la scène semble différente.", "context_note": "Visual change inside same scene.", "vocab_hints": []},
+                        {"step": 7, "english": "I take one step forward.", "french": "Je fais un pas en avant.", "context_note": "Simple dramatic action.", "vocab_hints": []},
+                        {"step": 8, "english": "The camera would stop here, just before the answer.", "french": "La caméra s'arrêterait ici, juste avant la réponse.", "context_note": "Film-scene ending beat.", "vocab_hints": []},
+                    ],
+                },
+                "B1": {
+                    "title": f"{theme.title()} Opening Scene",
+                    "sentences": [
+                        {"step": 1, "english": f"The scene opens on a place shaped by {theme}, but nobody explains it out loud.", "french": f"La scène s'ouvre sur un lieu marqué par {theme}, mais personne ne l'explique à voix haute.", "context_note": "Cinematic opening with explicit theme anchor.", "vocab_hints": []},
+                        {"step": 2, "english": "A small movement in the background immediately changes the mood.", "french": "Un petit mouvement en arrière-plan change immédiatement l'ambiance.", "context_note": "Visual shift inside a film scene.", "vocab_hints": []},
+                        {"step": 3, "english": "The main character notices it, but pretends to stay calm.", "french": "Le personnage principal le remarque, mais fait semblant de rester calme.", "context_note": "Visual action and internal tension.", "vocab_hints": []},
+                        {"step": 4, "english": f"What follows makes {theme} feel larger and more dangerous than before.", "french": f"Ce qui suit donne à {theme} une dimension plus vaste et plus dangereuse qu'avant.", "context_note": "Theme remains central to the cinematic beat.", "vocab_hints": []},
+                        {"step": 5, "english": "A single line of dialogue reveals that someone already knows the truth.", "french": "Une seule réplique révèle que quelqu'un connaît déjà la vérité.", "context_note": "Film-scene style revelation.", "vocab_hints": []},
+                        {"step": 6, "english": "The camera would linger on the silence that follows.", "french": "La caméra s'attarderait sur le silence qui suit.", "context_note": "Explicitly cinematic phrasing.", "vocab_hints": []},
+                        {"step": 7, "english": "By then, the audience understands the danger, even if the characters do not.", "french": "À ce moment-là, le public comprend le danger, même si les personnages ne le comprennent pas encore.", "context_note": "Cinematic irony and tension.", "vocab_hints": []},
+                        {"step": 8, "english": "The scene ends just before the decisive move.", "french": "La scène se termine juste avant le geste décisif.", "context_note": "Strong scene ending.", "vocab_hints": []},
+                    ],
+                },
+            },
+        }
+
+        selected = fallback_lessons[fallback_type][level_key]
+        sentences = [LessonSentence(**item) for item in selected["sentences"][: request.sentence_count]]
+        return LessonResponse(
+            lesson_id=lesson_id,
+            title=selected["title"],
+            difficulty=request.difficulty,
+            theme=request.theme,
+            lesson_type=fallback_type if request.lesson_type == "auto" else request.lesson_type,
+            source="fallback",
+            sentences=sentences,
+        )
+
     def _evaluate_answer_fallback(self, request: EvaluationRequest) -> EvaluationResponse:
         learner_normalized = normalize_french(request.learner_answer)
         target_normalized = normalize_french(request.target_french)
@@ -592,7 +2428,6 @@ class AIService:
                 is_correct=False,
                 correctness_score=0,
                 naturalness_score=0,
-                accent_issues_only=False,
                 verdict="",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -600,6 +2435,7 @@ class AIService:
                 more_common_french=request.target_french,
                 tips=[],
                 mistakes=[],
+                learner_token_labels=[],
                 reminders_triggered=[],
                 encouraging_note="",
                 source="fallback",
@@ -611,7 +2447,6 @@ class AIService:
                 is_correct=True,
                 correctness_score=100,
                 naturalness_score=90,
-                accent_issues_only=False,
                 verdict="Correct and natural.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -619,6 +2454,11 @@ class AIService:
                 more_common_french=request.target_french,
                 tips=["Nice work. This matches the target meaning very closely."],
                 mistakes=[],
+                learner_token_labels=self._build_fallback_token_labels(
+                    request.learner_answer,
+                    request.target_french,
+                    is_correct=True,
+                ),
                 reminders_triggered=[],
                 encouraging_note="You can move on confidently.",
                 source="fallback",
@@ -629,7 +2469,6 @@ class AIService:
                 is_correct=False,
                 correctness_score=max(60, similarity - 10),
                 naturalness_score=max(55, similarity - 15),
-                accent_issues_only=False,
                 verdict="Close, but an important grammar word is missing.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -640,6 +2479,11 @@ class AIService:
                     "French often needs a small linking word here: compare your answer with the suggested version carefully.",
                 ],
                 mistakes=[item["explanation"] for item in reminder_triggers],
+                learner_token_labels=self._build_fallback_token_labels(
+                    request.learner_answer,
+                    request.target_french,
+                    is_correct=False,
+                ),
                 reminders_triggered=[],
                 encouraging_note="This is exactly the kind of repeatable pattern the reminder list is meant to catch.",
                 source="fallback",
@@ -650,7 +2494,6 @@ class AIService:
                 is_correct=True,
                 correctness_score=88,
                 naturalness_score=78,
-                accent_issues_only=False,
                 verdict="Probably correct, but the wording could be smoother.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -659,9 +2502,13 @@ class AIService:
                 tips=[
                     "Your answer is close in meaning.",
                     "Compare your word order with the suggested French.",
-                    "If you skipped accents, that is acceptable here, but notice them for review.",
                 ],
                 mistakes=["Some wording is less idiomatic than the target sentence."],
+                learner_token_labels=self._build_fallback_token_labels(
+                    request.learner_answer,
+                    request.target_french,
+                    is_correct=True,
+                ),
                 reminders_triggered=[],
                 encouraging_note="This is a solid attempt. Focus on the most natural phrasing now.",
                 source="fallback",
@@ -671,7 +2518,6 @@ class AIService:
             is_correct=False,
             correctness_score=max(35, similarity),
             naturalness_score=max(30, similarity - 10),
-            accent_issues_only=False,
             verdict="Not quite right yet.",
             learner_normalized=learner_normalized,
             target_normalized=target_normalized,
@@ -682,6 +2528,11 @@ class AIService:
                 "Use the suggested answer as a model, then try the next sentence quickly.",
             ],
             mistakes=["The meaning or structure differs noticeably from the target sentence."],
+            learner_token_labels=self._build_fallback_token_labels(
+                request.learner_answer,
+                request.target_french,
+                is_correct=False,
+            ),
             reminders_triggered=[],
             encouraging_note="The important part is staying in the flow and learning from the comparison.",
             source="fallback",

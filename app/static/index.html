@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>French Story Trainer</title>
+  <meta name="google" content="notranslate">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css?v=20260330-enterfix">
+  <link rel="stylesheet" href="/static/styles.css?v=20260402-question-toolbar-167">
 </head>
-<body>
+  <body class="bauhaus-colors">
   <div class="page-shell">
-    <main class="main-panel single-column">
+    <main class="main-panel single-column app-shell">
+      <div class="main-column">
       <section id="lesson-card" class="card lesson-card">
         <div class="lesson-header">
           <div>
@@ -25,16 +27,15 @@
         </div>
 
         <div id="setup-panel" class="setup-panel">
-          <p class="hero-copy">
+          <p id="hero-copy" class="hero-copy">
             Generate a connected story or dialogue, then translate each English sentence into French with feedback on what you wrote.
           </p>
-
-          <form id="lesson-form" class="lesson-form">
+            <form id="lesson-form" class="lesson-form">
             <label class="form-field">
               <span>Difficulty</span>
               <select id="difficulty" name="difficulty">
-                <option value="A1">A1</option>
-                <option value="A2" selected>A2</option>
+                <option value="A1" selected>A1</option>
+                <option value="A2">A2</option>
                 <option value="B1">B1</option>
                 <option value="B2">B2</option>
                 <option value="C1">C1</option>
@@ -54,8 +55,8 @@
             <label class="form-field">
               <span>Lesson length</span>
               <select id="lesson-length" name="lesson_length">
-                <option value="short">Short</option>
-                <option value="medium" selected>Medium</option>
+                <option value="short" selected>Short</option>
+                <option value="medium">Medium</option>
                 <option value="long">Long</option>
               </select>
             </label>
@@ -71,30 +72,56 @@
             <label class="form-field form-field-full">
               <span>Theme</span>
               <small class="field-help">Choose a theme and/or linguistic topic to focus on</small>
-              <input id="theme" name="theme" value="mythological mystery" maxlength="80">
+              <input id="theme" name="theme" value="Greek myth" maxlength="80">
             </label>
 
-            <button id="generate-btn" type="submit">Generate lesson</button>
+            <button id="generate-btn" type="submit">
+              <span class="generate-btn-label">Generate lesson!</span>
+              <span class="generate-btn-hint">Press <kbd>Enter</kbd> to continue.</span>
+            </button>
           </form>
-
-          <div class="status-row">
-            <div class="status-pill" id="backend-status">Checking backend...</div>
-            <div class="status-pill subtle" id="provider-status">Loading...</div>
-          </div>
         </div>
+
+        <section id="generating-panel" class="generating-panel hidden" aria-live="polite">
+          <p class="card-label">Generating your story</p>
+          <div class="generating-stage" aria-hidden="true">
+            <div class="moon-orbit">
+              <span class="moon-core"></span>
+              <span class="moon-halo"></span>
+            </div>
+            <div class="story-ribbon story-ribbon-one"></div>
+            <div class="story-ribbon story-ribbon-two"></div>
+            <div class="story-ribbon story-ribbon-three"></div>
+            <div class="story-book">
+              <span class="story-book-page story-book-left"></span>
+              <span class="story-book-spine"></span>
+              <span class="story-book-page story-book-right"></span>
+            </div>
+            <div class="story-star story-star-one"></div>
+            <div class="story-star story-star-two"></div>
+            <div class="story-star story-star-three"></div>
+            <div class="story-star story-star-four"></div>
+          </div>
+          <h3 id="generating-title">Generating your story<span id="generating-ellipsis"></span></h3>
+          <p id="generating-copy" class="generating-copy">Gathering a fresh little world, one sentence at a time.</p>
+        </section>
 
         <div id="prompt-panel" class="prompt-panel hidden">
           <p class="context-note" id="context-note">Translate the following sentence...</p>
           <div class="prompt-header-row">
             <p class="english-prompt" id="english-prompt"></p>
-            <div class="hint-toolbar">
-              <button id="toggle-hints-btn" class="ghost-btn" type="button">Show vocab hints</button>
-            </div>
           </div>
 
           <div id="vocab-hints" class="vocab-hints hidden"></div>
 
           <div id="answer-entry" class="answer-entry-form">
+            <div class="answer-toolbar-row">
+              <div class="hint-toolbar">
+                <p id="hint-shortcut-copy" class="hint-shortcut-copy hidden">Press <kbd>Tab</kbd> to show vocab hints.</p>
+                <button id="toggle-hints-btn" class="ghost-btn" type="button">Show vocab hints</button>
+              </div>
+              <p class="keyboard-hint prompt-keyboard-hint">Press <kbd>Enter</kbd> to check your answer.</p>
+            </div>
             <label class="answer-box">
               <input id="answer-input" type="text" placeholder="Type your translation here..." enterkeyhint="done" autocomplete="off" spellcheck="false">
             </label>
@@ -102,7 +129,6 @@
             <div class="action-row">
               <button id="check-btn" type="button">Check answer</button>
               <button id="skip-btn" class="ghost-btn" type="button">Reveal and skip</button>
-              <p class="keyboard-hint">Press <kbd>Enter</kbd> to check your answer.</p>
             </div>
           </div>
         </div>
@@ -112,6 +138,22 @@
             <h3>The story so far...</h3>
           </div>
           <div id="story-so-far-list" class="saved-vocab-list story-so-far-list"></div>
+        </section>
+
+        <section id="checking-panel" class="checking-panel hidden" aria-live="polite">
+          <p class="card-label">Checking answer</p>
+          <div class="checking-illustration" aria-hidden="true">
+            <div class="checking-book">
+              <span class="checking-page checking-page-left"></span>
+              <span class="checking-spine"></span>
+              <span class="checking-page checking-page-right"></span>
+            </div>
+            <div class="checking-spark checking-spark-one"></div>
+            <div class="checking-spark checking-spark-two"></div>
+            <div class="checking-spark checking-spark-three"></div>
+          </div>
+          <h3>Analysing translation<span id="checking-ellipsis"></span></h3>
+          <p class="checking-copy">Helpful tip: Focus on the core meaning first, then polish the French phrasing.</p>
         </section>
 
         <section id="feedback-card" class="feedback-card hidden">
@@ -133,11 +175,11 @@
 
           <div class="comparison-grid">
             <div>
-              <p class="mini-label">Your answer</p>
+              <p id="your-answer-label" class="mini-label">Your answer</p>
               <p id="learner-answer" class="comparison-text quoted-text"></p>
             </div>
             <div>
-              <p class="mini-label">Correct sentence</p>
+              <p id="correct-sentence-label" class="mini-label">Correct sentence</p>
               <p id="correct-french" class="comparison-text quoted-text"></p>
               <div id="phrase-explainer" class="phrase-explainer hidden">
                 <div class="phrase-explainer-header">
@@ -156,7 +198,7 @@
 
           <div class="feedback-columns">
             <div>
-              <p class="mini-label">Feedback notes</p>
+              <p id="feedback-notes-label" class="mini-label">Feedback notes</p>
               <ul id="notes-list"></ul>
             </div>
           </div>
@@ -181,6 +223,7 @@
           </div>
           <div class="action-row">
             <button id="restart-btn" type="button">Create another story!</button>
+            <p class="keyboard-hint">Press <kbd>Enter</kbd> to continue.</p>
           </div>
         </section>
 
@@ -194,7 +237,7 @@
           <div class="vocab-header">
             <div>
               <p class="card-label">Saved vocabulary</p>
-              <h3>Your vocab list</h3>
+              <h3>Recent vocab</h3>
             </div>
             <button id="export-btn" class="ghost-btn" type="button">Flashcard export</button>
           </div>
@@ -205,16 +248,102 @@
           <div class="vocab-header">
             <div>
               <p class="card-label">Reminders</p>
-              <h3>Common errors to watch</h3>
+              <h3>Recent common errors</h3>
             </div>
           </div>
           <div id="reminders-list" class="saved-vocab-list"></div>
         </section>
       </div>
+
+      <footer class="site-footer" aria-label="Site footer">
+        <div class="app-masthead app-masthead-footer" aria-hidden="true">
+          <p class="app-kicker">StoryTime.ai</p>
+          <h2 class="app-brand" aria-label="S T">
+            <span class="book-page book-page-left">S</span>
+            <span class="book-spine" aria-hidden="true"></span>
+            <span class="book-page book-page-right">T</span>
+          </h2>
+        </div>
+        <p class="site-footer-copy">StoryTime.ai &copy; 2026</p>
+        <nav class="site-footer-nav" aria-label="Footer links">
+          <a href="#">About</a>
+          <a href="#">Contact</a>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </nav>
+      </footer>
+      </div>
+
+      <aside class="card side-panel" aria-label="Profile and navigation">
+        <div id="app-masthead" class="sidebar-wordmark" role="button" tabindex="0" aria-label="Return to landing page">
+          StoryTime.ai
+        </div>
+
+        <section class="side-panel-section">
+          <p class="card-label">Profile</p>
+          <div class="profile-section">
+            <div class="profile-badge">CG</div>
+            <div class="profile-meta">
+              <h3 class="side-panel-title profile-name">cgribben1</h3>
+              <p class="profile-email">curtisgribben1@gmail</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-panel-section">
+          <p class="card-label">Navigation</p>
+          <div class="side-panel-actions">
+            <button id="sidebar-home-btn" class="ghost-btn side-panel-btn" type="button">Home</button>
+              <button class="ghost-btn side-panel-btn side-panel-btn-placeholder" type="button">Vocab list</button>
+              <button class="ghost-btn side-panel-btn side-panel-btn-placeholder" type="button">Common errors</button>
+          </div>
+        </section>
+
+        <section class="side-panel-section">
+          <p class="card-label">Current lesson</p>
+          <div class="side-panel-meta">
+            <div class="side-meta-row">
+              <span>Title</span>
+              <strong id="sidebar-lesson-title">Choose your story</strong>
+            </div>
+            <div class="side-meta-row">
+              <span>Theme</span>
+              <strong id="sidebar-theme">Greek myth</strong>
+            </div>
+            <div class="side-meta-row">
+              <span>Level</span>
+              <strong id="sidebar-difficulty">A1</strong>
+            </div>
+            <div class="side-meta-row">
+              <span>Progress</span>
+              <strong id="sidebar-progress">0 / 0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-panel-section">
+          <p class="card-label">Quick view</p>
+          <div class="side-panel-meta">
+            <div class="side-meta-row">
+              <span>Saved vocab</span>
+              <strong id="sidebar-vocab-count">0 items</strong>
+            </div>
+            <div class="side-meta-row">
+              <span>Error reminders</span>
+              <strong id="sidebar-reminder-count">0 items</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="side-panel-section side-panel-note">
+          <p class="card-label">Reading nook</p>
+          <p class="side-panel-copy">Keep this panel slim for now, then we can grow it into a full learner hub later.</p>
+        </section>
+      </aside>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-  <script src="/static/app.js?v=20260330-enterfix"></script>
+  <script src="/static/app.js?v=20260402-question-toolbar-167"></script>
 </body>
 </html>

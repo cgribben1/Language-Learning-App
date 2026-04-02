@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>French Adventure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/adventure.css?v=20260402-adventure-1">
+</head>
+<body>
+  <div class="adventure-shell">
+    <section class="hero-panel panel">
+      <div class="hero-copy">
+        <p class="eyebrow">French Adventure Mode</p>
+        <h1>Type your way through a living world.</h1>
+        <p>
+          Meet characters, solve problems, and move the story forward only by writing French.
+          NPCs react like helpful teachers inside the scene, and a markdown brain tracks the world state.
+        </p>
+        <div class="hero-actions">
+          <a class="ghost-link" href="/">Open classic trainer</a>
+        </div>
+      </div>
+
+      <form id="start-form" class="setup-grid">
+        <label>
+          <span>Difficulty</span>
+          <select id="difficulty">
+            <option value="A1">A1</option>
+            <option value="A2" selected>A2</option>
+            <option value="B1">B1</option>
+            <option value="B2">B2</option>
+            <option value="C1">C1</option>
+          </select>
+        </label>
+        <label>
+          <span>Theme</span>
+          <input id="theme" value="missing festival lanterns" maxlength="80">
+        </label>
+        <label>
+          <span>Setting</span>
+          <input id="setting" value="rainy seaside town" maxlength="80">
+        </label>
+        <label>
+          <span>Player name</span>
+          <input id="player-name" value="Camille" maxlength="40">
+        </label>
+        <button id="start-btn" type="submit">Start adventure</button>
+      </form>
+    </section>
+
+    <main class="game-grid">
+      <section class="world-panel panel">
+        <div class="world-header">
+          <div>
+            <p id="source-pill" class="source-pill">Waiting</p>
+            <h2 id="adventure-title">A wider French world</h2>
+          </div>
+          <div class="turn-box">
+            <span>Turn</span>
+            <strong id="turn-count">0</strong>
+          </div>
+        </div>
+
+        <div class="scene-stage" aria-hidden="true">
+          <div class="scene-backdrop"></div>
+          <div class="scene-halo"></div>
+          <div class="scene-moon"></div>
+          <div class="scene-cloud scene-cloud-one"></div>
+          <div class="scene-cloud scene-cloud-two"></div>
+          <div class="scene-hill scene-hill-back"></div>
+          <div class="scene-hill scene-hill-front"></div>
+          <div class="scene-tower"></div>
+          <div class="scene-player"></div>
+          <div class="scene-npc"></div>
+          <div class="scene-lantern scene-lantern-one"></div>
+          <div class="scene-lantern scene-lantern-two"></div>
+          <div class="scene-lantern scene-lantern-three"></div>
+        </div>
+
+        <div class="scene-copy">
+          <div class="scene-line">
+            <span class="label">Location</span>
+            <strong id="location-name">Start a game to begin</strong>
+          </div>
+          <p id="location-description" class="lead-copy">The world scene will appear here.</p>
+          <div class="scene-tags">
+            <span id="visual-motif" class="tag">visual motif</span>
+            <span id="ambience" class="tag">ambience</span>
+          </div>
+        </div>
+
+        <section class="dialogue-card">
+          <p class="eyebrow">Current Objective</p>
+          <p id="objective" class="objective-copy">Use the setup panel to create a session.</p>
+          <p id="player-prompt" class="prompt-copy"></p>
+          <div class="npc-message">
+            <div class="npc-head">
+              <strong id="npc-name">NPC</strong>
+              <span id="npc-role">role</span>
+            </div>
+            <p id="npc-french">Le monde attend.</p>
+            <p id="npc-english" class="subtle-copy"></p>
+          </div>
+        </section>
+
+        <form id="action-form" class="action-form">
+          <label for="learner-input">Your action in French</label>
+          <textarea id="learner-input" placeholder="Bonjour, je peux vous aider ?" rows="3"></textarea>
+          <div class="action-row">
+            <p id="status-copy" class="status-copy">Start an adventure, then type French to act.</p>
+            <button id="act-btn" type="submit" disabled>Send action</button>
+          </div>
+        </form>
+
+        <section id="feedback-panel" class="feedback-panel hidden">
+          <div class="feedback-head">
+            <h3>Teacher feedback</h3>
+            <span id="feedback-score" class="score-pill">0</span>
+          </div>
+          <p id="feedback-note"></p>
+          <p><strong>Correction:</strong> <span id="feedback-correction"></span></p>
+          <p id="feedback-encouragement" class="subtle-copy"></p>
+        </section>
+
+        <section class="transcript-panel">
+          <div class="panel-head">
+            <h3>Transcript</h3>
+          </div>
+          <div id="transcript-list" class="transcript-list"></div>
+        </section>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel side-panel">
+          <div class="panel-head">
+            <h3>Characters</h3>
+          </div>
+          <div id="characters-list" class="stack-list"></div>
+        </section>
+
+        <section class="panel side-panel">
+          <div class="panel-head">
+            <h3>Tasks</h3>
+          </div>
+          <div id="tasks-list" class="stack-list"></div>
+        </section>
+
+        <section class="panel side-panel">
+          <div class="panel-head">
+            <h3>Inventory</h3>
+          </div>
+          <div id="inventory-list" class="stack-list"></div>
+        </section>
+
+        <section class="panel side-panel brain-panel">
+          <div class="panel-head">
+            <h3>Markdown Brain</h3>
+          </div>
+          <pre id="brain-output" class="brain-output"># Adventure Brain</pre>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="/static/adventure.js?v=20260402-adventure-1"></script>
+</body>
+</html>

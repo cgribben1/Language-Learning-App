@@ -11,6 +11,7 @@ DifficultyLevel = Literal["A1", "A2", "B1", "B2", "C1"]
 class VocabHint(BaseModel):
     english: str
     french: str
+    display_french: str = ""
     note: str = ""
 
 
@@ -35,7 +36,12 @@ class LessonResponse(BaseModel):
     difficulty: DifficultyLevel
     theme: str
     lesson_type: str
-    source: Literal["openai", "fallback"]
+    source: Literal["openai"]
+    requested_sentence_count: int
+    available_sentence_count: int
+    is_complete: bool
+    status: Literal["generating", "ready", "failed"] = "ready"
+    error_message: str = ""
     sentences: list[LessonSentence]
 
 
@@ -45,23 +51,25 @@ class EvaluationRequest(BaseModel):
     learner_answer: str
     difficulty: DifficultyLevel
     context_note: str = ""
+    vocab_hints: list[VocabHint] = Field(default_factory=list)
 
 
 class EvaluationResponse(BaseModel):
     is_correct: bool
     correctness_score: int = Field(ge=0, le=100)
     naturalness_score: int = Field(ge=0, le=100)
-    accent_issues_only: bool = False
     verdict: str
     learner_normalized: str
     target_normalized: str
+    accepted_learner_french: str = ""
     suggested_french: str
     more_common_french: str
     tips: list[str] = Field(default_factory=list)
     mistakes: list[str] = Field(default_factory=list)
+    learner_token_labels: list[Literal["correct", "acceptable", "wrong"]] = Field(default_factory=list)
     reminders_triggered: list[str] = Field(default_factory=list)
     encouraging_note: str = ""
-    source: Literal["openai", "fallback"]
+    source: Literal["openai"]
 
 
 class PhraseExplainRequest(BaseModel):
@@ -77,7 +85,7 @@ class PhraseExplainResponse(BaseModel):
     english_meaning: str
     usage_note: str = ""
     save_note: str = ""
-    source: Literal["openai", "fallback"]
+    source: Literal["dictionary"]
 
 
 class SaveVocabRequest(BaseModel):
@@ -109,3 +117,66 @@ class ReminderItem(BaseModel):
 
 class ReminderResponse(BaseModel):
     items: list[ReminderItem]
+
+
+class AdventureStartRequest(BaseModel):
+    difficulty: DifficultyLevel = "A2"
+    theme: str = "lost festival lanterns"
+    setting: str = "rainy seaside town"
+    player_name: str = "Camille"
+
+
+class AdventureActionRequest(BaseModel):
+    session_id: str
+    learner_french: str
+
+
+class AdventureCharacter(BaseModel):
+    name: str
+    role: str
+    mood: str = ""
+    note: str = ""
+
+
+class AdventureTask(BaseModel):
+    title: str
+    description: str
+    status: Literal["active", "complete"] = "active"
+
+
+class AdventureScene(BaseModel):
+    location_name: str
+    location_description: str
+    visual_motif: str
+    ambience: str
+    objective: str
+    player_prompt: str
+    npc_name: str
+    npc_role: str
+    npc_message_french: str
+    npc_message_english: str = ""
+
+
+class AdventureFeedback(BaseModel):
+    accepted: bool
+    score: int = Field(ge=0, le=100)
+    correction_french: str
+    teacher_note: str
+    encouragement: str = ""
+
+
+class AdventureStateResponse(BaseModel):
+    session_id: str
+    title: str
+    difficulty: DifficultyLevel
+    theme: str
+    setting: str
+    turn: int
+    source: Literal["openai", "fallback"]
+    scene: AdventureScene
+    characters: list[AdventureCharacter] = Field(default_factory=list)
+    tasks: list[AdventureTask] = Field(default_factory=list)
+    inventory: list[str] = Field(default_factory=list)
+    transcript: list[str] = Field(default_factory=list)
+    brain_markdown: str = ""
+    feedback: AdventureFeedback | None = None
