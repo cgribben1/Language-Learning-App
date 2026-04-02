@@ -98,7 +98,7 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             key=item["key"],
             label=item["label"],
             explanation=item["explanation"],
-            target=request.target_french,
+            target=request.target_sentence,
             answer=request.learner_answer,
         )
     feedback.reminders_triggered = [item["label"] for item in triggered]

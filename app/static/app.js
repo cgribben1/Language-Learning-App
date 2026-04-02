@@ -986,11 +986,11 @@ function formatCorrectSentenceDisplay(answer) {
   return formatted;
 }
 
-function getDisplayedCorrectFrench(feedback) {
+function getDisplayedCorrectSentence(feedback) {
   const current = currentSentence();
-  const acceptedLearner = pickSingleFrenchSentence(feedback.accepted_learner_french);
-  const suggested = pickSingleFrenchSentence(feedback.suggested_french);
-  const moreCommon = pickSingleFrenchSentence(feedback.more_common_french);
+  const acceptedLearner = pickSingleFrenchSentence(feedback.accepted_learner_sentence);
+  const suggested = pickSingleFrenchSentence(feedback.suggested_sentence);
+  const moreCommon = pickSingleFrenchSentence(feedback.more_common_sentence);
   const fallbackTarget = pickSingleFrenchSentence(current?.french || "");
   if (acceptedLearner) {
     return acceptedLearner;
@@ -2071,30 +2071,30 @@ function renderFeedback(feedback) {
   const feedbackSentence = state.lesson?.sentences?.[state.currentIndex] || currentSentence();
   const questionSentenceDisplay = `"${feedbackSentence?.english || ""}"`;
   const learnerAnswerDisplay = formatLearnerAnswerDisplay(state.lastAnswer);
-  const displayedCorrectFrench = formatCorrectSentenceDisplay(
-    getDisplayedCorrectFrench(feedback) || feedbackSentence?.french || state.lesson?.sentences?.[state.currentIndex]?.french || "",
+  const displayedCorrectSentence = formatCorrectSentenceDisplay(
+    getDisplayedCorrectSentence(feedback) || feedbackSentence?.french || state.lesson?.sentences?.[state.currentIndex]?.french || "",
   );
-  const canonicalTargetFrench = formatCorrectSentenceDisplay(
-    pickSingleFrenchSentence(feedback.suggested_french) || feedbackSentence?.french || displayedCorrectFrench,
+  const canonicalTargetSentence = formatCorrectSentenceDisplay(
+    pickSingleFrenchSentence(feedback.suggested_sentence) || feedbackSentence?.french || displayedCorrectSentence,
   );
   const learnerTokenLabels = promoteAcceptableDifferenceLabels(
     learnerAnswerDisplay,
-    canonicalTargetFrench,
+    canonicalTargetSentence,
       feedback.learner_token_labels || [],
       Boolean(feedback.is_correct),
     );
   const learnerAnswerMarkup = buildLearnerAnswerMarkup(
     learnerAnswerDisplay,
-    canonicalTargetFrench,
+    canonicalTargetSentence,
     learnerTokenLabels,
   );
-  const correctFrenchMarkup = buildCorrectSentenceMarkup(displayedCorrectFrench);
+  const correctSentenceMarkup = buildCorrectSentenceMarkup(displayedCorrectSentence);
   el.feedbackQuestionText.textContent = "";
   el.learnerAnswer.innerHTML = "";
   el.correctFrench.innerHTML = "";
   reserveTextBlockHeight(el.feedbackQuestionText, questionSentenceDisplay);
   reserveAnimatedMarkupHeight(el.learnerAnswer, learnerAnswerMarkup);
-  reserveAnimatedMarkupHeight(el.correctFrench, correctFrenchMarkup);
+  reserveAnimatedMarkupHeight(el.correctFrench, correctSentenceMarkup);
   const questionSentenceEndDelay = animatePlainText(
     el.feedbackQuestionText,
       questionSentenceDisplay,
@@ -2102,14 +2102,14 @@ function renderFeedback(feedback) {
     );
   const yourAnswerEndDelay = animateInlineSegments(
     el.learnerAnswer,
-    buildLearnerAnswerSegments(learnerAnswerDisplay, canonicalTargetFrench, learnerTokenLabels),
+    buildLearnerAnswerSegments(learnerAnswerDisplay, canonicalTargetSentence, learnerTokenLabels),
     Math.max(yourAnswerStartDelay + 120, questionSentenceEndDelay + 40),
     28,
   );
   const correctSentenceStartDelay = yourAnswerEndDelay + 70;
   const correctSentenceEndDelay = animateInlineSegments(
     el.correctFrench,
-    buildCorrectSentenceSegments(displayedCorrectFrench),
+    buildCorrectSentenceSegments(displayedCorrectSentence),
     correctSentenceStartDelay + 120,
     30,
   );
@@ -2197,8 +2197,8 @@ async function explainPhrase(phrase, anchorElement) {
     body: JSON.stringify({
       english_sentence: sentence.english,
       language: currentLanguage(),
-      french_sentence: sentence.french,
-      selected_phrase: phrase,
+      target_sentence: sentence.french,
+      selected_text: phrase,
       difficulty: state.lesson.difficulty,
       vocab_hints: sentence.vocab_hints || [],
     }),
@@ -2211,7 +2211,7 @@ async function explainPhrase(phrase, anchorElement) {
     source_sentence: sentence.english,
   };
 
-  el.phraseTitle.textContent = phrase;
+  el.phraseTitle.textContent = data.selected_text || phrase;
   el.phraseMeaning.textContent = data.english_meaning;
   el.phraseNote.textContent = data.usage_note || data.save_note || "";
   el.phraseExplainer.classList.remove("hidden");
@@ -2423,7 +2423,7 @@ async function evaluateCurrentAnswer() {
       body: JSON.stringify({
         language: currentLanguage(),
         english: sentence.english,
-        target_french: sentence.french,
+        target_sentence: sentence.french,
         learner_answer: learnerAnswer,
         difficulty: state.lesson.difficulty,
         context_note: sentence.context_note,
@@ -2526,8 +2526,8 @@ function revealAndSkip() {
     verdict: "Revealed target answer.",
     correctness_score: 0,
     naturalness_score: 0,
-    suggested_french: sentence.french,
-    more_common_french: sentence.french,
+    suggested_sentence: sentence.french,
+    more_common_sentence: sentence.french,
     tips: ["Read the target answer aloud once before moving on."],
     mistakes: [],
     learner_token_labels: [],

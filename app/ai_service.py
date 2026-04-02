@@ -263,7 +263,7 @@ def lookup_wiktionary_french_definition(phrase: str, sentence: str) -> tuple[str
 
 def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationResponse) -> list[dict[str, str]]:
     learner = normalize_french(request.learner_answer)
-    target = normalize_french(request.target_french)
+    target = normalize_french(request.target_sentence)
     triggers: list[dict[str, str]] = []
 
     if request.language == "spanish":
@@ -426,13 +426,13 @@ def note_contradicts_canonical_vocab(text: str, canonical_phrases: list[str]) ->
     return any(phrase and phrase in normalized for phrase in canonical_phrases)
 
 
-def note_conflicts_target_structure(text: str, target_french: str) -> bool:
+def note_conflicts_target_structure(text: str, target_sentence: str) -> bool:
     note_normalized = normalize_french(text)
-    target_normalized = normalize_french(target_french)
+    target_normalized = normalize_french(target_sentence)
     if not note_normalized or not target_normalized:
         return False
 
-    target_tokens = set(tokenize_french_context(target_french))
+    target_tokens = set(tokenize_french_context(target_sentence))
     anchored_after_match = re.search(r"\bafter ['\"]?([a-zà-ÿ]+)['\"]?", note_normalized)
     if anchored_after_match:
         anchor = normalize_french(anchored_after_match.group(1))
@@ -929,7 +929,7 @@ class AIService:
 
     def _score_answer_locally(self, request: EvaluationRequest) -> tuple[int, bool, bool]:
         learner_normalized = normalize_french(request.learner_answer)
-        target_normalized = normalize_french(request.target_french)
+        target_normalized = normalize_french(request.target_sentence)
         learner_tokens = learner_normalized.split()
         target_tokens = target_normalized.split()
         function_words = self._function_words(request.language)
@@ -987,7 +987,7 @@ class AIService:
 
     def _count_local_contraction_mismatches(self, request: EvaluationRequest) -> int:
         learner_tokens = [normalize_french(token) for token in re.split(r"\s+", request.learner_answer.strip()) if token]
-        target_tokens = [normalize_french(token) for token in re.split(r"\s+", request.target_french.strip()) if token]
+        target_tokens = [normalize_french(token) for token in re.split(r"\s+", request.target_sentence.strip()) if token]
         mismatch_count = 0
 
         contraction_expectations = (
@@ -1018,8 +1018,8 @@ class AIService:
 
         return mismatch_count
 
-    def _is_orthography_equivalent(self, learner_answer: str, target_french: str) -> bool:
-        return normalize_french(learner_answer) == normalize_french(target_french)
+    def _is_orthography_equivalent(self, learner_answer: str, target_sentence: str) -> bool:
+        return normalize_french(learner_answer) == normalize_french(target_sentence)
 
     def _apply_naturalness_adjustment(
         self,
@@ -1029,7 +1029,7 @@ class AIService:
         naturalness_score: int,
     ) -> tuple[int, bool]:
         learner_normalized = normalize_french(request.learner_answer)
-        target_normalized = normalize_french(request.target_french)
+        target_normalized = normalize_french(request.target_sentence)
 
         if not is_correct or learner_normalized == target_normalized:
             return correctness_score, is_correct
@@ -1082,7 +1082,7 @@ class AIService:
 
         return cleaned
 
-    def _sanitize_token_labels(self, labels: Any, learner_answer: str, target_french: str = "") -> list[str]:
+    def _sanitize_token_labels(self, labels: Any, learner_answer: str, target_sentence: str = "") -> list[str]:
         learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
         raw_labels = labels if isinstance(labels, list) else []
         cleaned_labels = [
@@ -1090,7 +1090,7 @@ class AIService:
             if label in {"correct", "acceptable", "wrong"}
         ]
         if len(cleaned_labels) == len(learner_tokens):
-            target_tokens = [part for part in re.split(r"\s+", target_french.strip()) if part]
+            target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
             if len(target_tokens) == len(learner_tokens):
                 for index, (learner_token, target_token) in enumerate(zip(learner_tokens, target_tokens)):
                     if normalize_french(learner_token) == normalize_french(target_token):
@@ -1101,7 +1101,7 @@ class AIService:
     def _build_fallback_token_labels(
         self,
         learner_answer: str,
-        target_french: str,
+        target_sentence: str,
         *,
         is_correct: bool,
     ) -> list[str]:
@@ -1110,7 +1110,7 @@ class AIService:
             return []
 
         learner_normalized = [normalize_french(token) for token in learner_tokens]
-        target_tokens = [part for part in re.split(r"\s+", target_french.strip()) if part]
+        target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
         target_normalized = [normalize_french(token) for token in target_tokens]
         target_counts = Counter(token for token in target_normalized if token)
 
@@ -1146,7 +1146,7 @@ class AIService:
             }
 
         learner_tokens = [part for part in re.split(r"\s+", request.learner_answer.strip()) if part]
-        target_tokens = [part for part in re.split(r"\s+", request.target_french.strip()) if part]
+        target_tokens = [part for part in re.split(r"\s+", request.target_sentence.strip()) if part]
         learner_normalized = [normalize_french(token) for token in learner_tokens]
         target_normalized = [normalize_french(token) for token in target_tokens]
 
@@ -1177,7 +1177,7 @@ class AIService:
 
     def _build_local_contraction_note(self, request: EvaluationRequest) -> str:
         learner_raw_tokens = [part for part in re.split(r"\s+", request.learner_answer.strip()) if part]
-        target_raw_tokens = [part for part in re.split(r"\s+", request.target_french.strip()) if part]
+        target_raw_tokens = [part for part in re.split(r"\s+", request.target_sentence.strip()) if part]
         learner_tokens = [normalize_french(token) for token in learner_raw_tokens]
         target_tokens = [normalize_french(token) for token in target_raw_tokens]
 
@@ -1239,7 +1239,7 @@ class AIService:
         cleaned = {
             **payload,
             "meaning_equivalent": False,
-            "accepted_learner_french": "",
+            "accepted_learner_sentence": "",
             "mistakes": [note],
             "tips": [],
         }
@@ -1252,8 +1252,8 @@ class AIService:
         correctness_score: int,
         is_correct: bool,
     ) -> dict[str, Any]:
-        accepted_learner_french = (payload.get("accepted_learner_french") or "").strip()
-        should_strip = accepted_learner_french or (is_correct and correctness_score >= 85)
+        accepted_learner_sentence = (payload.get("accepted_learner_sentence") or "").strip()
+        should_strip = accepted_learner_sentence or (is_correct and correctness_score >= 85)
         if not should_strip:
             return payload
 
@@ -1271,7 +1271,7 @@ class AIService:
         request: EvaluationRequest,
     ) -> dict[str, Any]:
         canonical_phrases = [
-            normalize_french(request.target_french),
+            normalize_french(request.target_sentence),
             *[normalize_french(hint.french) for hint in request.vocab_hints],
         ]
         canonical_phrases = [phrase for phrase in canonical_phrases if phrase]
@@ -1280,12 +1280,12 @@ class AIService:
         cleaned["tips"] = [
             tip for tip in cleaned.get("tips", [])
             if not note_contradicts_canonical_vocab(tip, canonical_phrases)
-            and not note_conflicts_target_structure(tip, request.target_french)
+            and not note_conflicts_target_structure(tip, request.target_sentence)
         ]
         cleaned["mistakes"] = [
             mistake for mistake in cleaned.get("mistakes", [])
             if not note_contradicts_canonical_vocab(mistake, canonical_phrases)
-            and not note_conflicts_target_structure(mistake, request.target_french)
+            and not note_conflicts_target_structure(mistake, request.target_sentence)
         ]
         return cleaned
 
@@ -2004,9 +2004,9 @@ class AIService:
                     "required_construction_note": {"type": "string"},
                     "naturalness_score": {"type": "integer", "minimum": 0, "maximum": 100},
                     "verdict": {"type": "string"},
-                    "accepted_learner_french": {"type": "string"},
-                    "suggested_french": {"type": "string"},
-                    "more_common_french": {"type": "string"},
+                    "accepted_learner_sentence": {"type": "string"},
+                    "suggested_sentence": {"type": "string"},
+                    "more_common_sentence": {"type": "string"},
                     "tips": {"type": "array", "items": {"type": "string"}},
                     "mistakes": {"type": "array", "items": {"type": "string"}},
                     "learner_token_labels": {
@@ -2021,9 +2021,9 @@ class AIService:
                     "required_construction_note",
                     "naturalness_score",
                     "verdict",
-                    "accepted_learner_french",
-                    "suggested_french",
-                    "more_common_french",
+                    "accepted_learner_sentence",
+                    "suggested_sentence",
+                    "more_common_sentence",
                     "tips",
                     "mistakes",
                     "learner_token_labels",
@@ -2068,8 +2068,8 @@ class AIService:
                             "Examples include mandatory contractions like au, aux, du, and fixed constructions like en espèces. "
                             "When that happens, set has_required_construction_issue to true and write one short English note in required_construction_note explaining the needed target construction. "
                             "When there is no such issue, set has_required_construction_issue to false and required_construction_note to an empty string. "
-                            "If the learner uses a different but fully acceptable French wording, set accepted_learner_french to a polished version of the learner's wording with proper accents and punctuation. "
-                            "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_french to an empty string. "
+                            f"If the learner uses a different but fully acceptable {self._language_name(request.language)} wording, set accepted_learner_sentence to a polished version of the learner's wording with proper accents and punctuation. "
+                            "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_sentence to an empty string. "
                             "Only raise naturalness or idiomaticity issues when the learner's wording sounds clearly awkward, noticeably non-native, or distinctly less natural than standard everyday French. "
                             "Do not nitpick between two clearly natural, common phrasings that mean the same thing. "
                             "If the learner's French is already natural, do not offer a tiny stylistic swap as correction. "
@@ -2111,7 +2111,7 @@ class AIService:
                         "content": (
                             f"Difficulty: {request.difficulty}\n"
                             f"English prompt: {request.english}\n"
-                            f"Target {self._language_name(request.language)}: {request.target_french}\n"
+                            f"Target {self._language_name(request.language)}: {request.target_sentence}\n"
                             f"Context note: {request.context_note}\n"
                             f"Canonical vocab hints: {', '.join(f'{hint.french} = {hint.english}' for hint in request.vocab_hints) or 'None'}\n"
                             f"Learner answer: {request.learner_answer}\n"
@@ -2141,10 +2141,10 @@ class AIService:
             raise RuntimeError("Answer evaluation failed to return structured JSON.")
         payload = self._sanitize_feedback_payload(payload)
         learner_normalized = normalize_french(request.learner_answer)
-        target_normalized = normalize_french(request.target_french)
+        target_normalized = normalize_french(request.target_sentence)
         orthography_equivalent = self._is_orthography_equivalent(
             request.learner_answer,
-            request.target_french,
+            request.target_sentence,
         )
         correctness_score, is_correct = self._score_answer_locally(request)
         correctness_score, is_correct = self._apply_naturalness_adjustment(
@@ -2159,9 +2159,9 @@ class AIService:
                 "meaning_equivalent": True,
                 "naturalness_score": max(90, int(payload.get("naturalness_score", 90))),
                 "verdict": "Correct and natural.",
-                "accepted_learner_french": polish_learner_french(request.learner_answer),
-                "suggested_french": request.target_french,
-                "more_common_french": request.target_french,
+                "accepted_learner_sentence": polish_learner_french(request.learner_answer),
+                "suggested_sentence": request.target_sentence,
+                "more_common_sentence": request.target_sentence,
                 "tips": [],
                 "mistakes": [],
                 "learner_token_labels": ["correct" for token in re.split(r"\s+", request.learner_answer.strip()) if token],
@@ -2178,9 +2178,9 @@ class AIService:
         if payload.get("meaning_equivalent"):
             correctness_score = max(correctness_score, 90)
             is_correct = True
-        if is_correct and not (payload.get("accepted_learner_french") or "").strip():
-            payload["accepted_learner_french"] = polish_learner_french(request.learner_answer)
-        accepted_learner_normalized = normalize_french(payload.get("accepted_learner_french", ""))
+        if is_correct and not (payload.get("accepted_learner_sentence") or "").strip():
+            payload["accepted_learner_sentence"] = polish_learner_french(request.learner_answer)
+        accepted_learner_normalized = normalize_french(payload.get("accepted_learner_sentence", ""))
         if accepted_learner_normalized and accepted_learner_normalized == learner_normalized:
             payload = {
                 **payload,
@@ -2194,7 +2194,7 @@ class AIService:
             correctness_score = max(correctness_score, 100)
             is_correct = True
         if not payload.get("meaning_equivalent") and not is_correct:
-            payload["accepted_learner_french"] = ""
+            payload["accepted_learner_sentence"] = ""
         payload = self._remove_fussy_style_feedback(
             payload,
             correctness_score=correctness_score,
@@ -2209,17 +2209,17 @@ class AIService:
         payload["learner_token_labels"] = self._sanitize_token_labels(
             payload.get("learner_token_labels"),
             request.learner_answer,
-            request.target_french,
+            request.target_sentence,
         ) or self._build_fallback_token_labels(
             request.learner_answer,
-            request.target_french,
+            request.target_sentence,
             is_correct=is_correct,
         )
         return EvaluationResponse(
             is_correct=is_correct,
             correctness_score=correctness_score,
             learner_normalized=normalize_french(request.learner_answer),
-            target_normalized=normalize_french(request.target_french),
+            target_normalized=normalize_french(request.target_sentence),
             reminders_triggered=[],
             source="openai",
             **payload,
@@ -2247,38 +2247,38 @@ class AIService:
         return None
 
     def _explain_phrase_local(self, request: PhraseExplainRequest) -> PhraseExplainResponse:
-        selected_normalized = normalize_french(request.selected_phrase)
+        selected_normalized = normalize_french(request.selected_text)
 
         for hint in request.vocab_hints:
             if normalize_french(hint.french) == selected_normalized:
                 return PhraseExplainResponse(
                     language=request.language,
-                    french_phrase=request.selected_phrase,
+                    selected_text=request.selected_text,
                     english_meaning=hint.english,
                     usage_note=hint.note or "Useful vocabulary from this sentence.",
                     save_note=f"From: {request.english_sentence}",
                     source="dictionary",
                 )
 
-        dictionary_entry = self._lookup_phrase_entry(request.selected_phrase, request.language)
+        dictionary_entry = self._lookup_phrase_entry(request.selected_text, request.language)
         if dictionary_entry is not None:
             return PhraseExplainResponse(
                 language=request.language,
-                french_phrase=request.selected_phrase,
+                selected_text=request.selected_text,
                 english_meaning=dictionary_entry["english_meaning"],
                 usage_note=dictionary_entry.get("usage_note", ""),
                 save_note=f"From: {request.english_sentence}",
                 source="dictionary",
             )
 
-        phrase_tokens = tokenize_french_context(request.selected_phrase)
+        phrase_tokens = tokenize_french_context(request.selected_text)
         if len(phrase_tokens) > 1:
             token_entries = [self._lookup_phrase_entry(token, request.language) for token in phrase_tokens]
             known_tokens = [entry["english_meaning"] for entry in token_entries if entry is not None]
             if known_tokens:
                 return PhraseExplainResponse(
                     language=request.language,
-                    french_phrase=request.selected_phrase,
+                    selected_text=request.selected_text,
                     english_meaning=" / ".join(known_tokens),
                     usage_note="Combined from the local dictionary because this exact phrase was not stored yet.",
                     save_note=f"From: {request.english_sentence}",
@@ -2287,8 +2287,8 @@ class AIService:
 
         return PhraseExplainResponse(
             language=request.language,
-            french_phrase=request.selected_phrase,
-            english_meaning=f"Sentence-specific meaning of '{request.selected_phrase}'",
+            selected_text=request.selected_text,
+            english_meaning=f"Sentence-specific meaning of '{request.selected_text}'",
             usage_note="No exact entry was found in the local dictionary yet, so use the surrounding sentence for context.",
             save_note=f"From: {request.english_sentence}",
             source="dictionary",
@@ -2330,8 +2330,8 @@ class AIService:
                     "role": "user",
                     "content": (
                         f"English sentence: {request.english_sentence}\n"
-                        f"French sentence: {request.french_sentence}\n"
-                        f"Selected phrase: {request.selected_phrase}\n"
+                        f"Target sentence: {request.target_sentence}\n"
+                        f"Selected text: {request.selected_text}\n"
                         f"Difficulty: {request.difficulty}\n"
                         f"Known hints: {hint_text}\n"
                         "Return the meaning, a short usage note, and a short flashcard note."
@@ -2343,7 +2343,7 @@ class AIService:
         payload = json.loads(response.output_text)
         return PhraseExplainResponse(
             language=request.language,
-            french_phrase=request.selected_phrase,
+            selected_text=request.selected_text,
             source="openai",
             **payload,
         )
@@ -2591,7 +2591,7 @@ class AIService:
 
     def _evaluate_answer_fallback(self, request: EvaluationRequest) -> EvaluationResponse:
         learner_normalized = normalize_french(request.learner_answer)
-        target_normalized = normalize_french(request.target_french)
+        target_normalized = normalize_french(request.target_sentence)
         exact_match = learner_normalized == target_normalized
         similarity = int(SequenceMatcher(None, learner_normalized, target_normalized).ratio() * 100)
         reminder_triggers = detect_reminder_triggers(
@@ -2603,8 +2603,8 @@ class AIService:
                 verdict="",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
-                suggested_french=request.target_french,
-                more_common_french=request.target_french,
+                suggested_sentence=request.target_sentence,
+                more_common_sentence=request.target_sentence,
                 tips=[],
                 mistakes=[],
                 learner_token_labels=[],
@@ -2622,13 +2622,13 @@ class AIService:
                 verdict="Correct and natural.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
-                suggested_french=request.target_french,
-                more_common_french=request.target_french,
+                suggested_sentence=request.target_sentence,
+                more_common_sentence=request.target_sentence,
                 tips=["Nice work. This matches the target meaning very closely."],
                 mistakes=[],
                 learner_token_labels=self._build_fallback_token_labels(
                     request.learner_answer,
-                    request.target_french,
+                    request.target_sentence,
                     is_correct=True,
                 ),
                 reminders_triggered=[],
@@ -2644,8 +2644,8 @@ class AIService:
                 verdict="Close, but an important grammar word is missing.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
-                suggested_french=request.target_french,
-                more_common_french=request.target_french,
+                suggested_sentence=request.target_sentence,
+                more_common_sentence=request.target_sentence,
                 tips=[
                     "You are close on the main meaning.",
                     "French often needs a small linking word here: compare your answer with the suggested version carefully.",
@@ -2653,7 +2653,7 @@ class AIService:
                 mistakes=[item["explanation"] for item in reminder_triggers],
                 learner_token_labels=self._build_fallback_token_labels(
                     request.learner_answer,
-                    request.target_french,
+                    request.target_sentence,
                     is_correct=False,
                 ),
                 reminders_triggered=[],
@@ -2669,8 +2669,8 @@ class AIService:
                 verdict="Probably correct, but the wording could be smoother.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
-                suggested_french=request.target_french,
-                more_common_french=request.target_french,
+                suggested_sentence=request.target_sentence,
+                more_common_sentence=request.target_sentence,
                 tips=[
                     "Your answer is close in meaning.",
                     "Compare your word order with the suggested French.",
@@ -2678,7 +2678,7 @@ class AIService:
                 mistakes=["Some wording is less idiomatic than the target sentence."],
                 learner_token_labels=self._build_fallback_token_labels(
                     request.learner_answer,
-                    request.target_french,
+                    request.target_sentence,
                     is_correct=True,
                 ),
                 reminders_triggered=[],
@@ -2693,8 +2693,8 @@ class AIService:
             verdict="Not quite right yet.",
             learner_normalized=learner_normalized,
             target_normalized=target_normalized,
-            suggested_french=request.target_french,
-            more_common_french=request.target_french,
+            suggested_sentence=request.target_sentence,
+            more_common_sentence=request.target_sentence,
             tips=[
                 "Check the core verb and the small grammar words.",
                 "Use the suggested answer as a model, then try the next sentence quickly.",
@@ -2702,7 +2702,7 @@ class AIService:
             mistakes=["The meaning or structure differs noticeably from the target sentence."],
             learner_token_labels=self._build_fallback_token_labels(
                 request.learner_answer,
-                request.target_french,
+                request.target_sentence,
                 is_correct=False,
             ),
             reminders_triggered=[],
@@ -2711,7 +2711,7 @@ class AIService:
         )
 
     def _explain_phrase_fallback(self, request: PhraseExplainRequest) -> PhraseExplainResponse:
-        selected_normalized = normalize_french(request.selected_phrase)
+        selected_normalized = normalize_french(request.selected_text)
         common_phrases = {
             "pres de": {
                 "english_meaning": "near / close to",
@@ -2734,18 +2734,18 @@ class AIService:
         if selected_normalized in common_phrases:
             phrase_data = common_phrases[selected_normalized]
             return PhraseExplainResponse(
-                french_phrase=request.selected_phrase,
+                selected_text=request.selected_text,
                 english_meaning=phrase_data["english_meaning"],
                 usage_note=phrase_data["usage_note"],
                 save_note=f"From: {request.english_sentence}",
                 source="fallback",
             )
 
-        wiktionary_result = lookup_wiktionary_french_definition(request.selected_phrase, request.french_sentence)
+        wiktionary_result = lookup_wiktionary_french_definition(request.selected_text, request.target_sentence)
         if wiktionary_result is not None:
             english_meaning, usage_note = wiktionary_result
             return PhraseExplainResponse(
-                french_phrase=request.selected_phrase,
+                selected_text=request.selected_text,
                 english_meaning=english_meaning,
                 usage_note=usage_note,
                 save_note=f"From: {request.english_sentence}",
@@ -2755,16 +2755,16 @@ class AIService:
         for hint in request.vocab_hints:
             if normalize_french(hint.french) == selected_normalized:
                 return PhraseExplainResponse(
-                    french_phrase=request.selected_phrase,
+                    selected_text=request.selected_text,
                     english_meaning=hint.english,
                     usage_note=hint.note or "Useful vocabulary from this sentence.",
                     save_note=f"From: {request.english_sentence}",
                     source="fallback",
                 )
 
-        phrase = request.selected_phrase.strip()
+        phrase = request.selected_text.strip()
         return PhraseExplainResponse(
-            french_phrase=phrase,
+            selected_text=phrase,
             english_meaning=f"Meaning of '{phrase}' in this sentence",
             usage_note="No custom hint was available, so treat this as a sentence-specific lookup target.",
             save_note=f"From: {request.english_sentence}",
