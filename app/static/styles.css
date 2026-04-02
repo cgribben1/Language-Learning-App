@@ -415,6 +415,7 @@ button:disabled {
 .action-row {
   justify-content: flex-end;
   flex-wrap: wrap;
+  align-items: flex-end;
 }
 
 .hint-toolbar {
