@@ -1160,6 +1160,15 @@ kbd {
   animation-delay: var(--wave-delay, 0ms);
 }
 
+.generating-copy.wave-active .wave-char::after {
+  content: "";
+}
+
+.generating-copy.wave-active .wave-char + .wave-char {
+  animation: generatingWaveEcho 120ms ease-out 1;
+  animation-delay: calc(var(--wave-delay, 0ms) + 20ms);
+}
+
 @keyframes generatingWave {
   0%,
   100% {
@@ -1173,6 +1182,22 @@ kbd {
   70% {
     transform: translateY(0.03em);
     opacity: 0.92;
+  }
+}
+
+@keyframes generatingWaveEcho {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.84;
+  }
+  45% {
+    transform: translateY(-0.1em) scale(1.01);
+    opacity: 0.96;
+  }
+  70% {
+    transform: translateY(0.02em);
+    opacity: 0.9;
   }
 }
 
