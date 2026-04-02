@@ -319,6 +319,11 @@ label span {
   text-align: center;
 }
 
+#setup-panel .form-field select,
+#setup-panel .form-field input {
+  text-align: left;
+}
+
 #setup-panel #theme {
   text-align: left;
 }
