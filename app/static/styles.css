@@ -612,16 +612,18 @@ kbd {
   gap: 8px;
 }
 
-.feedback-comparison-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-}
-
 .feedback-sentence-block {
   display: grid;
   gap: 4px;
+}
+
+.feedback-comparison-stack {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(236, 225, 206, 0.78);
+  border: 1px solid rgba(62, 41, 28, 0.08);
 }
 
 .feedback-arrow {
@@ -658,37 +660,6 @@ kbd {
 .feedback-arrow-active .feedback-arrow-head {
   opacity: 1;
   transform: translateY(0);
-}
-
-.feedback-arrow-horizontal {
-  align-self: center;
-  min-height: auto;
-  min-width: 52px;
-  grid-auto-flow: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.feedback-arrow-horizontal .feedback-arrow-line {
-  width: 42px;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(166, 41, 13, 0.16), rgba(166, 41, 13, 0.78));
-  transform: scaleX(0);
-  transform-origin: left center;
-}
-
-.feedback-arrow-horizontal .feedback-arrow-head {
-  transform: translateX(-5px);
-  transition: opacity 180ms ease 220ms, transform 220ms ease 220ms;
-}
-
-.feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-line {
-  transform: scaleX(1);
-}
-
-.feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-head {
-  transform: translateX(0);
 }
 
 #feedback-question-text {
@@ -1425,6 +1396,10 @@ body.bauhaus-colors .feedback-card {
   background: rgba(244, 235, 221, 0.92) !important;
 }
 
+body.bauhaus-colors .feedback-comparison-stack {
+  background: rgba(236, 225, 206, 0.92);
+}
+
 body.bauhaus-colors #learner-answer .answer-word-correct,
 body.bauhaus-colors #learner-answer .answer-word-acceptable,
 body.bauhaus-colors #learner-answer .answer-word-wrong,
@@ -1729,34 +1704,6 @@ body.landing-bauhaus-colors #generate-btn {
   .final-story-grid,
   .reference-grid {
     grid-template-columns: 1fr;
-  }
-
-  .feedback-comparison-row {
-    grid-template-columns: 1fr;
-  }
-
-  .feedback-arrow-horizontal {
-    justify-self: center;
-  }
-
-  .feedback-arrow-horizontal .feedback-arrow-line {
-    width: 2px;
-    height: 28px;
-    background: linear-gradient(180deg, rgba(166, 41, 13, 0.16), rgba(166, 41, 13, 0.78));
-    transform: scaleY(0);
-    transform-origin: top center;
-  }
-
-  .feedback-arrow-horizontal .feedback-arrow-head {
-    transform: translateY(-5px);
-  }
-
-  .feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-line {
-    transform: scaleY(1);
-  }
-
-  .feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-head {
-    transform: translateY(0);
   }
 
   .lesson-form {
