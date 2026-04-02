@@ -1842,8 +1842,7 @@ body.bauhaus-colors #check-btn,
 body.bauhaus-colors #check-btn:hover,
 body.bauhaus-colors #check-btn:focus,
 body.bauhaus-colors #check-btn:active {
-  background: #f2b705 !important;
-  background-image: none !important;
+  background: linear-gradient(135deg, #a6290d 0%, #7f2447 38%, #0477bf 100%) !important;
   color: #fffdf9 !important;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
 }
@@ -1947,7 +1946,7 @@ body.bauhaus-colors .moon-core {
 }
 
 body.bauhaus-colors .score-bar-fill {
-  background: linear-gradient(90deg, #a6290d, #f2b705);
+  background: linear-gradient(90deg, #a6290d 0%, #7f2447 45%, #0477bf 100%);
 }
 
 #correct-french .inline-phrase-btn,
