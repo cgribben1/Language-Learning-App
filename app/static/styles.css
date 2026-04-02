@@ -594,10 +594,10 @@ kbd {
 .feedback-card {
   display: grid;
   gap: 18px;
-  padding: 10px 0 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
+  padding: 18px;
+  border: 1px solid rgba(62, 41, 28, 0.1);
+  border-radius: 20px;
+  background: #fffdf9;
 }
 
 .feedback-question-block {
@@ -625,6 +625,14 @@ kbd {
 
 .score-grid-single {
   grid-template-columns: minmax(160px, 220px);
+}
+
+.feedback-heading .score-card {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .score-card,
@@ -1262,7 +1270,7 @@ body.bauhaus-colors .side-panel-btn {
 }
 
 body.bauhaus-colors .feedback-card {
-  background: transparent !important;
+  background: #fffdf9 !important;
 }
 
 body.bauhaus-colors .generating-panel {
