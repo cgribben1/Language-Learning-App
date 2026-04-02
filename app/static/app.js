@@ -211,6 +211,50 @@ const CHECKING_TIPS_BY_LEVEL = {
   ],
 };
 
+const CHECKING_TIPS_BY_LEVEL_SPANISH = {
+  A1: [
+    "Helpful tip: \"Tengo\" means \"I have\" and is one of the most useful starters.",
+    "Helpful tip: Spanish often needs an article like \"un\", \"una\", \"el\", or \"la\".",
+    "Helpful tip: \"Soy\" and \"estoy\" are different, so watch which kind of \"to be\" you need.",
+    "Helpful tip: Common useful phrase: \"Quiero...\" means \"I want...\".",
+    "Helpful tip: Basic adjectives often come after the noun in Spanish.",
+    "Helpful tip: \"Hay\" means \"there is\" or \"there are\".",
+    "Helpful tip: \"Me llamo...\" means \"My name is...\" and is worth knowing early.",
+    "Helpful tip: Watch noun gender from the start: \"un\" and \"una\" matter.",
+    "Helpful tip: \"Voy a...\" is a very common way to say the near future.",
+    "Helpful tip: Short words like \"de\", \"a\", and \"en\" can change the whole sentence."
+  ],
+  A2: [
+    "Helpful tip: After \"querer\", \"poder\", and \"ir a\", Spanish often uses an infinitive.",
+    "Helpful tip: Watch common contractions like \"al\" and \"del\".",
+    "Helpful tip: \"Porque\" gives a reason, while \"para\" often points to purpose.",
+    "Helpful tip: \"Entrar en\" is often better than leaving out the preposition.",
+    "Helpful tip: \"Acabar de\" helps you say you have just done something.",
+    "Helpful tip: \"Hay que\" is a useful way to say what is necessary.",
+    "Helpful tip: Reflexive verbs are common in daily routine, like \"me levanto\".",
+    "Helpful tip: Keep one clear main idea per sentence before adding detail."
+  ],
+  B1: [
+    "Helpful tip: Keep an eye on tense consistency across the sentence.",
+    "Helpful tip: Connect ideas naturally instead of stacking short literal translations.",
+    "Helpful tip: Useful connectors include \"mientras\", \"aunque\", and \"entonces\".",
+    "Helpful tip: B1 Spanish improves a lot when articles and prepositions are precise.",
+    "Helpful tip: Good intermediate Spanish often sounds simpler than a literal English calque."
+  ],
+  B2: [
+    "Helpful tip: At B2, natural connector choice matters almost as much as grammar.",
+    "Helpful tip: Stronger Spanish often comes from tighter phrasing, not more words.",
+    "Helpful tip: Check whether the register sounds neutral, formal, or conversational.",
+    "Helpful tip: Good B2 answers often reorganize the sentence rather than translate word by word."
+  ],
+  C1: [
+    "Helpful tip: At C1, nuance and register matter as much as correctness.",
+    "Helpful tip: Look for a sharper idiomatic phrasing rather than a literal one.",
+    "Helpful tip: Advanced Spanish often improves through cleaner clause structure.",
+    "Helpful tip: Ask whether the sentence sounds genuinely native, not just grammatical."
+  ],
+};
+
 const GENERATING_STORY_LINES = [
   "Gathering a fresh little world, one sentence at a time.",
   "Letting the pages rustle until the story finds its shape.",
@@ -947,14 +991,21 @@ function getDisplayedCorrectFrench(feedback) {
   const acceptedLearner = pickSingleFrenchSentence(feedback.accepted_learner_french);
   const suggested = pickSingleFrenchSentence(feedback.suggested_french);
   const moreCommon = pickSingleFrenchSentence(feedback.more_common_french);
+  const fallbackTarget = pickSingleFrenchSentence(current?.french || "");
   if (acceptedLearner) {
     return acceptedLearner;
   }
+  if (!suggested && !moreCommon) {
+    return fallbackTarget;
+  }
   if (!moreCommon) {
-    return suggested;
+    return suggested || fallbackTarget;
+  }
+  if (!suggested) {
+    return moreCommon || fallbackTarget;
   }
   if (normalizeFrenchText(moreCommon) === normalizeFrenchText(suggested)) {
-    return suggested;
+    return suggested || fallbackTarget;
   }
   const hints = current?.vocab_hints || [];
   const breaksHintAlignment = hints.some((hint) => {
@@ -965,9 +1016,9 @@ function getDisplayedCorrectFrench(feedback) {
     return normalizeFrenchText(suggested).includes(hinted) && !normalizeFrenchText(moreCommon).includes(hinted);
   });
   if (breaksHintAlignment) {
-    return suggested;
+    return suggested || fallbackTarget;
   }
-  return moreCommon;
+  return moreCommon || suggested || fallbackTarget;
 }
 
 function buildNoteDedupKey(note) {
@@ -1112,7 +1163,8 @@ function shuffleIndexes(length) {
 }
 
 function ensureCheckingTipQueue(difficulty) {
-  const tips = CHECKING_TIPS_BY_LEVEL[difficulty] || [];
+  const tipBank = currentLanguage() === "spanish" ? CHECKING_TIPS_BY_LEVEL_SPANISH : CHECKING_TIPS_BY_LEVEL;
+  const tips = tipBank[difficulty] || [];
   const existingQueue = state.checkingTipQueueByDifficulty[difficulty] || [];
   if (existingQueue.length) {
     return existingQueue;
@@ -1132,7 +1184,8 @@ function ensureCheckingTipQueue(difficulty) {
 }
 
 function pickNextCheckingTip(difficulty) {
-  const tips = CHECKING_TIPS_BY_LEVEL[difficulty] || CHECKING_TIPS_BY_LEVEL.A2;
+  const tipBank = currentLanguage() === "spanish" ? CHECKING_TIPS_BY_LEVEL_SPANISH : CHECKING_TIPS_BY_LEVEL;
+  const tips = tipBank[difficulty] || tipBank.A2;
   if (!tips.length) {
     return "Helpful tip: Watch the article, verb, and word order before you submit.";
   }
