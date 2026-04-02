@@ -670,6 +670,8 @@ kbd {
   display: grid;
   align-content: start;
   overflow: hidden;
+  padding: 16px 18px;
+  gap: 12px;
 }
 
 .reference-grid .saved-vocab-list {
