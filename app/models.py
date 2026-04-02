@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 DifficultyLevel = Literal["A1", "A2", "B1", "B2", "C1"]
@@ -51,7 +51,7 @@ class LessonResponse(BaseModel):
 class EvaluationRequest(BaseModel):
     language: LanguageCode = "french"
     english: str
-    target_french: str
+    target_sentence: str = Field(validation_alias=AliasChoices("target_sentence", "target_french"))
     learner_answer: str
     difficulty: DifficultyLevel
     context_note: str = ""
@@ -65,9 +65,9 @@ class EvaluationResponse(BaseModel):
     verdict: str
     learner_normalized: str
     target_normalized: str
-    accepted_learner_french: str = ""
-    suggested_french: str
-    more_common_french: str
+    accepted_learner_sentence: str = Field(default="", validation_alias=AliasChoices("accepted_learner_sentence", "accepted_learner_french"))
+    suggested_sentence: str = Field(validation_alias=AliasChoices("suggested_sentence", "suggested_french"))
+    more_common_sentence: str = Field(validation_alias=AliasChoices("more_common_sentence", "more_common_french"))
     tips: list[str] = Field(default_factory=list)
     mistakes: list[str] = Field(default_factory=list)
     learner_token_labels: list[Literal["correct", "acceptable", "wrong"]] = Field(default_factory=list)
@@ -79,15 +79,15 @@ class EvaluationResponse(BaseModel):
 class PhraseExplainRequest(BaseModel):
     language: LanguageCode = "french"
     english_sentence: str
-    french_sentence: str
-    selected_phrase: str
+    target_sentence: str = Field(validation_alias=AliasChoices("target_sentence", "french_sentence"))
+    selected_text: str = Field(validation_alias=AliasChoices("selected_text", "selected_phrase"))
     difficulty: DifficultyLevel
     vocab_hints: list[VocabHint] = Field(default_factory=list)
 
 
 class PhraseExplainResponse(BaseModel):
     language: LanguageCode = "french"
-    french_phrase: str
+    selected_text: str = Field(validation_alias=AliasChoices("selected_text", "french_phrase"))
     english_meaning: str
     usage_note: str = ""
     save_note: str = ""
