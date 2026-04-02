@@ -2223,8 +2223,6 @@ function renderReminders(items) {
         <span class="reminder-count">${item.count}x</span>
       </div>
       <p class="reminder-item-explanation">${item.explanation}</p>
-      <p class="reminder-item-meta"><span class="reminder-meta-label">Latest target</span>${item.last_target}</p>
-      <p class="reminder-item-meta"><span class="reminder-meta-label">Your latest answer</span>${item.last_answer}</p>
     `;
     el.remindersList.appendChild(div);
   });
