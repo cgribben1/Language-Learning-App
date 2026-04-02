@@ -220,8 +220,7 @@ body {
   aspect-ratio: 14 / 10;
   min-width: 28px;
   min-height: 20px;
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.12);
+  border-radius: 2px;
   background-repeat: no-repeat;
   background-size: 100% 100%;
   overflow: hidden;
@@ -255,18 +254,16 @@ body {
 
 .lang-flag-btn:hover {
   transform: translateY(-1px);
-  filter: drop-shadow(0 6px 14px rgba(27, 25, 22, 0.14));
+  filter: drop-shadow(0 4px 10px rgba(27, 25, 22, 0.14));
 }
 
 .lang-flag-btn.active {
   transform: translateY(-1px);
-  filter: drop-shadow(0 8px 16px rgba(166, 41, 13, 0.22));
+  filter: drop-shadow(0 5px 12px rgba(166, 41, 13, 0.2));
 }
 
 .lang-flag-btn.active .lang-flag {
-  box-shadow:
-    0 0 0 1px rgba(38, 29, 17, 0.18),
-    0 0 18px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.4);
 }
 
 .progress-box {
