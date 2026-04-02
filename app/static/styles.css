@@ -199,16 +199,17 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(62, 41, 28, 0.12);
-  background: rgba(255, 253, 249, 0.9);
-  box-shadow: 0 10px 24px rgba(27, 25, 22, 0.06);
+  width: 34px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   font-size: 1.18rem;
   line-height: 1;
   cursor: pointer;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
 }
 
 .lang-flag {
@@ -254,18 +255,12 @@ body {
 
 .lang-flag-btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(166, 41, 13, 0.22);
-  box-shadow:
-    0 16px 28px rgba(27, 25, 22, 0.1),
-    0 0 0 4px rgba(242, 183, 5, 0.12);
+  filter: drop-shadow(0 6px 14px rgba(27, 25, 22, 0.14));
 }
 
 .lang-flag-btn.active {
-  border-color: rgba(166, 41, 13, 0.42);
-  background: rgba(255, 246, 232, 1);
-  box-shadow:
-    0 18px 30px rgba(166, 41, 13, 0.16),
-    0 0 0 4px rgba(166, 41, 13, 0.08);
+  transform: translateY(-1px);
+  filter: drop-shadow(0 8px 16px rgba(166, 41, 13, 0.22));
 }
 
 .lang-flag-btn.active .lang-flag {
