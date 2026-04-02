@@ -1174,7 +1174,7 @@ body.bauhaus-colors #check-btn:active {
 body.bauhaus-colors input,
 body.bauhaus-colors select,
 body.bauhaus-colors textarea {
-  background: rgba(248, 240, 224, 0.94);
+  background: rgba(244, 235, 221, 0.92);
   border-color: rgba(26, 26, 26, 0.14);
   color: #1a1a1a;
 }
@@ -1193,6 +1193,10 @@ body.bauhaus-colors .checking-panel,
 body.bauhaus-colors .generating-panel,
 body.bauhaus-colors .side-panel-btn {
   background-color: rgba(242, 226, 196, 0.8);
+}
+
+body.bauhaus-colors .generating-panel {
+  background: rgba(244, 235, 221, 0.92);
 }
 
 body.bauhaus-colors .vocab-hint {
