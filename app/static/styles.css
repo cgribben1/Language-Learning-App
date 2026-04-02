@@ -626,6 +626,8 @@ kbd {
   display: grid;
   gap: 10px;
   min-width: 0;
+  grid-auto-rows: max-content;
+  width: 100%;
 }
 
 .saved-vocab-item,
@@ -634,11 +636,18 @@ kbd {
   display: grid;
   gap: 6px;
   align-content: start;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  font-size: 0.94rem;
+  line-height: 1.45;
 }
 
 .saved-vocab-item > div,
 .reminder-item > div,
 .empty-vocab > div {
+  display: block;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   white-space: normal;
@@ -658,19 +667,30 @@ kbd {
 }
 
 .reminder-item > div:first-child {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 10px;
-  flex-wrap: wrap;
+}
+
+.reminder-count {
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .reference-grid .vocab-card {
+  display: grid;
+  align-content: start;
   overflow: hidden;
 }
 
 .reference-grid .saved-vocab-list {
   align-content: start;
+}
+
+.reference-grid .saved-vocab-list > * {
+  min-width: 0;
+  width: 100%;
 }
 
 .story-so-far-card {
