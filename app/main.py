@@ -4,7 +4,7 @@ import hashlib
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
@@ -56,6 +56,7 @@ def config() -> dict[str, object]:
     return {
         "openai_enabled": ai_service.enabled,
         "adventure_openai_enabled": adventure_service.enabled,
+        "languages": ["french", "spanish"],
         "difficulties": ["A1", "A2", "B1", "B2", "C1"],
         "lesson_types": ["story", "dialogue", "film_scene", "auto"],
     }
@@ -93,6 +94,7 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
     triggered = detect_reminder_triggers(request, feedback)
     for item in triggered:
         record_reminder_hit(
+            language=request.language,
             key=item["key"],
             label=item["label"],
             explanation=item["explanation"],
@@ -127,8 +129,8 @@ def submit_adventure_action(request: AdventureActionRequest) -> AdventureStateRe
 
 
 @app.get("/api/vocab", response_model=SavedVocabResponse)
-def get_vocab() -> SavedVocabResponse:
-    return SavedVocabResponse(items=load_vocab())
+def get_vocab(language: str = Query(default="french")) -> SavedVocabResponse:
+    return SavedVocabResponse(items=load_vocab(language))
 
 
 @app.post("/api/vocab", response_model=SavedVocabResponse)
@@ -137,16 +139,17 @@ def add_vocab(request: SaveVocabRequest) -> SavedVocabResponse:
 
 
 @app.get("/api/reminders", response_model=ReminderResponse)
-def get_reminders() -> ReminderResponse:
-    return ReminderResponse(items=load_reminders())
+def get_reminders(language: str = Query(default="french")) -> ReminderResponse:
+    return ReminderResponse(items=load_reminders(language))
 
 
 @app.get("/api/vocab/export")
-def export_vocab() -> PlainTextResponse:
+def export_vocab(language: str = Query(default="french")) -> PlainTextResponse:
+    language_label = "french" if language == "french" else "spanish"
     return PlainTextResponse(
-        vocab_to_anki_csv(load_vocab()),
+        vocab_to_anki_csv(load_vocab(language), language),
         media_type="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="french_story_trainer_anki.csv"'},
+        headers={"Content-Disposition": f'attachment; filename="{language_label}_story_trainer_anki.csv"'},
     )
 
 
