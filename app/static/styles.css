@@ -432,6 +432,10 @@ button:disabled {
   padding: 10px 14px;
 }
 
+#toggle-hints-btn {
+  min-width: 220px;
+}
+
 .action-row,
 .hint-toolbar,
 .prompt-header-row,
