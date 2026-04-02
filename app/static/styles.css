@@ -232,7 +232,7 @@ h1 {
 .answer-entry-form {
   display: grid;
   gap: 10px;
-  margin-top: -2px;
+  margin-top: -8px;
 }
 
 .answer-toolbar-row {
@@ -402,7 +402,7 @@ button:disabled {
 
 .prompt-header-row {
   align-items: center;
-  margin: 0 0 8px;
+  margin: 0 0 2px;
 }
 
 .keyboard-hint {
