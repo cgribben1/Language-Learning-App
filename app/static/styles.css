@@ -255,7 +255,7 @@ body {
 }
 
 .lang-flag-btn:hover {
-  transform: none;
+  transform: translateY(-1px);
   filter: drop-shadow(0 4px 10px rgba(27, 25, 22, 0.14));
 }
 
