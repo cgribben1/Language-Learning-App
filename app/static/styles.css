@@ -1542,6 +1542,98 @@ kbd {
   font-weight: 700;
 }
 
+.reference-grid .saved-vocab-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.reference-grid .saved-vocab-item,
+.reference-grid .reminder-item,
+.reference-grid .empty-vocab {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(62, 41, 28, 0.1);
+  background: #fffdf9;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.reference-grid .saved-vocab-row,
+.reference-grid .reminder-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reference-grid .saved-vocab-french,
+.reference-grid .reminder-item-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.reference-grid .saved-vocab-english,
+.reference-grid .reminder-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.reference-grid .saved-vocab-english {
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: right;
+}
+
+.reference-grid .saved-vocab-note,
+.reference-grid .saved-vocab-source,
+.reference-grid .reminder-item-explanation,
+.reference-grid .reminder-item-meta {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.reference-grid .saved-vocab-source,
+.reference-grid .reminder-item-meta {
+  padding-top: 2px;
+  border-top: 1px solid rgba(62, 41, 28, 0.06);
+}
+
+.reference-grid .reminder-count {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(166, 41, 13, 0.08);
+  color: var(--accent);
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.reference-grid .reminder-item-explanation {
+  color: var(--ink);
+}
+
+.reference-grid .reminder-meta-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
 .reference-grid.reference-grid-triple {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
