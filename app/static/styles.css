@@ -1032,6 +1032,51 @@ kbd {
   border-bottom: none;
 }
 
+.site-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 4px;
+}
+
+.site-footer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
+}
+
+.site-footer-copy {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.9rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.site-footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.site-footer-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.9rem;
+}
+
+.site-footer-nav a:hover {
+  color: var(--ink);
+}
+
 .reference-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
