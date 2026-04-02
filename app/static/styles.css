@@ -634,13 +634,13 @@ kbd {
 .reminder-item,
 .empty-vocab {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   align-content: start;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  font-size: 0.94rem;
-  line-height: 1.45;
+  font-size: 0.92rem;
+  line-height: 1.42;
 }
 
 .saved-vocab-item > div,
@@ -666,18 +666,6 @@ kbd {
   word-break: break-word;
 }
 
-.reminder-item > div:first-child {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 10px;
-}
-
-.reminder-count {
-  justify-self: end;
-  white-space: nowrap;
-}
-
 .reference-grid .vocab-card {
   display: grid;
   align-content: start;
@@ -691,6 +679,85 @@ kbd {
 .reference-grid .saved-vocab-list > * {
   min-width: 0;
   width: 100%;
+}
+
+.saved-vocab-item,
+.reminder-item {
+  padding: 12px 13px;
+  border-radius: 14px;
+}
+
+.saved-vocab-main {
+  display: grid !important;
+  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.saved-vocab-french {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.saved-vocab-arrow {
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.saved-vocab-english {
+  color: var(--ink);
+}
+
+.saved-vocab-note,
+.saved-vocab-source,
+.reminder-item-explanation,
+.reminder-item-meta {
+  color: var(--muted);
+}
+
+.saved-vocab-source,
+.reminder-item-meta {
+  font-size: 0.85rem;
+  line-height: 1.38;
+}
+
+.reminder-item-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.reminder-item-title {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.reminder-count {
+  justify-self: end;
+  align-self: start;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(166, 41, 13, 0.08);
+  color: var(--accent);
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.reminder-item-explanation {
+  color: var(--ink);
+}
+
+.reminder-item-meta {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+}
+
+.empty-vocab {
+  padding: 14px 16px;
+  color: var(--muted);
 }
 
 .story-so-far-card {

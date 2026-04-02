@@ -2143,9 +2143,13 @@ function renderSavedVocab(items) {
     const div = document.createElement("div");
     div.className = "saved-vocab-item";
     div.innerHTML = `
-      <div><strong>${item.french}</strong> -> ${item.english}</div>
-      ${item.note ? `<div>${item.note}</div>` : ""}
-      ${item.source_sentence ? `<div><em>${item.source_sentence}</em></div>` : ""}
+      <div class="saved-vocab-main">
+        <strong class="saved-vocab-french">${item.french}</strong>
+        <span class="saved-vocab-arrow">→</span>
+        <span class="saved-vocab-english">${item.english}</span>
+      </div>
+      ${item.note ? `<div class="saved-vocab-note">${item.note}</div>` : ""}
+      ${item.source_sentence ? `<div class="saved-vocab-source"><em>${item.source_sentence}</em></div>` : ""}
     `;
     el.savedVocabList.appendChild(div);
   });
@@ -2217,13 +2221,13 @@ function renderReminders(items) {
     const div = document.createElement("div");
     div.className = "reminder-item";
     div.innerHTML = `
-      <div>
-        <strong>${item.label}</strong>
+      <div class="reminder-item-header">
+        <strong class="reminder-item-title">${item.label}</strong>
         <span class="reminder-count">${item.count}x</span>
       </div>
-      <div>${item.explanation}</div>
-      <div><em>Latest target:</em> ${item.last_target}</div>
-      <div><em>Your latest answer:</em> ${item.last_answer}</div>
+      <div class="reminder-item-explanation">${item.explanation}</div>
+      <div class="reminder-item-meta"><em>Latest target:</em> <span>${item.last_target}</span></div>
+      <div class="reminder-item-meta"><em>Your latest answer:</em> <span>${item.last_answer}</span></div>
     `;
     el.remindersList.appendChild(div);
   });
