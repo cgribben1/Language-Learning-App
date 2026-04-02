@@ -612,6 +612,13 @@ kbd {
   gap: 8px;
 }
 
+.feedback-comparison-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
 .feedback-sentence-block {
   display: grid;
   gap: 4px;
@@ -653,6 +660,37 @@ kbd {
   transform: translateY(0);
 }
 
+.feedback-arrow-horizontal {
+  align-self: center;
+  min-height: auto;
+  min-width: 52px;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.feedback-arrow-horizontal .feedback-arrow-line {
+  width: 42px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(166, 41, 13, 0.16), rgba(166, 41, 13, 0.78));
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.feedback-arrow-horizontal .feedback-arrow-head {
+  transform: translateX(-5px);
+  transition: opacity 180ms ease 220ms, transform 220ms ease 220ms;
+}
+
+.feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-line {
+  transform: scaleX(1);
+}
+
+.feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-head {
+  transform: translateX(0);
+}
+
 #feedback-question-text {
   color: var(--ink);
 }
@@ -669,6 +707,11 @@ kbd {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.feedback-notes-section {
+  padding-top: 10px;
+  border-top: 1px solid rgba(62, 41, 28, 0.08);
 }
 
 .score-grid-single {
@@ -1686,6 +1729,34 @@ body.landing-bauhaus-colors #generate-btn {
   .final-story-grid,
   .reference-grid {
     grid-template-columns: 1fr;
+  }
+
+  .feedback-comparison-row {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-arrow-horizontal {
+    justify-self: center;
+  }
+
+  .feedback-arrow-horizontal .feedback-arrow-line {
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(166, 41, 13, 0.16), rgba(166, 41, 13, 0.78));
+    transform: scaleY(0);
+    transform-origin: top center;
+  }
+
+  .feedback-arrow-horizontal .feedback-arrow-head {
+    transform: translateY(-5px);
+  }
+
+  .feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-line {
+    transform: scaleY(1);
+  }
+
+  .feedback-arrow-horizontal.feedback-arrow-active .feedback-arrow-head {
+    transform: translateY(0);
   }
 
   .lesson-form {

@@ -60,7 +60,6 @@ const el = {
   correctnessBar: document.querySelector("#correctness-bar"),
   feedbackQuestionLabel: document.querySelector("#feedback-question-label"),
   feedbackQuestionText: document.querySelector("#feedback-question-text"),
-  feedbackArrowQuestionUser: document.querySelector("#feedback-arrow-question-user"),
   yourAnswerLabel: document.querySelector("#your-answer-label"),
   learnerAnswer: document.querySelector("#learner-answer"),
   feedbackArrowUserCorrect: document.querySelector("#feedback-arrow-user-correct"),
@@ -1704,7 +1703,7 @@ function reserveAnimatedMarkupHeight(target, html) {
 }
 
 function resetFeedbackArrows() {
-  [el.feedbackArrowQuestionUser, el.feedbackArrowUserCorrect].forEach((arrow) => {
+  [el.feedbackArrowUserCorrect].forEach((arrow) => {
     if (!arrow) return;
     arrow.classList.remove("feedback-arrow-active");
   });
@@ -2010,21 +2009,17 @@ function renderFeedback(feedback) {
     questionSentenceDisplay,
     questionSentenceStartDelay,
   );
-  const firstArrowEndDelay = animateFeedbackArrow(
-    el.feedbackArrowQuestionUser,
-    Math.max(questionSentenceEndDelay + 30, questionSentenceStartDelay + 180),
-  );
   const yourAnswerEndDelay = animateInlineSegments(
     el.learnerAnswer,
     buildLearnerAnswerSegments(learnerAnswerDisplay, canonicalTargetFrench, learnerTokenLabels),
-    Math.max(yourAnswerStartDelay + 120, firstArrowEndDelay + 30),
+    Math.max(yourAnswerStartDelay + 120, questionSentenceEndDelay + 40),
     28,
   );
-  const secondArrowEndDelay = animateFeedbackArrow(
+  const arrowEndDelay = animateFeedbackArrow(
     el.feedbackArrowUserCorrect,
-    Math.max(yourAnswerEndDelay + 30, firstArrowEndDelay + 120),
+    Math.max(yourAnswerEndDelay + 40, questionSentenceEndDelay + 180),
   );
-  const correctSentenceStartDelay = secondArrowEndDelay + 30;
+  const correctSentenceStartDelay = arrowEndDelay + 30;
   const correctSentenceEndDelay = animateInlineSegments(
     el.correctFrench,
     buildCorrectSentenceSegments(displayedCorrectFrench),
