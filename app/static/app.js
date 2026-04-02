@@ -1163,15 +1163,17 @@ function shuffleIndexes(length) {
 }
 
 function ensureCheckingTipQueue(difficulty) {
+  const languageKey = currentLanguage();
+  const queueKey = `${languageKey}:${difficulty}`;
   const tipBank = currentLanguage() === "spanish" ? CHECKING_TIPS_BY_LEVEL_SPANISH : CHECKING_TIPS_BY_LEVEL;
   const tips = tipBank[difficulty] || [];
-  const existingQueue = state.checkingTipQueueByDifficulty[difficulty] || [];
+  const existingQueue = state.checkingTipQueueByDifficulty[queueKey] || [];
   if (existingQueue.length) {
     return existingQueue;
   }
 
   if (!tips.length) {
-    state.checkingTipQueueByDifficulty[difficulty] = [];
+    state.checkingTipQueueByDifficulty[queueKey] = [];
     return [];
   }
 
@@ -1179,11 +1181,13 @@ function ensureCheckingTipQueue(difficulty) {
   if (tips.length > 1 && queue[0] === state.lastCheckingTipIndex) {
     queue.push(queue.shift());
   }
-  state.checkingTipQueueByDifficulty[difficulty] = queue;
+  state.checkingTipQueueByDifficulty[queueKey] = queue;
   return queue;
 }
 
 function pickNextCheckingTip(difficulty) {
+  const languageKey = currentLanguage();
+  const queueKey = `${languageKey}:${difficulty}`;
   const tipBank = currentLanguage() === "spanish" ? CHECKING_TIPS_BY_LEVEL_SPANISH : CHECKING_TIPS_BY_LEVEL;
   const tips = tipBank[difficulty] || tipBank.A2;
   if (!tips.length) {
@@ -1192,9 +1196,9 @@ function pickNextCheckingTip(difficulty) {
 
   const queue = ensureCheckingTipQueue(difficulty);
   const nextIndex = queue.shift();
-  state.checkingTipQueueByDifficulty[difficulty] = queue;
-  state.usedCheckingTipIndexes[difficulty] = [
-    ...(state.usedCheckingTipIndexes[difficulty] || []),
+  state.checkingTipQueueByDifficulty[queueKey] = queue;
+  state.usedCheckingTipIndexes[queueKey] = [
+    ...(state.usedCheckingTipIndexes[queueKey] || []),
     nextIndex,
   ].slice(-tips.length);
   state.lastCheckingTipIndex = nextIndex;
@@ -2067,9 +2071,11 @@ function renderFeedback(feedback) {
   const feedbackSentence = state.lesson?.sentences?.[state.currentIndex] || currentSentence();
   const questionSentenceDisplay = `"${feedbackSentence?.english || ""}"`;
   const learnerAnswerDisplay = formatLearnerAnswerDisplay(state.lastAnswer);
-  const displayedCorrectFrench = formatCorrectSentenceDisplay(getDisplayedCorrectFrench(feedback));
+  const displayedCorrectFrench = formatCorrectSentenceDisplay(
+    getDisplayedCorrectFrench(feedback) || feedbackSentence?.french || state.lesson?.sentences?.[state.currentIndex]?.french || "",
+  );
   const canonicalTargetFrench = formatCorrectSentenceDisplay(
-    pickSingleFrenchSentence(feedback.suggested_french) || displayedCorrectFrench,
+    pickSingleFrenchSentence(feedback.suggested_french) || feedbackSentence?.french || displayedCorrectFrench,
   );
   const learnerTokenLabels = promoteAcceptableDifferenceLabels(
     learnerAnswerDisplay,
