@@ -276,7 +276,7 @@ h1 {
 }
 
 #setup-panel .form-field {
-  justify-self: center;
+  justify-self: start;
   width: min(100%, 360px);
 }
 
