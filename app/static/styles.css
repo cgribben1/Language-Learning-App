@@ -603,6 +603,8 @@ kbd {
 .feedback-question-block {
   display: grid;
   gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(62, 41, 28, 0.08);
 }
 
 #feedback-question-text {
