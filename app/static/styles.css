@@ -1473,11 +1473,11 @@ kbd {
 }
 
 .checking-quill {
-  top: 74px;
-  right: 86px;
+  top: 96px;
+  right: 68px;
   width: 72px;
   height: 34px;
-  transform: rotate(-28deg);
+  transform: rotate(-18deg);
   animation: quillWrite 1.9s steps(4, end) infinite;
   transform-origin: 18% 82%;
 }
@@ -1619,10 +1619,10 @@ kbd {
 
 @keyframes quillWrite {
   0%, 100% {
-    transform: rotate(-28deg) translate3d(0, 0, 0);
+    transform: rotate(-18deg) translate3d(0, 0, 0);
   }
   50% {
-    transform: rotate(-24deg) translate3d(-8px, 4px, 0);
+    transform: rotate(-14deg) translate3d(-10px, 6px, 0);
   }
 }
 
