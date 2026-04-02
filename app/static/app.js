@@ -1827,11 +1827,11 @@ function renderLesson(preserveStoryFlight = false) {
   el.progressTotal.textContent = String(total);
   updateSidebarMeta();
 
-  if (!sentence) {
-    if (state.lesson && !state.lesson.is_complete) {
-      el.lessonCard.classList.remove("hidden");
-      el.lessonHeader.classList.remove("hidden");
-      el.progressBox.classList.remove("hidden");
+    if (!sentence) {
+      if (state.lesson && !state.lesson.is_complete) {
+        el.lessonCard.classList.remove("hidden");
+        el.lessonHeader.classList.remove("hidden");
+        el.progressBox.classList.remove("hidden");
       hideLessonScreens();
       el.emptyState.classList.add("hidden");
       el.promptPanel.classList.remove("hidden");
@@ -1843,14 +1843,15 @@ function renderLesson(preserveStoryFlight = false) {
       el.answerInput.disabled = true;
       el.checkBtn.disabled = true;
       el.skipBtn.disabled = true;
-      el.toggleHintsBtn.disabled = true;
-      el.vocabHints.innerHTML = "";
-      el.vocabHints.classList.add("hidden");
-      renderStorySoFar();
-      ensureLessonPolling();
-      scrollWindowToTop();
-      return;
-    }
+        el.toggleHintsBtn.disabled = true;
+        el.vocabHints.innerHTML = "";
+        el.vocabHints.classList.add("hidden");
+        renderStorySoFar();
+        ensureLessonPolling();
+        animatePanelIn(el.promptPanel);
+        scrollWindowToTop();
+        return;
+      }
     renderSetupView("Lesson complete. Adjust the settings above if you want a fresh story or dialogue.");
     return;
   }
@@ -2410,8 +2411,7 @@ function nextSentence() {
   if (state.nextTransitionInProgress) return;
   if (!state.lesson) return;
   if (state.currentIndex >= state.lesson.sentences.length - 1 && !state.lesson.is_complete) {
-    state.currentIndex += 1;
-    renderLesson();
+    animateCurrentSentenceIntoStory();
     return;
   }
   if (state.currentIndex < state.lesson.sentences.length - 1) {
