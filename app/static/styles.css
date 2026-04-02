@@ -1152,24 +1152,27 @@ kbd {
 
 .generating-copy .wave-char {
   display: inline-block;
-  animation: generatingWave 0.95s ease-in-out infinite;
-  animation-delay: calc(var(--wave-index) * 32ms);
   will-change: transform, opacity;
+}
+
+.generating-copy.wave-active .wave-char {
+  animation: generatingWave 180ms ease-out 1;
+  animation-delay: var(--wave-delay, 0ms);
 }
 
 @keyframes generatingWave {
   0%,
   100% {
     transform: translateY(0);
-    opacity: 0.82;
+    opacity: 0.84;
   }
-  35% {
-    transform: translateY(-0.2em);
+  45% {
+    transform: translateY(-0.18em) scale(1.02);
     opacity: 1;
   }
-  60% {
+  70% {
     transform: translateY(0.03em);
-    opacity: 0.94;
+    opacity: 0.92;
   }
 }
 

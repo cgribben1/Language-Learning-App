@@ -19,6 +19,7 @@ const state = {
   checkingEllipsisTimer: null,
   generatingEllipsisTimer: null,
   generatingCopyTimer: null,
+  generatingWaveTimer: null,
   devVersion: null,
   devReloadTimer: null,
   lastCheckingTipIndex: -1,
@@ -350,8 +351,15 @@ function clearGeneratingScreenAnimation() {
     clearTimeout(state.generatingCopyTimer);
     state.generatingCopyTimer = null;
   }
+  if (state.generatingWaveTimer) {
+    clearTimeout(state.generatingWaveTimer);
+    state.generatingWaveTimer = null;
+  }
   if (el.generatingEllipsis) {
     el.generatingEllipsis.textContent = "";
+  }
+  if (el.generatingCopy) {
+    el.generatingCopy.classList.remove("wave-active");
   }
 }
 
@@ -437,6 +445,43 @@ function setGeneratingCopyLine(text, prefersReducedMotion = false) {
   });
 
   el.generatingCopy.replaceChildren(fragment);
+  startGeneratingCopyWaveLoop();
+}
+
+function startGeneratingCopyWaveLoop() {
+  if (!el.generatingCopy) {
+    return;
+  }
+
+  if (state.generatingWaveTimer) {
+    clearTimeout(state.generatingWaveTimer);
+    state.generatingWaveTimer = null;
+  }
+
+  const chars = Array.from(el.generatingCopy.querySelectorAll(".wave-char"));
+  if (!chars.length) {
+    return;
+  }
+
+  const delayStep = 18;
+  const shiverDuration = 180;
+  const totalDuration = chars.length * delayStep + shiverDuration + 180;
+
+  chars.forEach((char, index) => {
+    char.style.setProperty("--wave-delay", `${index * delayStep}ms`);
+  });
+
+  const runWave = () => {
+    if (!el.generatingCopy) {
+      return;
+    }
+    el.generatingCopy.classList.remove("wave-active");
+    void el.generatingCopy.offsetWidth;
+    el.generatingCopy.classList.add("wave-active");
+    state.generatingWaveTimer = setTimeout(runWave, totalDuration);
+  };
+
+  runWave();
 }
 
 function mergeLessonUpdate(lesson) {
