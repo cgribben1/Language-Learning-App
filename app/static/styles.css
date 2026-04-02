@@ -1234,8 +1234,7 @@ kbd {
   clip-path: polygon(18% 0, 82% 0, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0 82%, 0 18%);
   background: radial-gradient(circle at 30% 30%, rgba(255, 248, 238, 1), rgba(242, 183, 5, 0.9) 56%, rgba(166, 41, 13, 0.78));
   box-shadow:
-    6px 6px 0 rgba(38, 29, 17, 0.08),
-    0 0 0 2px rgba(38, 29, 17, 0.1);
+    0 0 0 2px rgba(38, 29, 17, 0.12);
   animation: moonPulse 3.2s steps(4, end) infinite;
 }
 
@@ -1250,9 +1249,7 @@ kbd {
   height: 10px;
   border-radius: 0;
   background: linear-gradient(90deg, rgba(166, 41, 13, 0.2), rgba(242, 183, 5, 0.45), rgba(166, 41, 13, 0.18));
-  box-shadow:
-    2px 2px 0 rgba(38, 29, 17, 0.08),
-    inset 0 0 0 1px rgba(38, 29, 17, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(38, 29, 17, 0.08);
 }
 
 .story-ribbon-one {
@@ -1296,9 +1293,7 @@ kbd {
   height: 104px;
   border-radius: 0;
   background: linear-gradient(180deg, rgba(255, 251, 244, 0.98), rgba(242, 226, 196, 0.88));
-  box-shadow:
-    4px 4px 0 rgba(38, 29, 17, 0.08),
-    inset 0 0 0 2px rgba(38, 29, 17, 0.08);
+  box-shadow: inset 0 0 0 2px rgba(38, 29, 17, 0.08);
 }
 
 .story-book-left,
@@ -1331,9 +1326,7 @@ kbd {
   height: 9px;
   border-radius: 0;
   background: rgba(242, 183, 5, 0.88);
-  box-shadow:
-    2px 2px 0 rgba(38, 29, 17, 0.08),
-    0 0 0 1px rgba(38, 29, 17, 0.08);
+  box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.08);
   animation: starTwinkle 2.2s steps(3, end) infinite;
 }
 
@@ -1959,24 +1952,18 @@ body.bauhaus-colors .story-book-page,
 body.bauhaus-colors .checking-page {
   background: linear-gradient(180deg, rgba(255, 250, 244, 0.98), rgba(246, 231, 210, 0.96));
   border-color: rgba(38, 29, 17, 0.08);
-  box-shadow:
-    4px 4px 0 rgba(38, 29, 17, 0.08),
-    inset 0 0 0 2px rgba(38, 29, 17, 0.08);
+  box-shadow: inset 0 0 0 2px rgba(38, 29, 17, 0.08);
 }
 
 body.bauhaus-colors .story-star,
 body.bauhaus-colors .checking-spark {
   background: linear-gradient(135deg, rgba(166, 41, 13, 0.94), rgba(4, 119, 191, 0.92));
-  box-shadow:
-    2px 2px 0 rgba(38, 29, 17, 0.08),
-    0 0 0 1px rgba(38, 29, 17, 0.08);
+  box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.08);
 }
 
 body.bauhaus-colors .moon-core {
   background: radial-gradient(circle at 30% 30%, rgba(255, 248, 238, 1), rgba(4, 119, 191, 0.86) 54%, rgba(166, 41, 13, 0.8));
-  box-shadow:
-    6px 6px 0 rgba(38, 29, 17, 0.08),
-    0 0 0 2px rgba(38, 29, 17, 0.1);
+  box-shadow: 0 0 0 2px rgba(38, 29, 17, 0.1);
 }
 
 body.bauhaus-colors .story-ribbon {

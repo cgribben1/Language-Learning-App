@@ -403,7 +403,7 @@ function startGeneratingScreenAnimation() {
       const tickEllipsis = () => {
         el.generatingEllipsis.textContent = frames[index];
         index = (index + 1) % frames.length;
-        const delay = index === 0 ? 1200 : 560;
+        const delay = index === 0 ? 1700 : 820;
         state.generatingEllipsisTimer = setTimeout(tickEllipsis, delay);
       };
       tickEllipsis();
@@ -465,7 +465,7 @@ function startGeneratingCopyWaveLoop() {
 
   const delayStep = 12;
   const shiverDuration = 120;
-  const totalDuration = chars.length * delayStep + shiverDuration + 1200;
+  const totalDuration = chars.length * delayStep + shiverDuration + 1900;
 
   chars.forEach((char, index) => {
     char.style.setProperty("--wave-delay", `${index * delayStep}ms`);
