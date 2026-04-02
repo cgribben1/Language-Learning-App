@@ -1156,7 +1156,7 @@ kbd {
 }
 
 .generating-copy.wave-active .wave-char {
-  animation: generatingWave 180ms ease-out 1;
+  animation: generatingWave 120ms ease-out 1;
   animation-delay: var(--wave-delay, 0ms);
 }
 

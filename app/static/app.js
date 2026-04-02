@@ -463,9 +463,9 @@ function startGeneratingCopyWaveLoop() {
     return;
   }
 
-  const delayStep = 18;
-  const shiverDuration = 180;
-  const totalDuration = chars.length * delayStep + shiverDuration + 180;
+  const delayStep = 12;
+  const shiverDuration = 120;
+  const totalDuration = chars.length * delayStep + shiverDuration + 120;
 
   chars.forEach((char, index) => {
     char.style.setProperty("--wave-delay", `${index * delayStep}ms`);
