@@ -662,27 +662,53 @@ kbd {
 #feedback-question-text,
 #learner-answer,
 #correct-french {
-  font-family: "Fraunces", serif;
+  font-family: "Fraunces", serif !important;
+  font-size: 1.04rem;
+  line-height: 1.62;
+}
+
+#feedback-question-text *,
+#learner-answer *,
+#correct-french *,
+#correct-french .inline-phrase-btn,
+#correct-french .inline-phrase-btn:hover,
+#correct-french .inline-phrase-btn:focus-visible {
+  font-family: "Fraunces", serif !important;
 }
 
 .quoted-text {
   min-height: 2.6em;
 }
 
+#feedback-question-text {
+  min-height: 3.2em;
+}
+
+#learner-answer,
+#correct-french {
+  min-height: 5.4em;
+}
+
 .answer-word {
+  display: inline-block;
+  padding: 0.02em 0.08em;
+  border-radius: 0.22em;
   transition: color 180ms ease, background-color 180ms ease;
 }
 
 .answer-word-correct {
   color: #1f7a46;
+  background: rgba(31, 122, 70, 0.08);
 }
 
 .answer-word-acceptable {
   color: #ab7a12;
+  background: rgba(171, 122, 18, 0.08);
 }
 
 .answer-word-wrong {
   color: #b24a2d;
+  background: rgba(178, 74, 45, 0.08);
 }
 
 .answer-word-neutral {
@@ -1380,9 +1406,12 @@ body.bauhaus-colors .score-bar-fill {
 #correct-french .inline-phrase-btn,
 #correct-french .inline-phrase-btn:hover,
 #correct-french .inline-phrase-btn:focus-visible {
-  color: var(--ink);
-  background: transparent;
-  box-shadow: none;
+  color: var(--ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
 }
 
 body.bauhaus-colors .reminder-count,
