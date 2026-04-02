@@ -173,17 +173,28 @@
             </div>
           </div>
 
-          <div class="feedback-question-block">
-            <p id="feedback-question-label" class="mini-label">Question sentence</p>
-            <p id="feedback-question-text" class="comparison-text quoted-text"></p>
-          </div>
+          <div class="feedback-flow">
+            <div class="feedback-question-block">
+              <p id="feedback-question-label" class="mini-label">Question sentence</p>
+              <p id="feedback-question-text" class="comparison-text quoted-text"></p>
+            </div>
 
-          <div class="comparison-grid">
-            <div>
+            <div id="feedback-arrow-question-user" class="feedback-arrow" aria-hidden="true">
+              <span class="feedback-arrow-line"></span>
+              <span class="feedback-arrow-head">↓</span>
+            </div>
+
+            <div class="feedback-sentence-block">
               <p id="your-answer-label" class="mini-label">Your answer</p>
               <p id="learner-answer" class="comparison-text quoted-text"></p>
             </div>
-            <div>
+
+            <div id="feedback-arrow-user-correct" class="feedback-arrow" aria-hidden="true">
+              <span class="feedback-arrow-line"></span>
+              <span class="feedback-arrow-head">↓</span>
+            </div>
+
+            <div class="feedback-sentence-block">
               <p id="correct-sentence-label" class="mini-label">Correct sentence</p>
               <p id="correct-french" class="comparison-text quoted-text"></p>
               <div id="phrase-explainer" class="phrase-explainer hidden">
