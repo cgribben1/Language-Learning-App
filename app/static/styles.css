@@ -213,10 +213,17 @@ body {
 
 .lang-flag {
   display: block;
-  width: 24px;
-  height: 18px;
+  flex: 0 0 auto;
+  width: 28px;
+  height: auto;
+  aspect-ratio: 14 / 10;
+  min-width: 28px;
+  min-height: 20px;
   border-radius: 4px;
   box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.12);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  overflow: hidden;
 }
 
 .flag-fr {
