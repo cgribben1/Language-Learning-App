@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 
 DifficultyLevel = Literal["A1", "A2", "B1", "B2", "C1"]
+LanguageCode = Literal["french", "spanish"]
 
 
 class VocabHint(BaseModel):
@@ -24,6 +25,7 @@ class LessonSentence(BaseModel):
 
 
 class LessonRequest(BaseModel):
+    language: LanguageCode = "french"
     difficulty: DifficultyLevel = "A2"
     theme: str = "mythological adventure"
     lesson_type: Literal["story", "dialogue", "film_scene", "auto"] = "story"
@@ -32,6 +34,7 @@ class LessonRequest(BaseModel):
 
 class LessonResponse(BaseModel):
     lesson_id: str
+    language: LanguageCode = "french"
     title: str
     difficulty: DifficultyLevel
     theme: str
@@ -46,6 +49,7 @@ class LessonResponse(BaseModel):
 
 
 class EvaluationRequest(BaseModel):
+    language: LanguageCode = "french"
     english: str
     target_french: str
     learner_answer: str
@@ -73,6 +77,7 @@ class EvaluationResponse(BaseModel):
 
 
 class PhraseExplainRequest(BaseModel):
+    language: LanguageCode = "french"
     english_sentence: str
     french_sentence: str
     selected_phrase: str
@@ -81,6 +86,7 @@ class PhraseExplainRequest(BaseModel):
 
 
 class PhraseExplainResponse(BaseModel):
+    language: LanguageCode = "french"
     french_phrase: str
     english_meaning: str
     usage_note: str = ""
@@ -89,6 +95,7 @@ class PhraseExplainResponse(BaseModel):
 
 
 class SaveVocabRequest(BaseModel):
+    language: LanguageCode = "french"
     english: str
     french: str
     note: str = ""
@@ -96,6 +103,7 @@ class SaveVocabRequest(BaseModel):
 
 
 class SavedVocabItem(BaseModel):
+    language: LanguageCode = "french"
     english: str
     french: str
     note: str = ""
@@ -107,6 +115,7 @@ class SavedVocabResponse(BaseModel):
 
 
 class ReminderItem(BaseModel):
+    language: LanguageCode = "french"
     key: str
     label: str
     explanation: str
