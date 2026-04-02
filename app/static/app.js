@@ -1221,8 +1221,30 @@ function updateLanguageToggle() {
 }
 
 function setLanguage(language) {
-  state.language = language === "spanish" ? "spanish" : "french";
+  const nextLanguage = language === "spanish" ? "spanish" : "french";
+  const wasSetupVisible = isSetupVisible();
+  const previousLanguage = state.language;
+  if (nextLanguage === previousLanguage) {
+    updateLanguageToggle();
+    return;
+  }
+  state.language = nextLanguage;
   updateLanguageToggle();
+  if (wasSetupVisible) {
+    const heroCopyText = LANGUAGE_COPY[currentLanguage()]?.hero || LANGUAGE_COPY.french.hero;
+    reserveTextBlockHeight(el.heroCopy, heroCopyText);
+    el.lessonTitle.textContent = "Choose your story.";
+    animatePlainText(
+      el.heroCopy,
+      heroCopyText,
+      0,
+      0.42,
+    );
+    updateSidebarMeta();
+    loadVocab();
+    loadReminders();
+    return;
+  }
   renderSetupView();
   loadVocab();
   loadReminders();
