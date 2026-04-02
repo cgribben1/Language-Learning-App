@@ -792,19 +792,19 @@ kbd {
 .vocab-hints {
   min-width: 240px;
   max-width: min(340px, calc(100vw - 32px));
-  padding: 12px;
+  padding: 8px;
   border-radius: 18px;
   border: 1px solid rgba(62, 41, 28, 0.1);
   background: #fffdf9;
   box-shadow: 0 18px 42px rgba(38, 29, 17, 0.14);
   display: grid;
-  gap: 10px;
+  gap: 6px;
   z-index: 50;
 }
 
 .vocab-hint {
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 9px 12px;
+  border-radius: 12px;
   background: #ffffff !important;
   border: 1px solid rgba(62, 41, 28, 0.08);
   min-width: 0;
@@ -814,7 +814,7 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .vocab-hint-row > div {
