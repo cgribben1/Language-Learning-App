@@ -176,6 +176,26 @@ body {
   border-bottom: 1px solid rgba(62, 41, 28, 0.12);
 }
 
+.progress-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(62, 41, 28, 0.1);
+  background: #fffdf9;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(31, 29, 26, 0.88);
+  flex-shrink: 0;
+}
+
+.progress-divider {
+  opacity: 0.55;
+}
+
 h1,
 h2,
 h3 {
@@ -301,6 +321,7 @@ textarea {
 #answer-input {
   min-height: 56px;
   font-size: 1rem;
+  background: #fffdf9;
 }
 
 button {
@@ -1101,7 +1122,7 @@ body.bauhaus-colors #check-btn:focus,
 body.bauhaus-colors #check-btn:active {
   background: #f2b705 !important;
   background-image: none !important;
-  color: #f2e2c4 !important;
+  color: #fffdf9 !important;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
 }
 
@@ -1130,7 +1151,7 @@ body.bauhaus-colors .side-panel-btn {
 }
 
 body.bauhaus-colors .side-panel {
-  background: rgba(232, 214, 182, 0.82);
+  background: rgba(244, 235, 221, 0.92);
 }
 
 body.bauhaus-colors .side-panel-btn {
@@ -1145,7 +1166,7 @@ body.bauhaus-colors .side-panel-btn {
 }
 
 body.bauhaus-colors .prompt-panel {
-  background: rgba(238, 223, 193, 0.86);
+  background: rgba(244, 235, 221, 0.92);
   border-color: rgba(166, 41, 13, 0.18);
 }
 
