@@ -1160,16 +1160,15 @@ function updateLanguageToggle() {
   const activeLanguage = currentLanguage();
   el.languageFrenchBtn?.classList.toggle("active", activeLanguage === "french");
   el.languageSpanishBtn?.classList.toggle("active", activeLanguage === "spanish");
+  document.title = activeLanguage === "spanish" ? "Spanish Story Trainer" : "French Story Trainer";
 }
 
 function setLanguage(language) {
   state.language = language === "spanish" ? "spanish" : "french";
   updateLanguageToggle();
-  if (isSetupVisible()) {
-    renderSetupView();
-    loadVocab();
-    loadReminders();
-  }
+  renderSetupView();
+  loadVocab();
+  loadReminders();
 }
 
 function currentDifficulty() {
