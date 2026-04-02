@@ -224,6 +224,8 @@ body {
   background-repeat: no-repeat;
   background-size: 100% 100%;
   overflow: hidden;
+  opacity: 0.62;
+  transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
 
 .flag-fr {
@@ -257,15 +259,23 @@ body {
   filter: drop-shadow(0 4px 10px rgba(27, 25, 22, 0.14));
 }
 
+.lang-flag-btn:hover .lang-flag {
+  opacity: 0.9;
+}
+
 .lang-flag-btn.active {
   transform: none;
-  filter:
-    drop-shadow(0 5px 12px rgba(166, 41, 13, 0.16))
-    drop-shadow(0 0 8px rgba(255, 244, 214, 0.42));
+  filter: drop-shadow(0 6px 14px rgba(27, 25, 22, 0.12));
 }
 
 .lang-flag-btn.active .lang-flag {
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.4);
+  opacity: 1;
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 2px rgba(166, 41, 13, 0.32),
+    0 6px 16px rgba(27, 25, 22, 0.16),
+    0 0 16px rgba(255, 255, 255, 0.42);
+  filter: saturate(1.08);
 }
 
 .progress-box {
