@@ -622,6 +622,7 @@ kbd {
 .story-so-far-card {
   display: grid;
   gap: 14px;
+  margin-top: 8px;
   padding: 10px 0 0;
   border: none;
   border-radius: 0;
