@@ -90,6 +90,7 @@ const el = {
   sidebarHomeBtn: document.querySelector("#sidebar-home-btn"),
   sidebarLessonTitle: document.querySelector("#sidebar-lesson-title"),
   sidebarTheme: document.querySelector("#sidebar-theme"),
+  sidebarLanguage: document.querySelector("#sidebar-language"),
   sidebarDifficulty: document.querySelector("#sidebar-difficulty"),
   sidebarProgress: document.querySelector("#sidebar-progress"),
   sidebarVocabCount: document.querySelector("#sidebar-vocab-count"),
@@ -2364,6 +2365,9 @@ function updateSidebarMeta() {
       lesson?.theme ||
       document.querySelector("#theme")?.value?.trim() ||
       "Greek myth";
+  }
+  if (el.sidebarLanguage) {
+    el.sidebarLanguage.textContent = currentLanguage() === "spanish" ? "Spanish" : "French";
   }
   if (el.sidebarDifficulty) {
     el.sidebarDifficulty.textContent =
