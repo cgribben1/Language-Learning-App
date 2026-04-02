@@ -1599,7 +1599,7 @@ function positionVocabHintsBubble(anchorElement) {
   const bubbleWidth = bubbleRect.width;
   const bubbleHeight = bubbleRect.height;
 
-    let left = anchorRect.left;
+    let left = anchorRect.left - bubbleWidth;
     left = Math.max(margin, Math.min(left, window.innerWidth - bubbleWidth - margin));
 
     let top = anchorRect.bottom + gap;
