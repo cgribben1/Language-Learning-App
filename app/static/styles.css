@@ -690,7 +690,7 @@ kbd {
 
 .feedback-notes-section {
   padding-top: 6px;
-  border-top: 1px solid rgba(62, 41, 28, 0.08);
+  border-top: none;
   grid-template-columns: 1fr;
 }
 
@@ -836,8 +836,11 @@ kbd {
 
 .checking-panel {
   align-content: center;
-  padding-top: 12px;
-  padding-bottom: 18px;
+  justify-content: center;
+  align-items: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  min-height: 520px;
 }
 
 .generating-stage,
@@ -849,11 +852,11 @@ kbd {
 }
 
 .checking-illustration {
-  margin: -6px auto 0;
+  margin: -20px auto 0;
 }
 
 .checking-copy {
-  margin-top: -8px;
+  margin-top: -12px;
 }
 
 .moon-orbit {
