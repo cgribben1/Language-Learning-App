@@ -383,7 +383,7 @@ function startGeneratingScreenAnimation() {
   let lineIndex = 0;
 
   if (el.generatingCopy) {
-    el.generatingCopy.textContent = lines[0];
+    setGeneratingCopyLine(lines[0], prefersReducedMotion);
   }
 
   if (el.generatingEllipsis) {
@@ -409,12 +409,34 @@ function startGeneratingScreenAnimation() {
   const rotateCopy = () => {
     lineIndex = (lineIndex + 1) % lines.length;
     if (el.generatingCopy) {
-      el.generatingCopy.textContent = lines[lineIndex];
+      setGeneratingCopyLine(lines[lineIndex], prefersReducedMotion);
     }
     state.generatingCopyTimer = setTimeout(rotateCopy, prefersReducedMotion ? 2800 : 2200);
   };
 
   state.generatingCopyTimer = setTimeout(rotateCopy, prefersReducedMotion ? 2800 : 2200);
+}
+
+function setGeneratingCopyLine(text, prefersReducedMotion = false) {
+  if (!el.generatingCopy) {
+    return;
+  }
+
+  if (prefersReducedMotion) {
+    el.generatingCopy.textContent = text;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  [...text].forEach((char, index) => {
+    const span = document.createElement("span");
+    span.className = "wave-char";
+    span.style.setProperty("--wave-index", String(index));
+    span.textContent = char === " " ? "\u00A0" : char;
+    fragment.appendChild(span);
+  });
+
+  el.generatingCopy.replaceChildren(fragment);
 }
 
 function mergeLessonUpdate(lesson) {

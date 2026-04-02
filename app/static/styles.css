@@ -1146,6 +1146,33 @@ kbd {
   margin-top: -8px;
 }
 
+.generating-copy {
+  min-height: 3.1em;
+}
+
+.generating-copy .wave-char {
+  display: inline-block;
+  animation: generatingWave 1.65s ease-in-out infinite;
+  animation-delay: calc(var(--wave-index) * 55ms);
+  will-change: transform, opacity;
+}
+
+@keyframes generatingWave {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.82;
+  }
+  35% {
+    transform: translateY(-0.2em);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(0.03em);
+    opacity: 0.94;
+  }
+}
+
 .moon-orbit {
   position: absolute;
   top: 8px;
