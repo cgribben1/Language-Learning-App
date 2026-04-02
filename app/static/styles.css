@@ -840,7 +840,7 @@ kbd {
   align-items: center;
   padding-top: 10px;
   padding-bottom: 10px;
-  min-height: 520px;
+  min-height: 420px;
 }
 
 .generating-stage,
@@ -852,11 +852,11 @@ kbd {
 }
 
 .checking-illustration {
-  margin: -20px auto 0;
+  margin: -10px auto 0;
 }
 
 .checking-copy {
-  margin-top: -12px;
+  margin-top: -8px;
 }
 
 .moon-orbit {
