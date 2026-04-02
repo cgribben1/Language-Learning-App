@@ -58,6 +58,8 @@ const el = {
   verdictText: document.querySelector("#verdict-text"),
   correctnessScore: document.querySelector("#correctness-score"),
   correctnessBar: document.querySelector("#correctness-bar"),
+  feedbackQuestionLabel: document.querySelector("#feedback-question-label"),
+  feedbackQuestionText: document.querySelector("#feedback-question-text"),
   yourAnswerLabel: document.querySelector("#your-answer-label"),
   learnerAnswer: document.querySelector("#learner-answer"),
   correctSentenceLabel: document.querySelector("#correct-sentence-label"),
@@ -1934,10 +1936,13 @@ function renderFeedback(feedback) {
   animatePanelIn(el.feedbackCard);
   const verdictDuration = animateFeedbackLabel(buildVerdictDisplay(feedback));
   animateCorrectnessMeter(feedback.correctness_score);
+  el.feedbackQuestionLabel.textContent = "Question sentence";
   el.yourAnswerLabel.textContent = "Your answer";
   el.correctSentenceLabel.textContent = "Correct sentence";
   el.feedbackNotesLabel.textContent = "Feedback notes";
+  const questionSentenceStartDelay = verdictDuration + 40;
   const yourAnswerStartDelay = verdictDuration + 90;
+  const questionSentenceDisplay = `"${currentSentence()?.english || ""}"`;
   const learnerAnswerDisplay = formatLearnerAnswerDisplay(state.lastAnswer);
   const displayedCorrectFrench = formatCorrectSentenceDisplay(getDisplayedCorrectFrench(feedback));
   const canonicalTargetFrench = formatCorrectSentenceDisplay(
@@ -1949,8 +1954,14 @@ function renderFeedback(feedback) {
     feedback.learner_token_labels || [],
     Boolean(feedback.is_correct),
   );
+  reserveTextBlockHeight(el.feedbackQuestionText, questionSentenceDisplay);
   reserveTextBlockHeight(el.learnerAnswer, learnerAnswerDisplay);
   reserveTextBlockHeight(el.correctFrench, displayedCorrectFrench);
+  const questionSentenceEndDelay = animatePlainText(
+    el.feedbackQuestionText,
+    questionSentenceDisplay,
+    questionSentenceStartDelay,
+  );
   const yourAnswerEndDelay = animateInlineSegments(
     el.learnerAnswer,
     buildLearnerAnswerSegments(
@@ -1958,7 +1969,7 @@ function renderFeedback(feedback) {
       canonicalTargetFrench,
       learnerTokenLabels,
     ),
-    yourAnswerStartDelay + 120,
+    Math.max(yourAnswerStartDelay + 120, questionSentenceEndDelay + 40),
     28,
   );
   const correctSentenceStartDelay = yourAnswerEndDelay + 80;
