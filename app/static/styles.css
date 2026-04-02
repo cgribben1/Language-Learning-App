@@ -293,6 +293,7 @@ h1 {
 #setup-panel .lesson-form button {
   justify-self: stretch;
   width: 100%;
+  margin-top: 6px;
 }
 
 .toggle-label select {
