@@ -60,10 +60,8 @@ const el = {
   correctnessBar: document.querySelector("#correctness-bar"),
   feedbackQuestionLabel: document.querySelector("#feedback-question-label"),
   feedbackQuestionText: document.querySelector("#feedback-question-text"),
-  feedbackArrowQuestionUser: document.querySelector("#feedback-arrow-question-user"),
   yourAnswerLabel: document.querySelector("#your-answer-label"),
   learnerAnswer: document.querySelector("#learner-answer"),
-  feedbackArrowUserCorrect: document.querySelector("#feedback-arrow-user-correct"),
   correctSentenceLabel: document.querySelector("#correct-sentence-label"),
   correctFrench: document.querySelector("#correct-french"),
   phraseExplainer: document.querySelector("#phrase-explainer"),
@@ -1703,23 +1701,6 @@ function reserveAnimatedMarkupHeight(target, html) {
   probe.remove();
 }
 
-function resetFeedbackArrows() {
-  [el.feedbackArrowQuestionUser, el.feedbackArrowUserCorrect].forEach((arrow) => {
-    if (!arrow) return;
-    arrow.classList.remove("feedback-arrow-active");
-  });
-}
-
-function animateFeedbackArrow(arrowElement, startDelay = 0) {
-  if (!arrowElement) return startDelay;
-  arrowElement.classList.remove("feedback-arrow-active");
-  const timer = setTimeout(() => {
-    arrowElement.classList.add("feedback-arrow-active");
-  }, startDelay);
-  state.contentAnimationTimers.push(timer);
-  return startDelay + 420;
-}
-
 function animateFastNaturalText(target, text, startDelay = 0) {
   return animateInlineSegments(target, buildPlainTextSegments(text), startDelay, 16);
 }
@@ -1967,12 +1948,11 @@ function renderFeedback(feedback) {
   el.lessonHeader.classList.add("hidden");
   el.storySoFarCard.classList.add("hidden");
   el.storySoFarList.innerHTML = "";
-  hideLessonScreens();
-  el.feedbackCard.classList.remove("hidden");
-  updateSidebarMeta();
-  animatePanelIn(el.feedbackCard);
-  resetFeedbackArrows();
-  const verdictDuration = animateFeedbackLabel(buildVerdictDisplay(feedback));
+    hideLessonScreens();
+    el.feedbackCard.classList.remove("hidden");
+    updateSidebarMeta();
+    animatePanelIn(el.feedbackCard);
+    const verdictDuration = animateFeedbackLabel(buildVerdictDisplay(feedback));
   animateCorrectnessMeter(feedback.correctness_score);
   el.feedbackQuestionLabel.textContent = "Question sentence";
   el.yourAnswerLabel.textContent = "Your answer";
@@ -2007,24 +1987,16 @@ function renderFeedback(feedback) {
   reserveAnimatedMarkupHeight(el.correctFrench, correctFrenchMarkup);
   const questionSentenceEndDelay = animatePlainText(
     el.feedbackQuestionText,
-    questionSentenceDisplay,
-    questionSentenceStartDelay,
-  );
-  const firstArrowEndDelay = animateFeedbackArrow(
-    el.feedbackArrowQuestionUser,
-    Math.max(questionSentenceEndDelay + 30, questionSentenceStartDelay + 180),
-  );
+      questionSentenceDisplay,
+      questionSentenceStartDelay,
+    );
   const yourAnswerEndDelay = animateInlineSegments(
     el.learnerAnswer,
     buildLearnerAnswerSegments(learnerAnswerDisplay, canonicalTargetFrench, learnerTokenLabels),
-    Math.max(yourAnswerStartDelay + 120, firstArrowEndDelay + 30),
+    Math.max(yourAnswerStartDelay + 120, questionSentenceEndDelay + 40),
     28,
   );
-  const arrowEndDelay = animateFeedbackArrow(
-    el.feedbackArrowUserCorrect,
-    Math.max(yourAnswerEndDelay + 30, firstArrowEndDelay + 120),
-  );
-  const correctSentenceStartDelay = arrowEndDelay + 30;
+  const correctSentenceStartDelay = yourAnswerEndDelay + 70;
   const correctSentenceEndDelay = animateInlineSegments(
     el.correctFrench,
     buildCorrectSentenceSegments(displayedCorrectFrench),
