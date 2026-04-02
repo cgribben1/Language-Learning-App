@@ -1044,6 +1044,9 @@ kbd {
   align-items: center;
   gap: 10px;
   padding: 8px 0 4px;
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-self: center;
 }
 
 .site-footer-meta {
