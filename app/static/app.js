@@ -1683,6 +1683,24 @@ function reserveTextBlockHeight(target, text) {
   }
 }
 
+function reserveAnimatedMarkupHeight(target, html) {
+  const width = target.getBoundingClientRect().width || target.parentElement?.getBoundingClientRect().width || 0;
+  const probe = target.cloneNode(false);
+  probe.innerHTML = html;
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  probe.style.height = "auto";
+  probe.style.minHeight = "0";
+  probe.style.left = "-9999px";
+  probe.style.top = "0";
+  probe.style.width = `${Math.max(width, 1)}px`;
+  probe.style.whiteSpace = "normal";
+  target.parentElement?.appendChild(probe);
+  target.style.minHeight = `${probe.scrollHeight}px`;
+  probe.remove();
+}
+
 function animateFastNaturalText(target, text, startDelay = 0) {
   return animateInlineSegments(target, buildPlainTextSegments(text), startDelay, 16);
 }
@@ -1942,7 +1960,8 @@ function renderFeedback(feedback) {
   el.feedbackNotesLabel.textContent = "Feedback notes";
   const questionSentenceStartDelay = verdictDuration + 40;
   const yourAnswerStartDelay = verdictDuration + 90;
-  const questionSentenceDisplay = `"${currentSentence()?.english || ""}"`;
+  const feedbackSentence = state.lesson?.sentences?.[state.currentIndex] || currentSentence();
+  const questionSentenceDisplay = `"${feedbackSentence?.english || ""}"`;
   const learnerAnswerDisplay = formatLearnerAnswerDisplay(state.lastAnswer);
   const displayedCorrectFrench = formatCorrectSentenceDisplay(getDisplayedCorrectFrench(feedback));
   const canonicalTargetFrench = formatCorrectSentenceDisplay(
@@ -1951,12 +1970,21 @@ function renderFeedback(feedback) {
   const learnerTokenLabels = promoteAcceptableDifferenceLabels(
     learnerAnswerDisplay,
     canonicalTargetFrench,
-    feedback.learner_token_labels || [],
-    Boolean(feedback.is_correct),
+      feedback.learner_token_labels || [],
+      Boolean(feedback.is_correct),
+    );
+  const learnerAnswerMarkup = buildLearnerAnswerMarkup(
+    learnerAnswerDisplay,
+    canonicalTargetFrench,
+    learnerTokenLabels,
   );
+  const correctFrenchMarkup = buildCorrectSentenceMarkup(displayedCorrectFrench);
+  el.feedbackQuestionText.textContent = "";
+  el.learnerAnswer.innerHTML = "";
+  el.correctFrench.innerHTML = "";
   reserveTextBlockHeight(el.feedbackQuestionText, questionSentenceDisplay);
-  reserveTextBlockHeight(el.learnerAnswer, learnerAnswerDisplay);
-  reserveTextBlockHeight(el.correctFrench, displayedCorrectFrench);
+  reserveAnimatedMarkupHeight(el.learnerAnswer, learnerAnswerMarkup);
+  reserveAnimatedMarkupHeight(el.correctFrench, correctFrenchMarkup);
   const questionSentenceEndDelay = animatePlainText(
     el.feedbackQuestionText,
     questionSentenceDisplay,
@@ -1964,11 +1992,7 @@ function renderFeedback(feedback) {
   );
   const yourAnswerEndDelay = animateInlineSegments(
     el.learnerAnswer,
-    buildLearnerAnswerSegments(
-      learnerAnswerDisplay,
-      canonicalTargetFrench,
-      learnerTokenLabels,
-    ),
+    buildLearnerAnswerSegments(learnerAnswerDisplay, canonicalTargetFrench, learnerTokenLabels),
     Math.max(yourAnswerStartDelay + 120, questionSentenceEndDelay + 40),
     28,
   );
