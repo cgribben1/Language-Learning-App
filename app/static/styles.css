@@ -253,13 +253,15 @@ body {
 }
 
 .lang-flag-btn:hover {
-  transform: translateY(-1px);
+  transform: none;
   filter: drop-shadow(0 4px 10px rgba(27, 25, 22, 0.14));
 }
 
 .lang-flag-btn.active {
-  transform: translateY(-1px);
-  filter: drop-shadow(0 5px 12px rgba(166, 41, 13, 0.2));
+  transform: none;
+  filter:
+    drop-shadow(0 5px 12px rgba(166, 41, 13, 0.16))
+    drop-shadow(0 0 8px rgba(255, 244, 214, 0.42));
 }
 
 .lang-flag-btn.active .lang-flag {
