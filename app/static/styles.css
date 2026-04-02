@@ -597,7 +597,7 @@ kbd {
   padding: 14px 16px;
   border: 1px solid rgba(62, 41, 28, 0.1);
   border-radius: 20px;
-  background: #fffdf9;
+  background: rgba(244, 235, 221, 0.92);
 }
 
 .feedback-question-block {
@@ -1333,7 +1333,7 @@ body.bauhaus-colors .side-panel-btn {
 }
 
 body.bauhaus-colors .feedback-card {
-  background: #fffdf9 !important;
+  background: rgba(244, 235, 221, 0.92) !important;
 }
 
 body.bauhaus-colors #learner-answer .answer-word-correct,
