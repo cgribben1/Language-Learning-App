@@ -533,7 +533,7 @@ label span {
 }
 
 .story-suggester-btn:not(.story-suggester-loading):not(.story-suggester-done):hover .story-suggester-sparkle-right {
-  animation-delay: 420ms;
+  animation-delay: -420ms;
 }
 
 .story-suggester-loading .story-suggester-sparkle-left {
