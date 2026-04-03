@@ -524,6 +524,25 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
         correct_result = " ".join(correct_parts).strip()
         return wrong_result or wrong_side, correct_result or correct_side
 
+    def expand_with_subject_context(pair: dict[str, Any]) -> tuple[str, str] | None:
+        prev_wrong, prev_correct = shared_previous_token(pair)
+        if not prev_wrong or normalize_french(prev_wrong) not in subjects:
+            return None
+
+        wrong_parts = [prev_wrong] + [token.strip() for token in pair["wrong_tokens"] if token.strip()]
+        correct_parts = [prev_correct] + [token.strip() for token in pair["correct_tokens"] if token.strip()]
+
+        next_wrong, next_correct = shared_next_token(pair)
+        if next_wrong and next_correct:
+            wrong_parts.append(next_wrong)
+            correct_parts.append(next_correct)
+
+        wrong_side = " ".join(wrong_parts).strip()
+        correct_side = " ".join(correct_parts).strip()
+        if wrong_side and correct_side:
+            return wrong_side, correct_side
+        return None
+
     category_key = normalize_reminder_key(category_key)
     if category_key == "articles":
         pair = pick_matching_pair(articles)
@@ -605,17 +624,22 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
             correct_tokens = pair["correct_tokens"]
             if not wrong_tokens and not correct_tokens:
                 continue
-            prev_wrong, prev_correct = shared_previous_token(pair)
-            if prev_wrong and normalize_french(prev_wrong) in subjects and wrong_tokens and correct_tokens:
-                return f"{prev_wrong} {wrong_tokens[0]}".strip(), f"{prev_correct} {correct_tokens[0]}".strip()
+            expanded = expand_with_subject_context(pair)
+            if expanded:
+                return expanded
             if wrong_tokens and correct_tokens:
                 if len(wrong_tokens) <= 2 and len(correct_tokens) <= 2:
                     return " ".join(wrong_tokens).strip(), " ".join(correct_tokens).strip()
                 return wrong_tokens[0].strip(), correct_tokens[0].strip()
-            if prev_wrong and normalize_french(prev_wrong) in subjects:
-                wrong_side = f"{prev_wrong} {' '.join(wrong_tokens).strip()}".strip()
-                correct_side = f"{prev_correct} {' '.join(correct_tokens).strip()}".strip()
-                return wrong_side, correct_side
+            expanded = expand_with_subject_context(pair)
+            if expanded:
+                return expanded
+
+    if category_key == "agreement":
+        for pair in changed_pairs:
+            expanded = expand_with_subject_context(pair)
+            if expanded:
+                return expanded
 
     pair = min(
         changed_pairs,
