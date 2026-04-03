@@ -314,6 +314,19 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
                 }
             )
 
+    function_swap = find_single_function_word_swap(request.learner_answer, request.target_sentence, request.language)
+    if function_swap:
+        learner_norm, target_norm, _, _ = function_swap
+        prepositions = SPANISH_PREPOSITIONS if request.language == "spanish" else FRENCH_PREPOSITIONS
+        if learner_norm in prepositions and target_norm in prepositions:
+            triggers.append(
+                {
+                    "key": "prepositions",
+                    "label": "Prepositions",
+                    "explanation": "Watch the preposition here; the target uses a different location or linking word.",
+                }
+            )
+
     unique: dict[str, dict[str, str]] = {}
     for item in triggers:
         unique[item["key"]] = item
@@ -344,6 +357,33 @@ def normalize_reminder_key(value: str) -> str:
         return ""
     key = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
     return key[:64]
+
+
+def find_single_function_word_swap(
+    learner_answer: str,
+    target_sentence: str,
+    language: str = "french",
+) -> tuple[str, str, str, str] | None:
+    learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
+    target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
+    if len(learner_tokens) != len(target_tokens):
+        return None
+
+    function_words = SPANISH_FUNCTION_WORDS if language == "spanish" else FRENCH_FUNCTION_WORDS
+    mismatches: list[tuple[str, str, str, str]] = []
+    for learner_raw, target_raw in zip(learner_tokens, target_tokens):
+        learner_norm = normalize_french(learner_raw)
+        target_norm = normalize_french(target_raw)
+        if learner_norm and target_norm and learner_norm != target_norm:
+            mismatches.append((learner_norm, target_norm, learner_raw, target_raw))
+
+    if len(mismatches) != 1:
+        return None
+
+    learner_norm, target_norm, learner_raw, target_raw = mismatches[0]
+    if learner_norm in function_words and target_norm in function_words:
+        return learner_norm, target_norm, learner_raw, target_raw
+    return None
 
 
 def canonicalize_reminder_category(
@@ -1348,8 +1388,15 @@ class AIService:
         target_counts = Counter(token for token in target_normalized if token)
 
         labels: list[str] = []
-        for token in learner_normalized:
+        for index, token in enumerate(learner_normalized):
             if not token:
+                labels.append("wrong")
+                continue
+            target_token = target_normalized[index] if index < len(target_normalized) else ""
+            if token != target_token and (
+                token in self._function_words("spanish") or token in self._function_words("french")
+                or target_token in self._function_words("spanish") or target_token in self._function_words("french")
+            ):
                 labels.append("wrong")
                 continue
             if target_counts.get(token, 0) > 0:
@@ -1367,6 +1414,18 @@ class AIService:
         is_correct: bool,
     ) -> dict[str, Any]:
         if is_correct:
+            function_swap = find_single_function_word_swap(
+                request.learner_answer,
+                request.target_sentence,
+                request.language,
+            )
+            if function_swap:
+                _, _, learner_raw, target_raw = function_swap
+                return {
+                    **payload,
+                    "mistakes": [f'Use "{target_raw}" here, not "{learner_raw}".'],
+                    "tips": [],
+                }
             return payload
         if payload.get("tips") or payload.get("mistakes"):
             return payload
