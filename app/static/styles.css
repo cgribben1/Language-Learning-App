@@ -537,6 +537,11 @@ button:disabled {
   width: 100%;
 }
 
+#toggle-hints-btn,
+#skip-btn {
+  color: rgba(38, 29, 17, 0.72);
+}
+
 .action-row,
 .hint-toolbar,
 .prompt-header-row,
