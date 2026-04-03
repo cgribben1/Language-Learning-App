@@ -1034,7 +1034,7 @@ kbd {
   padding: 14px 16px;
   border: 1px solid rgba(62, 41, 28, 0.12);
   border-radius: 20px;
-  background: rgba(236, 224, 204, 0.88);
+  background: rgba(228, 214, 191, 0.92);
 }
 
 .feedback-card {
@@ -1136,29 +1136,29 @@ kbd {
   28% {
     opacity: 0.9;
     transform: translateY(-3px) scale(1.08);
-    filter: brightness(1.14);
+    filter: brightness(1.18);
     text-shadow:
-      0 0 18px rgba(242, 183, 5, 0.44),
-      0 0 30px rgba(166, 41, 13, 0.2);
+      0 0 22px rgba(242, 183, 5, 0.54),
+      0 0 34px rgba(166, 41, 13, 0.24);
   }
   52% {
     opacity: 1;
     transform: translateY(0) scale(1.24);
-    filter: brightness(1.3);
+    filter: brightness(1.38);
     text-shadow:
-      0 0 34px rgba(242, 183, 5, 0.96),
-      0 0 64px rgba(242, 183, 5, 0.58),
-      0 0 24px rgba(166, 41, 13, 0.36),
-      0 0 36px rgba(4, 119, 191, 0.18);
+      0 0 42px rgba(242, 183, 5, 1),
+      0 0 78px rgba(242, 183, 5, 0.72),
+      0 0 28px rgba(166, 41, 13, 0.42),
+      0 0 40px rgba(4, 119, 191, 0.22);
   }
   80% {
     opacity: 1;
     transform: translateY(0) scale(1.18);
-    filter: brightness(1.18);
+    filter: brightness(1.22);
     text-shadow:
-      0 0 28px rgba(242, 183, 5, 0.68),
-      0 0 44px rgba(242, 183, 5, 0.34),
-      0 0 16px rgba(166, 41, 13, 0.2);
+      0 0 32px rgba(242, 183, 5, 0.78),
+      0 0 50px rgba(242, 183, 5, 0.42),
+      0 0 18px rgba(166, 41, 13, 0.24);
   }
   94% {
     opacity: 1;
