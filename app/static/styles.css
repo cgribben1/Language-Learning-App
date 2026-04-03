@@ -545,15 +545,21 @@ label span {
 }
 
 .story-suggester-ellipsis {
-  display: inline-flex !important;
+  display: inline-grid !important;
+  grid-auto-flow: column;
+  align-items: center;
   justify-content: flex-start;
   width: 3ch;
-  margin-left: 0.05rem;
+  margin-left: 0.08rem;
+  color: inherit !important;
 }
 
 .story-suggester-ellipsis > span {
+  display: block !important;
   width: 1ch;
-  opacity: 0.18;
+  text-align: center;
+  color: inherit !important;
+  opacity: 0.34;
   animation: storySuggesterEllipsis 1200ms steps(1, end) infinite;
 }
 
