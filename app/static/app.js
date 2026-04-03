@@ -2162,7 +2162,7 @@ function renderFeedback(feedback) {
   const finalNotes = buildConciseNotes(feedback);
   const notes = [...finalNotes];
   if (feedback.reminders_triggered?.length) {
-    notes.push(`Reminder added: ${feedback.reminders_triggered.join(", ")}`);
+    notes.push(`New common error saved: ${feedback.reminders_triggered.join(", ")}`);
   }
   const notesStartDelay = Math.max(correctSentenceEndDelay + 80, correctSentenceStartDelay + 240);
   animateNotesList(notes, notesStartDelay + 140);
@@ -2347,20 +2347,19 @@ async function loadVocab() {
 
 function renderReminders(items) {
   el.remindersList.innerHTML = "";
-  const repeated = items.filter((item) => item.count >= 2);
   if (el.sidebarReminderCount) {
-    el.sidebarReminderCount.textContent = `${repeated.length} item${repeated.length === 1 ? "" : "s"}`;
+    el.sidebarReminderCount.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
   }
 
-  if (!repeated.length) {
+  if (!items.length) {
     const empty = document.createElement("div");
     empty.className = "empty-vocab";
-    empty.textContent = "Repeated errors will start appearing here once the app spots a pattern more than once.";
+    empty.textContent = "Common error patterns will appear here once the app spots them.";
     el.remindersList.appendChild(empty);
     return;
   }
 
-  repeated.forEach((item) => {
+  items.forEach((item) => {
     const div = document.createElement("div");
     div.className = "reminder-item";
     const conciseExplanation = makeReminderExplanationConcise(item.explanation);
