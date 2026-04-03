@@ -1837,6 +1837,7 @@ kbd {
   position: relative;
   width: 100%;
   padding: 0 18px 3px 12px;
+  line-height: 1.15;
 }
 
 .side-panel-btn > span::after,
@@ -1846,7 +1847,7 @@ kbd {
   left: 12px;
   right: 18px;
   bottom: 0;
-  height: 1px;
+  height: 2px;
   background: currentColor;
   transform-origin: right center;
   transform: scaleX(1);
@@ -1855,7 +1856,7 @@ kbd {
 
 .side-panel-btn::after,
 .side-panel-btn-placeholder::after {
-  content: "\27F6";
+  content: "\2794";
   position: absolute;
   right: 16px;
   top: 50%;
