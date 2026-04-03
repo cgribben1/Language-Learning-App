@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .adventure_service import AdventureService
 from .ai_service import AIService, build_reminder_example, detect_reminder_triggers
-from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest
+from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest, StorySuggestionRequest, StorySuggestionResponse
 from .storage import load_reminders, load_story_brain, load_vocab, record_completed_story, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
 
@@ -176,6 +176,14 @@ def complete_story(request: StoryCompleteRequest) -> StoryBrainResponse:
     entry = ai_service.summarize_completed_story(request)
     items, _ = record_completed_story(entry)
     return StoryBrainResponse(items=[item for item in items if item.language == request.language])
+
+
+@app.post("/api/story-suggestion", response_model=StorySuggestionResponse)
+def suggest_story(request: StorySuggestionRequest) -> StorySuggestionResponse:
+    try:
+        return ai_service.suggest_story_theme(request)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @app.get("/api/vocab/export")

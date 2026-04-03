@@ -175,6 +175,18 @@ class StoryCompleteRequest(BaseModel):
     sentences: list[LessonSentence] = Field(default_factory=list)
 
 
+class StorySuggestionRequest(BaseModel):
+    language: LanguageCode = "french"
+    difficulty: DifficultyLevel = "A2"
+    lesson_type: Literal["story", "dialogue", "film_scene", "auto"] = "story"
+    current_theme: str = ""
+
+
+class StorySuggestionResponse(BaseModel):
+    suggestion: str
+    rationale: str = ""
+
+
 class AdventureStartRequest(BaseModel):
     difficulty: DifficultyLevel = "A2"
     theme: str = "lost festival lanterns"

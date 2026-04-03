@@ -27,6 +27,7 @@ const state = {
   funFactQueueByLanguage: {},
   savedVocabItems: [],
   completedStoryMemoryLessonIds: [],
+  storySuggestTimer: null,
 };
 
 const el = {
@@ -100,6 +101,8 @@ const el = {
   sidebarProgress: document.querySelector("#sidebar-progress"),
   sidebarVocabCount: document.querySelector("#sidebar-vocab-count"),
   sidebarReminderCount: document.querySelector("#sidebar-reminder-count"),
+  storySuggesterBtn: document.querySelector("#story-suggester-btn"),
+  storySuggesterNote: document.querySelector("#story-suggester-note"),
 };
 
 let selectedPhraseData = null;
@@ -1620,9 +1623,28 @@ function renderSetupView(message = "") {
   el.progressCurrent.textContent = "0";
   el.progressTotal.textContent = "0";
   el.storySoFarCard.classList.add("hidden");
+  if (el.storySuggesterNote) {
+    el.storySuggesterNote.classList.add("hidden");
+    el.storySuggesterNote.textContent = "";
+  }
   updateSidebarMeta();
   setSidebarNavState("home");
   scrollWindowToTop();
+}
+
+function showStorySuggestionNote(text) {
+  if (!el.storySuggesterNote) {
+    return;
+  }
+  if (state.storySuggestTimer) {
+    clearTimeout(state.storySuggestTimer);
+  }
+  el.storySuggesterNote.textContent = text;
+  el.storySuggesterNote.classList.remove("hidden");
+  state.storySuggestTimer = setTimeout(() => {
+    el.storySuggesterNote.classList.add("hidden");
+    state.storySuggestTimer = null;
+  }, 4200);
 }
 
 function renderGeneratingStoryScreen() {
@@ -2625,6 +2647,41 @@ async function generateLesson(event) {
   }
 }
 
+async function suggestStoryTheme() {
+  if (!el.storySuggesterBtn) {
+    return;
+  }
+  const button = el.storySuggesterBtn;
+  const themeInput = document.querySelector("#theme");
+  button.disabled = true;
+  button.textContent = "Thinking...";
+  try {
+    const response = await api("/api/story-suggestion", {
+      method: "POST",
+      body: JSON.stringify({
+        language: currentLanguage(),
+        difficulty: document.querySelector("#difficulty").value,
+        lesson_type: document.querySelector("#lesson-type").value,
+        current_theme: themeInput?.value?.trim() || "",
+      }),
+    });
+    if (themeInput && response.suggestion) {
+      themeInput.value = response.suggestion;
+      themeInput.focus();
+      themeInput.setSelectionRange(themeInput.value.length, themeInput.value.length);
+    }
+    if (response.rationale) {
+      showStorySuggestionNote(response.rationale);
+    }
+    updateSidebarMeta();
+  } catch (error) {
+    showStorySuggestionNote(`Could not suggest a theme: ${error.message}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Suggest theme";
+  }
+}
+
 async function evaluateCurrentAnswer() {
   const sentence = currentSentence();
   if (!sentence) return;
@@ -2788,6 +2845,7 @@ async function exportVocab() {
 }
 
 el.lessonForm.addEventListener("submit", generateLesson);
+el.storySuggesterBtn?.addEventListener("click", suggestStoryTheme);
 el.checkBtn.addEventListener("click", evaluateCurrentAnswer);
 el.skipBtn.addEventListener("click", revealAndSkip);
 el.correctFrench.addEventListener("click", async (event) => {

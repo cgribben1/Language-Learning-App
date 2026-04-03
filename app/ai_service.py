@@ -17,7 +17,7 @@ from typing import Any
 
 from openai import APIConnectionError, APIError, APITimeoutError, BadRequestError, OpenAI, RateLimitError
 
-from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, LessonSentence, PhraseExplainRequest, PhraseExplainResponse, StoryCompleteRequest, StoryMemoryEntry, VocabHint
+from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, LessonSentence, PhraseExplainRequest, PhraseExplainResponse, StoryCompleteRequest, StoryMemoryEntry, StorySuggestionRequest, StorySuggestionResponse, VocabHint
 from .storage import build_story_memory_guidance, load_phrase_dictionary
 
 try:
@@ -2268,6 +2268,111 @@ class AIService:
             vocab_domains=[request.theme],
             grammar_focuses=["General lesson review"],
             freshness_note=f"Avoid repeating the same setup as '{request.title}'.",
+        )
+
+    def suggest_story_theme(self, request: StorySuggestionRequest) -> StorySuggestionResponse:
+        memory_guidance = build_story_memory_guidance(request.language)
+        if not self.enabled:
+            return self._fallback_story_suggestion(request, memory_guidance)
+
+        schema = {
+            "name": "story_suggestion",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "suggestion": {"type": "string"},
+                    "rationale": {"type": "string"},
+                },
+                "required": ["suggestion", "rationale"],
+            },
+        }
+
+        prompt_bits = [
+            f"Language: {self._language_name(request.language)}",
+            f"Difficulty: {request.difficulty}",
+            f"Lesson type: {request.lesson_type}",
+        ]
+        if request.current_theme.strip():
+            prompt_bits.append(f"Current theme in the input box: {request.current_theme.strip()}")
+        if memory_guidance:
+            prompt_bits.append("")
+            prompt_bits.append(memory_guidance)
+
+        try:
+            response = self._responses_create_with_retry(
+                **self._response_create_options(
+                    model=self.lesson_model,
+                    max_output_tokens=220,
+                    reasoning_effort="low",
+                ),
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You suggest fresh language-learning story themes. "
+                            "Return one concise theme idea only, suitable for dropping directly into a theme input box. "
+                            "The suggestion should be specific enough to inspire a vivid lesson, but short enough to fit in a compact form field. "
+                            "Avoid repeating recent plots, settings, and vocabulary domains from the supplied memory. "
+                            "Write the suggestion in English. "
+                            "Keep it under 8 words when possible. "
+                            "The rationale should be one short English sentence explaining why it feels fresh compared with recent stories."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": "\n".join(prompt_bits),
+                    },
+                ],
+                text={"format": {"type": "json_schema", **schema}},
+            )
+            payload = json.loads(response.output_text)
+            return StorySuggestionResponse(
+                suggestion=payload["suggestion"].strip(),
+                rationale=payload["rationale"].strip(),
+            )
+        except Exception:
+            return self._fallback_story_suggestion(request, memory_guidance)
+
+    def _fallback_story_suggestion(self, request: StorySuggestionRequest, memory_guidance: str = "") -> StorySuggestionResponse:
+        language_label = "French" if request.language == "french" else "Spanish"
+        lesson_type = request.lesson_type if request.lesson_type != "auto" else "story"
+        memory_text = memory_guidance.lower()
+        candidates = [
+            "midnight train mystery",
+            "storm lantern festival",
+            "museum after closing",
+            "marketplace mix-up",
+            "lost map by the sea",
+            "winter mountain rescue",
+            "deserted cinema rehearsal",
+            "garden maze secret",
+            "moonlit bridge encounter",
+            "library code puzzle",
+        ]
+        if "myth" in memory_text or "greek" in memory_text:
+            candidates = [item for item in candidates if "maze" not in item and "map" not in item] + ["clockmaker in the rain"]
+        if request.lesson_type == "dialogue":
+            candidates = [
+                "market negotiation gone wrong",
+                "late train platform conversation",
+                "cafe misunderstanding at dusk",
+                "museum guard and visitor",
+                "hotel check-in mix-up",
+            ]
+        elif request.lesson_type == "film_scene":
+            candidates = [
+                "rooftop chase at midnight",
+                "silent station reunion",
+                "rainy street handoff",
+                "backstage panic before opening",
+                "harbor lookout at dawn",
+            ]
+        suggestion = candidates[0]
+        return StorySuggestionResponse(
+            suggestion=suggestion,
+            rationale=f"A fresh {language_label.lower()} {lesson_type} idea chosen to steer away from your recent completed stories.",
         )
 
     def _lesson_sentence_schema(self, min_items: int, max_items: int) -> dict[str, Any]:

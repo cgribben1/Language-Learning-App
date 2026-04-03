@@ -85,7 +85,11 @@
                 <small class="field-help">Choose a theme and/or linguistic topic to focus on.</small>
                 <p class="generate-shortcut-hint">Press <kbd>Enter</kbd> to continue.</p>
               </div>
-              <input id="theme" name="theme" value="Greek myth" maxlength="80">
+              <div class="theme-input-row">
+                <input id="theme" name="theme" value="Greek myth" maxlength="80">
+                <button id="story-suggester-btn" class="story-suggester-btn" type="button">Suggest theme</button>
+              </div>
+              <small id="story-suggester-note" class="story-suggester-note hidden" aria-live="polite"></small>
             </label>
 
             <button id="generate-btn" type="submit">
