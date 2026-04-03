@@ -765,11 +765,11 @@ body.bauhaus-colors #skip-btn {
 }
 
 #prompt-panel .prompt-header-row {
-  margin: 0 0 -10px;
+  margin: 8px 0 -6px;
 }
 
 #prompt-panel .english-prompt {
-  margin-top: -6px;
+  margin-top: 0;
 }
 
 .prompt-waiting-illustration {
