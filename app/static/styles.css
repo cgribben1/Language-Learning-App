@@ -813,11 +813,12 @@ body.bauhaus-colors #skip-btn {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  min-height: auto;
 }
 
 #prompt-panel .prompt-copy-stack {
   display: grid;
-  gap: 2px;
+  gap: 8px;
 }
 
 #prompt-panel .context-note {
@@ -833,6 +834,10 @@ body.bauhaus-colors #skip-btn {
   margin: 0;
   font-size: clamp(1.18rem, 1.85vw, 1.56rem);
   line-height: 1.18;
+}
+
+#prompt-panel > .context-note + .prompt-header-row {
+  margin-top: 0;
 }
 
 #answer-entry.answer-entry-form {
