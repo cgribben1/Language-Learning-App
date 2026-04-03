@@ -284,6 +284,9 @@ function clearStorySuggesterReset() {
     clearTimeout(state.storySuggestResetTimer);
     state.storySuggestResetTimer = null;
   }
+  if (el.storySuggesterBtn) {
+    el.storySuggesterBtn.classList.remove("story-suggester-resetting");
+  }
 }
 
 function clearStorySuggesterEllipsis() {
@@ -2739,6 +2742,10 @@ async function suggestStoryTheme() {
         button.classList.remove("story-suggester-done");
         button.classList.remove("story-suggester-loading");
         button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
+        button.classList.add("story-suggester-resetting");
+        state.contentAnimationTimers.push(setTimeout(() => {
+          button.classList.remove("story-suggester-resetting");
+        }, 650));
         state.storySuggestResetTimer = null;
       }, 2000);
     } else {
