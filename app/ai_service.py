@@ -331,6 +331,26 @@ def normalize_reminder_key(value: str) -> str:
     return key[:64]
 
 
+def localize_reminder_wording(text: str, language: str = "french") -> str:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return ""
+
+    replacements_by_language = {
+        "french": {
+            "be": "être",
+        },
+        "spanish": {
+            "be": "ser/estar",
+        },
+    }
+
+    replacements = replacements_by_language.get(language, {})
+    for english_term, target_term in replacements.items():
+        cleaned = re.sub(rf"\b{re.escape(english_term)}\b", target_term, cleaned, flags=re.IGNORECASE)
+    return cleaned
+
+
 def is_accent_feedback(text: str) -> bool:
     normalized = normalize_french(text)
     return any(
@@ -1068,11 +1088,11 @@ class AIService:
         adjusted_is_correct = learner_normalized == target_normalized or adjusted_score >= 85
         return adjusted_score, adjusted_is_correct
 
-    def _sanitize_feedback_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def _sanitize_feedback_payload(self, payload: dict[str, Any], language: str = "french") -> dict[str, Any]:
         cleaned = dict(payload)
         cleaned["reminder_key"] = normalize_reminder_key(cleaned.get("reminder_key", ""))
-        cleaned["reminder_label"] = str(cleaned.get("reminder_label", "") or "").strip()
-        cleaned["reminder_explanation"] = str(cleaned.get("reminder_explanation", "") or "").strip()
+        cleaned["reminder_label"] = localize_reminder_wording(cleaned.get("reminder_label", ""), language)
+        cleaned["reminder_explanation"] = localize_reminder_wording(cleaned.get("reminder_explanation", ""), language)
         cleaned["tips"] = [
             tip
             for tip in cleaned.get("tips", [])
@@ -2190,6 +2210,8 @@ class AIService:
                             "Make reminder_label specific and learner-friendly, ideally 2 to 6 words. "
                             "Do not use vague labels like 'verb conjugation' or 'grammar issue' if you can name the actual pattern more precisely. "
                             "For example, prefer labels like 'Third-person present tense', 'Missing preposition after entrer', or 'Wrong article with noun' over broad generic labels. "
+                            f"When naming a specific target-language word, verb, or construction in reminder_label, use the actual {self._language_name(request.language)} form rather than the English gloss. "
+                            f"For example, prefer labels like \"'être' conjugation\" or \"Missing 'dans' after entrer\" in {self._language_name(request.language)} mode. "
                             "Make reminder_explanation one short English sentence explaining the repeatable pattern in a concrete way. "
                             "Do not write generic explanations like 'check subject-verb agreement' if you can name the exact tense, pronoun pattern, or construction more specifically. "
                             "If there is no useful repeatable pattern, set reminder_key, reminder_label, and reminder_explanation to empty strings. "
@@ -2262,7 +2284,7 @@ class AIService:
 
         if payload is None:
             raise RuntimeError("Answer evaluation failed to return structured JSON.")
-        payload = self._sanitize_feedback_payload(payload)
+        payload = self._sanitize_feedback_payload(payload, request.language)
         learner_normalized = normalize_french(request.learner_answer)
         target_normalized = normalize_french(request.target_sentence)
         orthography_equivalent = self._is_orthography_equivalent(
