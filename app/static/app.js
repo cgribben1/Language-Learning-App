@@ -23,10 +23,8 @@ const state = {
   waitingPromptEllipsisTimer: null,
   devVersion: null,
   devReloadTimer: null,
-  lastCheckingTipIndex: -1,
-  checkingTipsLessonId: null,
-  usedCheckingTipIndexes: {},
-  checkingTipQueueByDifficulty: {},
+  lastFunFactIndexByLanguage: {},
+  funFactQueueByLanguage: {},
   savedVocabItems: [],
 };
 
@@ -121,160 +119,60 @@ function isVocabItemAlreadySaved(english, targetWord) {
   ));
 }
 
-const CHECKING_TIPS_BY_LEVEL = {
-  A1: [
-    "Helpful tip: \"J'ai\" means \"I have\" and is one of the most common starter phrases.",
-    "Helpful tip: French usually needs an article, like \"un\", \"une\", or \"le\", where English may be looser.",
-    "Helpful tip: \"Je suis\" means \"I am,\" but use \"j'ai\" for age: \"j'ai vingt ans\".",
-    "Helpful tip: Common survival phrase: \"Je voudrais...\" means \"I would like...\".",
-    "Helpful tip: Many basic adjectives come after the noun, like \"un livre interessant\".",
-    "Helpful tip: \"Il y a\" means \"there is\" or \"there are\" and shows up everywhere.",
-    "Helpful tip: \"C'est\" is one of the easiest ways to say \"it is\" or \"this is\".",
-    "Helpful tip: \"Je m'appelle...\" means \"My name is...\" and is worth memorizing early.",
-    "Helpful tip: French often uses \"est-ce que\" to make a simple question.",
-    "Helpful tip: \"Merci beaucoup\" is stronger than just \"merci\" and sounds very natural.",
-    "Helpful tip: \"Voici\" means \"here is\" and \"voila\" means \"there is\" or \"there you go\".",
-    "Helpful tip: \"Je ne comprends pas\" is a very useful phrase when you are stuck.",
-    "Helpful tip: Days and months in French do not usually take capital letters.",
-    "Helpful tip: \"Il est\" is used for time, like \"il est deux heures\".",
-    "Helpful tip: \"Dans\" often means \"in\" or \"inside\", while \"a\" can mean \"to\" or \"at\".",
-    "Helpful tip: French often keeps subject pronouns explicit: \"je\", \"tu\", \"il\", \"elle\".",
-    "Helpful tip: \"J'aime\" means \"I like\" or \"I love\", depending on context.",
-    "Helpful tip: \"Un\" and \"une\" are not interchangeable, so noun gender matters from the start.",
-    "Helpful tip: \"Comment ca va ?\" is a common way to ask how someone is doing.",
-    "Helpful tip: \"Je voudrais\" usually sounds more polite than \"je veux\" in requests.",
+const LANGUAGE_FUN_FACTS = {
+  french: [
+    "Fun fact: French is an official language on five continents.",
+    "Fun fact: Roughly one third of modern English words come from French or Norman French roots.",
+    "Fun fact: In standard French typography, spaces usually appear before : ; ? and !.",
+    "Fun fact: Weekdays and months in French usually do not take capital letters.",
+    "Fun fact: The Academie française was founded in 1635 to help standardize the language.",
+    "Fun fact: Quebec French preserves some older pronunciations and expressions that disappeared in France.",
+    "Fun fact: \"Vouvoiement\" and \"tutoiement\" describe the choice between formal \"vous\" and informal \"tu\".",
+    "Fun fact: The French word \"ordinateur\" was coined in the 1960s as a native term for computer.",
+    "Fun fact: Some French-speaking regions use \"septante\" instead of \"soixante-dix\" for seventy.",
+    "Fun fact: \"Ouais\" is a casual spoken alternative to \"oui\", a bit like saying \"yeah\" instead of \"yes\".",
+    "Fun fact: Verlan is a French slang system that flips syllables, like \"femme\" becoming \"meuf\".",
+    "Fun fact: The circumflex sometimes marks where an older French word once had an s, like \"forest\" becoming \"forêt\".",
+    "Fun fact: French has dozens of regional accents, from Marseille to Lille to Strasbourg.",
+    "Fun fact: \"Il y a\" is one of the most useful chunks in French because it means both \"there is\" and \"there are\".",
+    "Fun fact: French loanwords in English include restaurant, genre, menu, and ballet.",
+    "Fun fact: In France, counting on fingers often starts with the thumb rather than the index finger.",
+    "Fun fact: The Louvre began life as a medieval fortress before becoming a royal palace and then a museum.",
+    "Fun fact: France has more than forty thousand castles, ranging from giant fortresses to manor houses.",
+    "Fun fact: A baguette traditionally has no knife cuts before baking if it is made in the strict \"tradition\" style.",
+    "Fun fact: The Paris Metro opened in 1900 for the Exposition Universelle.",
+    "Fun fact: Mont Saint-Michel becomes an island at high tide and reconnects to land at low tide.",
+    "Fun fact: Many French place names preserve traces of Celtic, Latin, and Frankish history.",
+    "Fun fact: \"Bonjour\" originally carried the sense of wishing someone a good day.",
+    "Fun fact: French menus often use \"entree\" for a starter, unlike American English where it means the main course.",
+    "Fun fact: The cedilla in French only appears under the letter c, as in \"français\".",
   ],
-  A2: [
-    "Helpful tip: After \"aimer\", \"vouloir\", and \"pouvoir\", French often uses an infinitive: \"je veux partir\".",
-    "Helpful tip: \"Chez\" often means \"at the home or place of\", as in \"chez moi\" or \"chez le medecin\".",
-    "Helpful tip: Use \"aller + infinitive\" for the near future, like \"je vais partir\".",
-    "Helpful tip: \"Parce que\" introduces a reason, while \"pour\" is often followed by a noun or infinitive.",
-    "Helpful tip: Useful phrase: \"On y va ?\" means \"Shall we go?\" or \"Are we going?\".",
-    "Helpful tip: In negation, French usually wraps the verb: \"je ne sais pas\".",
-    "Helpful tip: \"Il faut\" is an easy structure for saying what is necessary.",
-    "Helpful tip: \"Depuis\" is often used for something that started in the past and is still true now.",
-    "Helpful tip: \"Toujours\" means \"always\", while \"encore\" can mean \"still\" or \"again\".",
-    "Helpful tip: \"Rien\" means \"nothing\" and often appears with negation: \"je ne vois rien\".",
-    "Helpful tip: \"Personne\" can mean \"nobody\" in negative sentences: \"il n'y a personne\".",
-    "Helpful tip: \"Quelqu'un\" means \"someone\" and is extremely common in everyday French.",
-    "Helpful tip: \"Tout le monde\" means \"everyone\" and behaves like a singular idea.",
-    "Helpful tip: \"Avant de\" is followed by an infinitive, like \"avant de partir\".",
-    "Helpful tip: \"Apres avoir\" or \"apres etre\" often helps connect two actions naturally.",
-    "Helpful tip: \"En train de\" is useful when you want to stress that something is happening right now.",
-    "Helpful tip: \"Je viens de...\" means \"I have just...\" and is common in conversation.",
-    "Helpful tip: \"Connaître\" is for being familiar with people or places; \"savoir\" is for facts and skills.",
-    "Helpful tip: \"Mieux\" means \"better\" as an adverb, while \"meilleur\" is an adjective.",
-    "Helpful tip: French often uses reflexive verbs for daily routine: \"je me leve\", \"je me couche\".",
-  ],
-  B1: [
-    "Helpful tip: \"Depuis\" means \"since\" or \"for\" with actions still continuing, as in \"j'habite ici depuis deux ans\".",
-    "Helpful tip: \"En train de\" highlights an action in progress: \"je suis en train de lire\".",
-    "Helpful tip: \"Il faut\" is a very common way to say \"it is necessary\" or \"you have to\".",
-    "Helpful tip: \"Y\" often replaces \"there\" or \"to it\", as in \"j'y vais\".",
-    "Helpful tip: \"Plus... plus...\" builds comparisons like \"plus je lis, plus je comprends\".",
-    "Helpful tip: Useful connector: \"du coup\" often means \"so\" or \"as a result\" in everyday French.",
-    "Helpful tip: \"Alors que\" helps you contrast two ideas inside one sentence.",
-    "Helpful tip: \"Pendant que\" means \"while\" and is useful for linked actions.",
-    "Helpful tip: \"Venir de\" and \"aller\" help French narration move more naturally through time.",
-    "Helpful tip: B1 French often sounds better when you connect clauses instead of stacking short sentences.",
-    "Helpful tip: \"On\" is extremely common in spoken French and often replaces \"nous\".",
-    "Helpful tip: \"Finir par\" means \"to end up doing\" and is useful for narration.",
-    "Helpful tip: \"Se rendre compte\" means \"to realize\" and is worth learning as a chunk.",
-    "Helpful tip: \"Avoir l'air\" means \"to seem\" or \"to look\".",
-    "Helpful tip: \"Faillir\" is rarer, but \"j'ai failli\" means \"I almost...\".",
-    "Helpful tip: \"Par rapport a\" is common in speech, but sometimes a simpler connector sounds cleaner.",
-    "Helpful tip: \"D'abord\", \"ensuite\", and \"finalement\" help structure a sequence clearly.",
-    "Helpful tip: B1 answers improve a lot when the tense choice stays stable across the sentence.",
-    "Helpful tip: \"Ce qui\" and \"ce que\" are useful when English would say \"what\".",
-    "Helpful tip: \"En fait\" can mean \"actually\" or \"in fact\", depending on context.",
-  ],
-  B2: [
-    "Helpful tip: The subjunctive often appears after expressions like \"il faut que\" or \"bien que\".",
-    "Helpful tip: \"Dont\" can replace \"de + noun\", as in \"le livre dont je parle\".",
-    "Helpful tip: \"Avoir beau\" means doing something even though it does not help: \"j'ai beau essayer...\".",
-    "Helpful tip: French often prefers a clean relative clause over repeating the noun too many times.",
-    "Helpful tip: Useful connector: \"pourtant\" means \"however\" or \"and yet\".",
-    "Helpful tip: Stronger B2 phrasing often relies on connectors like \"ainsi\", \"tandis que\", or \"alors que\".",
-    "Helpful tip: At B2, the difference between acceptable French and natural French is often connector choice.",
-    "Helpful tip: \"Or\" is a compact formal connector meaning something like \"now\" or \"yet\" in argumentation.",
-    "Helpful tip: \"Autant\" and \"d'autant plus que\" help build more nuanced comparisons.",
-    "Helpful tip: \"Ce dont\" and \"ce a quoi\" are useful when the clause has no explicit noun head.",
-    "Helpful tip: \"Bien que\" takes the subjunctive and often sounds more polished than a simpler contrast.",
-    "Helpful tip: \"A peine... que\" is a compact way to express immediate sequence.",
-    "Helpful tip: B2 French benefits from varying sentence openings instead of always starting with the subject.",
-    "Helpful tip: \"Il s'agit de\" is very common in explanations and formal descriptions.",
-    "Helpful tip: \"Mettre en place\" means \"to set up\" or \"to put in place\" and appears often in formal French.",
-    "Helpful tip: \"Meme si\" usually takes the indicative, unlike some nearby structures.",
-    "Helpful tip: \"Quoique\" and \"bien que\" are similar, but register and rhythm can differ.",
-    "Helpful tip: A strong B2 sentence often compresses ideas instead of translating every English word separately.",
-    "Helpful tip: Watch article choices after abstract verbs; French often wants one where English does not.",
-    "Helpful tip: Relative pronouns are a major fluency marker at B2, especially \"dont\" and \"lequel\" forms.",
-  ],
-  C1: [
-    "Helpful tip: At C1, register matters: ask whether the sentence sounds neutral, formal, literary, or conversational.",
-    "Helpful tip: Small connector choices reshape nuance: \"or\", \"pourtant\", \"toutefois\", \"d'ailleurs\".",
-    "Helpful tip: Watch pronominal verbs closely, especially when meaning shifts, as in \"se rendre compte\".",
-    "Helpful tip: French often sounds more elegant when repetition is replaced with pronouns or tighter clause structure.",
-    "Helpful tip: \"Mettre en valeur\" means \"to highlight\" and is common in analytical or formal writing.",
-    "Helpful tip: At higher levels, idiomatic precision matters more than literal word-for-word alignment.",
-    "Helpful tip: C1 French often improves through restraint: fewer heavy calques, tighter syntax, sharper nuance.",
-    "Helpful tip: \"D'autant que\" can justify a statement with a stronger follow-up reason.",
-    "Helpful tip: \"Force est de constater\" is formal and should be used sparingly, but it is worth recognizing.",
-    "Helpful tip: Advanced French often prefers nominal structures where English prefers verbs.",
-    "Helpful tip: A C1 sentence should sound intentional in rhythm as well as correct in grammar.",
-    "Helpful tip: \"Quitte a\" signals a tradeoff or accepted consequence and adds nuance efficiently.",
-    "Helpful tip: \"Pour peu que\" is an advanced conditional trigger that takes the subjunctive.",
-    "Helpful tip: \"Il n'en demeure pas moins que\" is formal but useful for concession in argumentation.",
-    "Helpful tip: At C1, you should notice when a phrase is grammatical but too flat for the intended register.",
-    "Helpful tip: Advanced fluency often comes from pruning unnecessary pronouns, articles, and literal repetitions.",
-    "Helpful tip: \"N'avoir de cesse de\" is literary, but recognizing such structures helps with high-level input.",
-    "Helpful tip: \"Du reste\" and \"au demeurant\" are high-register connectors with a distinct written tone.",
-    "Helpful tip: A polished C1 answer often reorganizes the sentence instead of preserving English information order.",
-    "Helpful tip: Nuance pairs matter at this level: \"quoique\" vs \"bien que\", \"encore\" vs \"toujours\", \"voire\" vs \"meme\".",
-  ],
-};
-
-const CHECKING_TIPS_BY_LEVEL_SPANISH = {
-  A1: [
-    "Helpful tip: \"Tengo\" means \"I have\" and is one of the most useful starters.",
-    "Helpful tip: Spanish often needs an article like \"un\", \"una\", \"el\", or \"la\".",
-    "Helpful tip: \"Soy\" and \"estoy\" are different, so watch which kind of \"to be\" you need.",
-    "Helpful tip: Common useful phrase: \"Quiero...\" means \"I want...\".",
-    "Helpful tip: Basic adjectives often come after the noun in Spanish.",
-    "Helpful tip: \"Hay\" means \"there is\" or \"there are\".",
-    "Helpful tip: \"Me llamo...\" means \"My name is...\" and is worth knowing early.",
-    "Helpful tip: Watch noun gender from the start: \"un\" and \"una\" matter.",
-    "Helpful tip: \"Voy a...\" is a very common way to say the near future.",
-    "Helpful tip: Short words like \"de\", \"a\", and \"en\" can change the whole sentence."
-  ],
-  A2: [
-    "Helpful tip: After \"querer\", \"poder\", and \"ir a\", Spanish often uses an infinitive.",
-    "Helpful tip: Watch common contractions like \"al\" and \"del\".",
-    "Helpful tip: \"Porque\" gives a reason, while \"para\" often points to purpose.",
-    "Helpful tip: \"Entrar en\" is often better than leaving out the preposition.",
-    "Helpful tip: \"Acabar de\" helps you say you have just done something.",
-    "Helpful tip: \"Hay que\" is a useful way to say what is necessary.",
-    "Helpful tip: Reflexive verbs are common in daily routine, like \"me levanto\".",
-    "Helpful tip: Keep one clear main idea per sentence before adding detail."
-  ],
-  B1: [
-    "Helpful tip: Keep an eye on tense consistency across the sentence.",
-    "Helpful tip: Connect ideas naturally instead of stacking short literal translations.",
-    "Helpful tip: Useful connectors include \"mientras\", \"aunque\", and \"entonces\".",
-    "Helpful tip: B1 Spanish improves a lot when articles and prepositions are precise.",
-    "Helpful tip: Good intermediate Spanish often sounds simpler than a literal English calque."
-  ],
-  B2: [
-    "Helpful tip: At B2, natural connector choice matters almost as much as grammar.",
-    "Helpful tip: Stronger Spanish often comes from tighter phrasing, not more words.",
-    "Helpful tip: Check whether the register sounds neutral, formal, or conversational.",
-    "Helpful tip: Good B2 answers often reorganize the sentence rather than translate word by word."
-  ],
-  C1: [
-    "Helpful tip: At C1, nuance and register matter as much as correctness.",
-    "Helpful tip: Look for a sharper idiomatic phrasing rather than a literal one.",
-    "Helpful tip: Advanced Spanish often improves through cleaner clause structure.",
-    "Helpful tip: Ask whether the sentence sounds genuinely native, not just grammatical."
+  spanish: [
+    "Fun fact: Spanish is an official language in more than twenty countries.",
+    "Fun fact: The upside-down opening marks ¿ and ¡ are unique visual signatures of written Spanish.",
+    "Fun fact: The letter ñ developed from medieval scribes doubling the letter n.",
+    "Fun fact: Spanish is one of the fastest spoken major languages by syllables per second.",
+    "Fun fact: \"Sobremesa\" is the time spent chatting at the table after a meal.",
+    "Fun fact: The Real Academia Española has helped regulate Spanish spelling since the 1700s.",
+    "Fun fact: In much of Latin America, \"ustedes\" replaces \"vosotros\" for the plural \"you\".",
+    "Fun fact: Rioplatense Spanish often pronounces ll and y with a \"sh\" or \"zh\" sound.",
+    "Fun fact: The word \"ojalá\" comes from Arabic and originally meant something like \"if God wills it\".",
+    "Fun fact: Spanish uses two verbs for \"to be\": \"ser\" and \"estar\".",
+    "Fun fact: The Spanish alphabet no longer treats ch and ll as separate letters, though they still matter in spelling.",
+    "Fun fact: \"Madrugar\" means waking up very early, with no perfect one-word English equivalent.",
+    "Fun fact: The Alhambra in Granada reflects centuries of Arabic influence on Iberian culture and language.",
+    "Fun fact: Many Spanish words beginning with al-, like \"almohada\" and \"alcachofa\", come from Arabic.",
+    "Fun fact: \"Tapa\" may come from the idea of covering a drink with a small bite to eat.",
+    "Fun fact: Spanish is phonetic enough that many learners can read it aloud quite early on.",
+    "Fun fact: The Day of the Dead in Mexico blends Indigenous and Catholic traditions in a vivid cultural festival.",
+    "Fun fact: Cervantes, the author of Don Quixote, is often described as the central figure of Spanish literature.",
+    "Fun fact: \"Vale\" is a very common way to say \"okay\" in Spain.",
+    "Fun fact: \"Ahorita\" can mean \"right now\" or \"in a little while\" depending on region and context.",
+    "Fun fact: Spanish is the second most common native language in the world by number of speakers.",
+    "Fun fact: Flamenco developed in Andalusia through a mix of Romani, Moorish, Jewish, and local influences.",
+    "Fun fact: In Spain, dinner often happens much later than in Britain or the United States.",
+    "Fun fact: Some regions use \"vos\" instead of \"tú\", especially in parts of Argentina, Uruguay, and Central America.",
+    "Fun fact: The Camino de Santiago has drawn pilgrims across northern Spain for centuries.",
   ],
 };
 
@@ -1260,25 +1158,6 @@ function normalizeQuotationMarks(text) {
     .replace(/\s*(?:»|Â»)/g, "\"");
 }
 
-function resetCheckingTipHistory(lessonId = null) {
-  state.checkingTipsLessonId = lessonId;
-  state.usedCheckingTipIndexes = {};
-  state.checkingTipQueueByDifficulty = {};
-  state.lastCheckingTipIndex = -1;
-}
-
-function ensureCheckingTipHistory(lessonId) {
-  if (!lessonId) {
-    if (state.checkingTipsLessonId !== null) {
-      resetCheckingTipHistory(null);
-    }
-    return;
-  }
-  if (state.checkingTipsLessonId !== lessonId) {
-    resetCheckingTipHistory(lessonId);
-  }
-}
-
 function shuffleIndexes(length) {
   const indexes = Array.from({ length }, (_, index) => index);
   for (let i = indexes.length - 1; i > 0; i -= 1) {
@@ -1288,47 +1167,47 @@ function shuffleIndexes(length) {
   return indexes;
 }
 
-function ensureCheckingTipQueue(difficulty) {
-  const languageKey = currentLanguage();
-  const queueKey = `${languageKey}:${difficulty}`;
-  const tipBank = currentLanguage() === "spanish" ? CHECKING_TIPS_BY_LEVEL_SPANISH : CHECKING_TIPS_BY_LEVEL;
-  const tips = tipBank[difficulty] || [];
-  const existingQueue = state.checkingTipQueueByDifficulty[queueKey] || [];
+function resetFunFactHistory(language = null) {
+  if (!language) {
+    state.lastFunFactIndexByLanguage = {};
+    state.funFactQueueByLanguage = {};
+    return;
+  }
+  delete state.lastFunFactIndexByLanguage[language];
+  delete state.funFactQueueByLanguage[language];
+}
+
+function ensureFunFactQueue(language) {
+  const facts = LANGUAGE_FUN_FACTS[language] || LANGUAGE_FUN_FACTS.french;
+  const existingQueue = state.funFactQueueByLanguage[language] || [];
   if (existingQueue.length) {
     return existingQueue;
   }
 
-  if (!tips.length) {
-    state.checkingTipQueueByDifficulty[queueKey] = [];
+  if (!facts.length) {
+    state.funFactQueueByLanguage[language] = [];
     return [];
   }
 
-  let queue = shuffleIndexes(tips.length);
-  if (tips.length > 1 && queue[0] === state.lastCheckingTipIndex) {
+  let queue = shuffleIndexes(facts.length);
+  if (facts.length > 1 && queue[0] === state.lastFunFactIndexByLanguage[language]) {
     queue.push(queue.shift());
   }
-  state.checkingTipQueueByDifficulty[queueKey] = queue;
+  state.funFactQueueByLanguage[language] = queue;
   return queue;
 }
 
-function pickNextCheckingTip(difficulty) {
-  const languageKey = currentLanguage();
-  const queueKey = `${languageKey}:${difficulty}`;
-  const tipBank = currentLanguage() === "spanish" ? CHECKING_TIPS_BY_LEVEL_SPANISH : CHECKING_TIPS_BY_LEVEL;
-  const tips = tipBank[difficulty] || tipBank.A2;
-  if (!tips.length) {
-    return "Helpful tip: Watch the article, verb, and word order before you submit.";
+function pickNextFunFact(language) {
+  const facts = LANGUAGE_FUN_FACTS[language] || LANGUAGE_FUN_FACTS.french;
+  if (!facts.length) {
+    return "Fun fact: Languages tend to reveal their history through everyday words, accents, and idioms.";
   }
 
-  const queue = ensureCheckingTipQueue(difficulty);
+  const queue = ensureFunFactQueue(language);
   const nextIndex = queue.shift();
-  state.checkingTipQueueByDifficulty[queueKey] = queue;
-  state.usedCheckingTipIndexes[queueKey] = [
-    ...(state.usedCheckingTipIndexes[queueKey] || []),
-    nextIndex,
-  ].slice(-tips.length);
-  state.lastCheckingTipIndex = nextIndex;
-  return tips[nextIndex];
+  state.funFactQueueByLanguage[language] = queue;
+  state.lastFunFactIndexByLanguage[language] = nextIndex;
+  return facts[nextIndex];
 }
 
 function currentLessonId() {
@@ -1380,9 +1259,8 @@ function currentDifficulty() {
   return state.lesson?.difficulty || document.querySelector("#difficulty")?.value || "A2";
 }
 
-function getCheckingTipForCurrentLesson() {
-  ensureCheckingTipHistory(currentLessonId());
-  return pickNextCheckingTip(currentDifficulty());
+function getCheckingFactForCurrentLanguage() {
+  return pickNextFunFact(currentLanguage());
 }
 
 function buildConciseVerdict(feedback) {
@@ -1713,7 +1591,7 @@ function renderSetupView(message = "") {
   state.lesson = null;
   state.currentIndex = 0;
   state.lastAnswer = "";
-  resetCheckingTipHistory(null);
+  resetFunFactHistory();
   el.lessonCard.classList.remove("hidden");
   el.lessonCard.classList.remove("lesson-card-checking");
   el.lessonHeader.classList.remove("hidden");
@@ -2331,7 +2209,7 @@ function renderCheckingScreen() {
   el.storySoFarList.innerHTML = "";
   hideLessonScreens();
   if (el.checkingCopy) {
-    el.checkingCopy.textContent = getCheckingTipForCurrentLesson();
+    el.checkingCopy.textContent = getCheckingFactForCurrentLanguage();
   }
   el.checkingPanel.classList.remove("hidden");
   updateSidebarMeta();
@@ -2549,7 +2427,7 @@ async function generateLesson(event) {
       body: JSON.stringify(payload),
     });
     state.lesson = lesson;
-    resetCheckingTipHistory(lesson.lesson_id);
+    resetFunFactHistory(currentLanguage());
     state.currentIndex = 0;
     state.lastAnswer = "";
     ensureLessonPolling();
