@@ -1782,7 +1782,7 @@ kbd {
 #sidebar-home-btn,
 .side-panel-btn,
 .side-panel-btn-placeholder {
-  font-family: "Manrope", sans-serif !important;
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
 .side-panel-title {
@@ -1798,30 +1798,52 @@ kbd {
 
 .side-panel-actions {
   display: grid;
-  gap: 6px;
+  gap: 0;
+  padding: 4px 0;
+  border-radius: 4px;
+  background: rgba(255, 248, 239, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .side-panel-btn {
   width: 100%;
   justify-content: flex-start;
-  padding: 10px 11px;
-  border-radius: 8px;
-  background: rgba(233, 226, 216, 0.72);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 9px 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: none;
   color: rgba(34, 34, 34, 0.86);
   font-weight: 800;
   letter-spacing: 0.01em;
+  text-align: left;
+  transition:
+    transform 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease;
 }
 
 .side-panel-btn-placeholder {
   cursor: default;
 }
 
+.side-panel-btn:last-child {
+  border-bottom: 0;
+}
+
+.side-panel-btn > span,
+.side-panel-btn-placeholder > span {
+  display: block;
+  width: 100%;
+  padding: 0 12px;
+}
+
 .side-panel-btn:hover {
-  transform: none;
+  transform: translateY(-2px);
   box-shadow: none;
-  background: rgba(233, 226, 216, 0.84);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .side-panel-meta {
