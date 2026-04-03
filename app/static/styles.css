@@ -1499,30 +1499,30 @@ kbd {
 }
 
 .checking-quill {
-  top: 96px;
-  right: 68px;
-  width: 72px;
-  height: 34px;
-  transform: rotate(-18deg);
-  animation: quillWrite 1.9s steps(4, end) infinite;
-  transform-origin: 18% 82%;
+  top: 88px;
+  right: 54px;
+  width: 84px;
+  height: 40px;
+  transform: rotate(18deg);
+  animation: quillWrite 1.7s steps(4, end) infinite;
+  transform-origin: 82% 86%;
 }
 
 .checking-quill-feather {
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 18px;
+  top: 10px;
+  right: 8px;
+  width: 34px;
+  height: 16px;
   border-radius: 0;
-  clip-path: polygon(0 50%, 18% 12%, 74% 0, 100% 30%, 72% 100%, 16% 86%);
+  clip-path: polygon(100% 50%, 78% 6%, 24% 0, 0 26%, 22% 100%, 82% 84%);
   background: linear-gradient(135deg, rgba(166, 41, 13, 0.94), rgba(4, 119, 191, 0.92));
   box-shadow: 0 0 0 1px rgba(38, 29, 17, 0.1);
 }
 
 .checking-quill-shaft {
-  left: 26px;
-  top: 14px;
-  width: 42px;
+  left: 12px;
+  top: 17px;
+  width: 56px;
   height: 4px;
   border-radius: 0;
   background: rgba(38, 29, 17, 0.88);
@@ -1532,13 +1532,13 @@ kbd {
 .checking-quill-shaft::after {
   content: "";
   position: absolute;
-  right: -8px;
+  left: -10px;
   top: -2px;
   width: 0;
   height: 0;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-left: 8px solid rgba(38, 29, 17, 0.88);
+  border-right: 10px solid rgba(38, 29, 17, 0.88);
 }
 
 .story-star-one,
@@ -1645,10 +1645,10 @@ kbd {
 
 @keyframes quillWrite {
   0%, 100% {
-    transform: rotate(-18deg) translate3d(0, 0, 0);
+    transform: rotate(18deg) translate3d(0, 0, 0);
   }
   50% {
-    transform: rotate(-14deg) translate3d(-10px, 6px, 0);
+    transform: rotate(13deg) translate3d(-8px, 5px, 0);
   }
 }
 
