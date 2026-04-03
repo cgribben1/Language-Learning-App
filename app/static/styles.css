@@ -2221,6 +2221,8 @@ kbd {
   font-size: 0.84rem;
   line-height: 1.35;
   color: var(--ink);
+  font-family: "Fraunces", serif !important;
+  font-weight: 400 !important;
 }
 
 .reference-grid .reminder-example-wrong,
