@@ -504,12 +504,43 @@ label span {
   opacity: 0.72;
 }
 
-.story-suggester-note {
-  display: block;
-  margin-top: 8px;
-  color: rgba(38, 29, 17, 0.58);
-  font-size: 0.76rem;
-  line-height: 1.4;
+.story-suggester-loader {
+  position: absolute;
+  left: 20px;
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  pointer-events: none;
+}
+
+.story-suggester-loader-pixel {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 253, 249, 0.96);
+  box-shadow: 0 0 0 1px rgba(78, 77, 158, 0.22);
+  animation: storySuggesterPixel 720ms steps(2, end) infinite;
+}
+
+.story-suggester-loader-pixel-one {
+  left: 0;
+  top: 6px;
+}
+
+.story-suggester-loader-pixel-two {
+  left: 6px;
+  top: 0;
+  animation-delay: 120ms;
+}
+
+.story-suggester-loader-pixel-three {
+  left: 12px;
+  top: 6px;
+  animation-delay: 240ms;
+}
+
+.story-suggester-loading:hover .story-suggester-arrow {
+  transform: scaleX(-1);
 }
 
 input,
@@ -1941,6 +1972,17 @@ kbd {
     opacity: 0.38;
   }
   50% {
+    opacity: 1;
+  }
+}
+
+@keyframes storySuggesterPixel {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.54;
+  }
+  50% {
+    transform: translateY(-1px);
     opacity: 1;
   }
 }

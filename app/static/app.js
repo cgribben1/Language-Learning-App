@@ -102,13 +102,12 @@ const el = {
   sidebarVocabCount: document.querySelector("#sidebar-vocab-count"),
   sidebarReminderCount: document.querySelector("#sidebar-reminder-count"),
   storySuggesterBtn: document.querySelector("#story-suggester-btn"),
-  storySuggesterNote: document.querySelector("#story-suggester-note"),
 };
 
 let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Suggest theme</span>';
-const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Thinking...</span>';
+const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-loader" aria-hidden="true"><span class="story-suggester-loader-pixel story-suggester-loader-pixel-one"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-two"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-three"></span></span><span>Thinking...</span>';
 
 function normalizeVocabValue(value) {
   return String(value || "")
@@ -1626,28 +1625,9 @@ function renderSetupView(message = "") {
   el.progressCurrent.textContent = "0";
   el.progressTotal.textContent = "0";
   el.storySoFarCard.classList.add("hidden");
-  if (el.storySuggesterNote) {
-    el.storySuggesterNote.classList.add("hidden");
-    el.storySuggesterNote.textContent = "";
-  }
   updateSidebarMeta();
   setSidebarNavState("home");
   scrollWindowToTop();
-}
-
-function showStorySuggestionNote(text) {
-  if (!el.storySuggesterNote) {
-    return;
-  }
-  if (state.storySuggestTimer) {
-    clearTimeout(state.storySuggestTimer);
-  }
-  el.storySuggesterNote.textContent = text;
-  el.storySuggesterNote.classList.remove("hidden");
-  state.storySuggestTimer = setTimeout(() => {
-    el.storySuggesterNote.classList.add("hidden");
-    state.storySuggestTimer = null;
-  }, 4200);
 }
 
 function renderGeneratingStoryScreen() {
@@ -1869,6 +1849,23 @@ function reserveAnimatedMarkupHeight(target, html) {
 
 function animateFastNaturalText(target, text, startDelay = 0) {
   return animateInlineSegments(target, buildPlainTextSegments(text), startDelay, 16);
+}
+
+function animateInputValue(target, text, startDelay = 0, baseDelay = 18) {
+  if (!target) {
+    return startDelay;
+  }
+  target.value = "";
+  let accumulatedDelay = startDelay;
+  const content = String(text || "");
+  for (let index = 0; index < content.length; index += 1) {
+    const nextValue = content.slice(0, index + 1);
+    state.contentAnimationTimers.push(setTimeout(() => {
+      target.value = nextValue;
+    }, accumulatedDelay));
+    accumulatedDelay += baseDelay;
+  }
+  return accumulatedDelay;
 }
 
 function animateInlineSegments(target, segments, startDelay = 0, baseDelay = 24) {
@@ -2658,6 +2655,7 @@ async function suggestStoryTheme() {
   const themeInput = document.querySelector("#theme");
   button.disabled = true;
   button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
+  button.classList.add("story-suggester-loading");
   try {
     const response = await api("/api/story-suggestion", {
       method: "POST",
@@ -2669,18 +2667,20 @@ async function suggestStoryTheme() {
       }),
     });
     if (themeInput && response.suggestion) {
-      themeInput.value = response.suggestion;
+      clearContentAnimations();
+      animateInputValue(themeInput, response.suggestion, 30, 18);
       themeInput.focus();
-      themeInput.setSelectionRange(themeInput.value.length, themeInput.value.length);
-    }
-    if (response.rationale) {
-      showStorySuggestionNote(response.rationale);
+      state.contentAnimationTimers.push(setTimeout(() => {
+        const length = themeInput.value.length;
+        themeInput.setSelectionRange(length, length);
+      }, Math.max(60, response.suggestion.length * 18 + 40)));
     }
     updateSidebarMeta();
   } catch (error) {
-    showStorySuggestionNote(`Could not suggest a theme: ${error.message}`);
+    alert(`Could not suggest a theme: ${error.message}`);
   } finally {
     button.disabled = false;
+    button.classList.remove("story-suggester-loading");
     button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
   }
 }
