@@ -2679,7 +2679,7 @@ function animateCurrentSentenceIntoStory() {
       state.storyFlightCleanupTimer = setTimeout(() => {
         target.classList.remove("story-sentence-landed");
         state.storyFlightCleanupTimer = null;
-      }, 2520);
+      }, 3500);
       state.storyFlightFinishTimer = null;
       state.nextTransitionInProgress = false;
     };
@@ -2694,7 +2694,7 @@ function animateCurrentSentenceIntoStory() {
     });
 
     ghost.addEventListener("transitionend", finishFlight, { once: true });
-    state.storyFlightFinishTimer = setTimeout(finishFlight, 980);
+    state.storyFlightFinishTimer = setTimeout(finishFlight, 1120);
   });
 }
 
