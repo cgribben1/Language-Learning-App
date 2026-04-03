@@ -127,6 +127,8 @@ FRENCH_PRONOUNS = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "
 SPANISH_PRONOUNS = {"yo", "tu", "tú", "el", "él", "ella", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "me", "te", "se", "lo", "la", "los", "las", "le", "les", "nos", "os"}
 FRENCH_NEGATION = {"ne", "n", "pas", "plus", "jamais", "rien", "personne"}
 SPANISH_NEGATION = {"no", "nunca", "jamás", "nadie", "nada"}
+FRENCH_SUBJECTS = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "ce", "cela", "ça", "ca"}
+SPANISH_SUBJECTS = {"yo", "tu", "tú", "el", "él", "ella", "usted", "nosotros", "nosotras", "vosotros", "vosotras", "ustedes", "ellos", "ellas", "esto", "eso"}
 
 
 def counter_overlap(reference_tokens: list[str], candidate_tokens: list[str]) -> tuple[int, int]:
@@ -409,6 +411,23 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
     prepositions = SPANISH_PREPOSITIONS if language == "spanish" else FRENCH_PREPOSITIONS
     pronouns = SPANISH_PRONOUNS if language == "spanish" else FRENCH_PRONOUNS
     negation = SPANISH_NEGATION if language == "spanish" else FRENCH_NEGATION
+    subjects = SPANISH_SUBJECTS if language == "spanish" else FRENCH_SUBJECTS
+
+    def shared_previous_token(pair: dict[str, Any]) -> tuple[str, str]:
+        if pair["i1"] > 0 and pair["j1"] > 0:
+            prev_wrong = answer_tokens[pair["i1"] - 1].strip()
+            prev_correct = target_tokens[pair["j1"] - 1].strip()
+            if normalize_french(prev_wrong) == normalize_french(prev_correct):
+                return prev_wrong, prev_correct
+        return "", ""
+
+    def shared_next_token(pair: dict[str, Any]) -> tuple[str, str]:
+        if pair["i2"] < len(answer_tokens) and pair["j2"] < len(target_tokens):
+            next_wrong = answer_tokens[pair["i2"]].strip()
+            next_correct = target_tokens[pair["j2"]].strip()
+            if normalize_french(next_wrong) == normalize_french(next_correct):
+                return next_wrong, next_correct
+        return "", ""
 
     def pick_matching_pair(vocabulary: set[str]) -> tuple[str, str] | None:
         for pair in changed_pairs:
@@ -435,7 +454,17 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
     if category_key == "articles":
         pair = pick_matching_pair(articles)
         if pair:
-            return pair
+            wrong_side, correct_side = pair
+            for changed_pair in changed_pairs:
+                prev_wrong, prev_correct = shared_previous_token(changed_pair)
+                next_wrong, next_correct = shared_next_token(changed_pair)
+                wrong_hits = [token for token in changed_pair["wrong_tokens"] if normalize_french(token) in articles]
+                correct_hits = [token for token in changed_pair["correct_tokens"] if normalize_french(token) in articles]
+                if wrong_hits or correct_hits:
+                    if next_wrong and next_correct:
+                        return f"{wrong_side} {next_wrong}".strip(), f"{correct_side} {next_correct}".strip()
+                    return wrong_side, correct_side
+            return wrong_side, correct_side
     if category_key == "prepositions":
         pair = pick_matching_pair(prepositions)
         if pair:
@@ -453,34 +482,22 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
         if pair:
             return pair
     if category_key == "verbs":
-        best_pair: tuple[str, str] | None = None
-        best_pair_meta: dict[str, Any] | None = None
-        best_score = -1.0
         for pair in changed_pairs:
             wrong_tokens = pair["wrong_tokens"]
             correct_tokens = pair["correct_tokens"]
-            for wrong_token in wrong_tokens or [""]:
-                for correct_token in correct_tokens or [""]:
-                    score = SequenceMatcher(None, normalize_french(wrong_token), normalize_french(correct_token)).ratio()
-                    if score > best_score:
-                        best_score = score
-                        best_pair = (wrong_token.strip(), correct_token.strip())
-                        best_pair_meta = pair
-        if best_pair and all(best_pair) and best_pair_meta:
-            wrong_side, correct_side = best_pair
-            wrong_tokens = best_pair_meta["wrong_tokens"]
-            correct_tokens = best_pair_meta["correct_tokens"]
-
-            if len(wrong_tokens) <= 2 and len(correct_tokens) <= 2 and (len(wrong_tokens) > 1 or len(correct_tokens) > 1):
-                return " ".join(wrong_tokens).strip(), " ".join(correct_tokens).strip()
-
-            if best_pair_meta["i1"] > 0 and best_pair_meta["j1"] > 0:
-                anchor_wrong = answer_tokens[best_pair_meta["i1"] - 1].strip()
-                anchor_correct = target_tokens[best_pair_meta["j1"] - 1].strip()
-                if anchor_wrong and anchor_correct:
-                    return f"{anchor_wrong} {wrong_side}".strip(), f"{anchor_correct} {correct_side}".strip()
-
-            return wrong_side, correct_side
+            if not wrong_tokens and not correct_tokens:
+                continue
+            prev_wrong, prev_correct = shared_previous_token(pair)
+            if prev_wrong and normalize_french(prev_wrong) in subjects and wrong_tokens and correct_tokens:
+                return f"{prev_wrong} {wrong_tokens[0]}".strip(), f"{prev_correct} {correct_tokens[0]}".strip()
+            if wrong_tokens and correct_tokens:
+                if len(wrong_tokens) <= 2 and len(correct_tokens) <= 2:
+                    return " ".join(wrong_tokens).strip(), " ".join(correct_tokens).strip()
+                return wrong_tokens[0].strip(), correct_tokens[0].strip()
+            if prev_wrong and normalize_french(prev_wrong) in subjects:
+                wrong_side = f"{prev_wrong} {' '.join(wrong_tokens).strip()}".strip()
+                correct_side = f"{prev_correct} {' '.join(correct_tokens).strip()}".strip()
+                return wrong_side, correct_side
 
     pair = min(
         changed_pairs,
