@@ -477,6 +477,8 @@ label span {
   font-size: 0.96rem;
   line-height: 1;
   color: rgba(34, 34, 34, 0.5);
+  transform: scaleX(-1);
+  transform-origin: center;
   pointer-events: none;
 }
 
