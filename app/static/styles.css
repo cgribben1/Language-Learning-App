@@ -520,10 +520,6 @@ label span {
   animation: storySuggesterSparkleSpin 2100ms cubic-bezier(0.22, 0.75, 0.28, 1) infinite;
 }
 
-.story-suggester-loading {
-  gap: 18px;
-}
-
 .story-suggester-btn:not(.story-suggester-loading):not(.story-suggester-done):hover .story-suggester-sparkle {
   animation: storySuggesterSparkleHover 2600ms linear infinite;
 }
@@ -542,6 +538,10 @@ label span {
 
 .story-suggester-loading .story-suggester-sparkle-right {
   animation-delay: 180ms;
+}
+
+.story-suggester-loading > span:nth-child(2) {
+  min-width: 7.1rem;
 }
 
 .story-suggester-loading.story-suggester-btn:disabled {
