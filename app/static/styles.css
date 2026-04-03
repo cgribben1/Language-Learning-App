@@ -482,11 +482,17 @@ label span {
   transform: scaleX(-1);
   transform-origin: center;
   pointer-events: none;
+  transition: transform 260ms ease, color 260ms ease;
 }
 
 .story-suggester-btn:hover {
   opacity: 1;
   box-shadow: 0 14px 26px rgba(89, 61, 36, 0.14);
+  transform: none !important;
+}
+
+.story-suggester-btn:hover .story-suggester-arrow {
+  transform: translateX(-3px) scaleX(-1);
 }
 
 .story-suggester-btn:disabled {
@@ -2830,6 +2836,7 @@ body.landing-bauhaus-colors #story-suggester-btn {
 body.landing-bauhaus-colors #story-suggester-btn:hover {
   background: linear-gradient(135deg, #cfaa79 0%, #e8cda8 46%, #f5e8ce 100%) !important;
   box-shadow: 0 14px 28px rgba(89, 61, 36, 0.18) !important;
+  transform: none !important;
 }
 
 body.bauhaus-colors #restart-btn {
