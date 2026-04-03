@@ -1836,7 +1836,7 @@ kbd {
   display: inline-block;
   position: relative;
   width: 100%;
-  padding: 0 18px 3px 12px;
+  padding: 0 18px 3px 0;
   line-height: 1.15;
 }
 
@@ -1844,7 +1844,7 @@ kbd {
 .side-panel-btn-placeholder > span::after {
   content: "";
   position: absolute;
-  left: 12px;
+  left: 0;
   right: 18px;
   bottom: 0;
   height: 2px;
