@@ -379,14 +379,18 @@ function startWaitingPromptEllipsis() {
   const baseText = "The next part of your story is still being written";
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (prefersReducedMotion) {
-    el.englishPrompt.textContent = `[${baseText}...]`;
+    el.englishPrompt.innerHTML = `<span class="waiting-bracketed-line">[${baseText}<span class="waiting-bracketed-dots">...</span>]</span>`;
     return;
   }
 
-  const frames = ["\u00A0\u00A0\u00A0", ".\u00A0\u00A0", "..\u00A0", "..."];
+  const frames = ["", ".", "..", "..."];
   let index = 0;
+  el.englishPrompt.innerHTML = `<span class="waiting-bracketed-line">[${baseText}<span class="waiting-bracketed-dots"></span>]</span>`;
+  const dotsEl = el.englishPrompt.querySelector(".waiting-bracketed-dots");
   const tick = () => {
-    el.englishPrompt.textContent = `[${baseText}${frames[index]}]`;
+    if (dotsEl) {
+      dotsEl.textContent = frames[index];
+    }
     index = (index + 1) % frames.length;
     const delay = index === 0 ? 760 : 280;
     state.waitingPromptEllipsisTimer = setTimeout(tick, delay);

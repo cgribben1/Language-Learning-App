@@ -586,6 +586,21 @@ button:disabled {
   display: block;
 }
 
+.prompt-panel-waiting .english-prompt {
+  color: rgba(31, 29, 26, 0.82);
+}
+
+.waiting-bracketed-line {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.waiting-bracketed-dots {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: left;
+}
+
 .prompt-panel {
   min-height: 352px;
 }
