@@ -2783,7 +2783,7 @@ async function suggestStoryTheme() {
           button.classList.remove("story-suggester-resetting");
         }, 650));
         state.storySuggestResetTimer = null;
-      }, 2000);
+      }, 1500);
     } else {
       button.disabled = false;
       button.classList.remove("story-suggester-done");
