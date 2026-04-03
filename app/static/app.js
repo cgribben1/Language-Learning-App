@@ -2205,7 +2205,7 @@ function renderFeedback(feedback) {
 
   const finalNotes = buildConciseNotes(feedback);
   const reminderBannerText = feedback.reminders_triggered?.length
-    ? `New common error saved: ${feedback.reminders_triggered.join(", ")}`
+    ? `New common error saved: "${feedback.reminders_triggered.join(", ")}"`
     : "";
   showFeedbackReminderBanner(reminderBannerText, correctSentenceEndDelay + 120);
   const notes = [...finalNotes];
