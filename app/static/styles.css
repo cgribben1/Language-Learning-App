@@ -1846,7 +1846,7 @@ kbd {
   left: 12px;
   right: 12px;
   bottom: 0;
-  height: 2px;
+  height: 1px;
   background: currentColor;
   transform-origin: right center;
   transform: scaleX(1);
@@ -1855,7 +1855,7 @@ kbd {
 
 .side-panel-btn::after,
 .side-panel-btn-placeholder::after {
-  content: "\2192";
+  content: "\27F6";
   position: absolute;
   right: 16px;
   top: 50%;
