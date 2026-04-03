@@ -1917,7 +1917,11 @@ kbd {
 
 .side-panel-btn.is-active::after,
 .side-panel-btn-placeholder.is-active::after {
-  opacity: 0;
+  content: "•";
+  opacity: 1;
+  color: rgba(34, 34, 34, 0.68);
+  font-size: 1.05rem;
+  transform: translateY(-50%);
 }
 
 .side-panel-btn.is-inactive,
