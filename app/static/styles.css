@@ -1845,7 +1845,7 @@ kbd {
   content: "";
   position: absolute;
   left: 0;
-  right: 18px;
+  right: 0;
   bottom: 0;
   height: 2px;
   background: currentColor;
