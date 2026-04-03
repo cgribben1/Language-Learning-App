@@ -107,7 +107,7 @@ const el = {
 let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Suggest theme</span>';
-const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-loader" aria-hidden="true"><span class="story-suggester-loader-pixel story-suggester-loader-pixel-one"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-two"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-three"></span></span><span>Thinking...</span>';
+const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-loader" aria-hidden="true"><span class="story-suggester-loader-pixel story-suggester-loader-pixel-one"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-two"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-three"></span></span><span>Suggesting<span class="story-suggester-ellipsis"></span></span>';
 
 function normalizeVocabValue(value) {
   return String(value || "")
@@ -275,6 +275,39 @@ function clearWaitingPromptEllipsis() {
     clearTimeout(state.waitingPromptEllipsisTimer);
     state.waitingPromptEllipsisTimer = null;
   }
+}
+
+function clearStorySuggesterEllipsis() {
+  if (state.storySuggestTimer) {
+    clearTimeout(state.storySuggestTimer);
+    state.storySuggestTimer = null;
+  }
+  const node = document.querySelector(".story-suggester-ellipsis");
+  if (node) {
+    node.textContent = "";
+  }
+}
+
+function startStorySuggesterEllipsis() {
+  clearStorySuggesterEllipsis();
+  const node = document.querySelector(".story-suggester-ellipsis");
+  if (!node) {
+    return;
+  }
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) {
+    node.textContent = "...";
+    return;
+  }
+  const frames = ["", ".", "..", "..."];
+  let index = 0;
+  const tick = () => {
+    node.textContent = frames[index];
+    index = (index + 1) % frames.length;
+    const delay = index === 0 ? 1700 : 820;
+    state.storySuggestTimer = setTimeout(tick, delay);
+  };
+  tick();
 }
 
 function startWaitingPromptEllipsis() {
@@ -2656,6 +2689,7 @@ async function suggestStoryTheme() {
   button.disabled = true;
   button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
   button.classList.add("story-suggester-loading");
+  startStorySuggesterEllipsis();
   try {
     const response = await api("/api/story-suggestion", {
       method: "POST",
@@ -2681,6 +2715,7 @@ async function suggestStoryTheme() {
   } finally {
     button.disabled = false;
     button.classList.remove("story-suggester-loading");
+    clearStorySuggesterEllipsis();
     button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
   }
 }
