@@ -510,7 +510,7 @@ button {
   font-weight: 400;
   line-height: 1.45;
   white-space: nowrap;
-  transform: translateX(-22px);
+  transform: translateX(-14px);
 }
 
 button:hover {
