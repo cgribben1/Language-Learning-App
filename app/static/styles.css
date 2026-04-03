@@ -340,8 +340,7 @@ h1 {
 #setup-panel .hero-copy,
 #setup-panel label span,
 #setup-panel select,
-#setup-panel input,
-#setup-panel button {
+#setup-panel input {
   font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
