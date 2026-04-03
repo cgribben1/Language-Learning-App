@@ -1447,7 +1447,7 @@ kbd {
 .story-book,
 .checking-book {
   left: 50%;
-  bottom: 34px;
+  bottom: 38px;
   width: 164px;
   height: 110px;
   transform: translateX(-50%);
@@ -1499,7 +1499,7 @@ kbd {
 }
 
 .checking-quill {
-  top: 114px;
+  top: 120px;
   right: 54px;
   width: 84px;
   height: 40px;
