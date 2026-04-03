@@ -490,6 +490,40 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
                 return wrong_side, correct_side
         return None
 
+    def expand_pair_with_context(
+        pair: dict[str, Any],
+        wrong_side: str,
+        correct_side: str,
+        *,
+        prefer_next: bool = True,
+    ) -> tuple[str, str]:
+        wrong_parts = [part for part in wrong_side.split() if part]
+        correct_parts = [part for part in correct_side.split() if part]
+
+        prev_wrong, prev_correct = shared_previous_token(pair)
+        next_wrong, next_correct = shared_next_token(pair)
+
+        if prefer_next and next_wrong and next_correct:
+            wrong_parts.append(next_wrong)
+            correct_parts.append(next_correct)
+
+        if (len(wrong_parts) <= 1 or len(correct_parts) <= 1) and prev_wrong and prev_correct:
+            wrong_parts.insert(0, prev_wrong)
+            correct_parts.insert(0, prev_correct)
+
+        if (len(wrong_parts) <= 1 or len(correct_parts) <= 1) and next_wrong and next_correct and not prefer_next:
+            wrong_parts.append(next_wrong)
+            correct_parts.append(next_correct)
+
+        if len(wrong_parts) <= 1 and pair["i2"] < len(answer_tokens):
+            wrong_parts.append(answer_tokens[pair["i2"]].strip())
+        if len(correct_parts) <= 1 and pair["j2"] < len(target_tokens):
+            correct_parts.append(target_tokens[pair["j2"]].strip())
+
+        wrong_result = " ".join(wrong_parts).strip()
+        correct_result = " ".join(correct_parts).strip()
+        return wrong_result or wrong_side, correct_result or correct_side
+
     category_key = normalize_reminder_key(category_key)
     if category_key == "articles":
         pair = pick_matching_pair(articles)
@@ -508,7 +542,26 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
     if category_key == "prepositions":
         pair = pick_matching_pair(prepositions)
         if pair:
-            return pair
+            wrong_side, correct_side = pair
+            for changed_pair in changed_pairs:
+                wrong_hits = [token for token in changed_pair["wrong_tokens"] if normalize_french(token) in prepositions]
+                correct_hits = [token for token in changed_pair["correct_tokens"] if normalize_french(token) in prepositions]
+                if wrong_hits or correct_hits:
+                    if len(changed_pair["wrong_tokens"]) > len(wrong_hits) and len(changed_pair["correct_tokens"]) > len(correct_hits):
+                        wrong_tail = changed_pair["wrong_tokens"][len(wrong_hits):]
+                        correct_tail = changed_pair["correct_tokens"][len(correct_hits):]
+                        if wrong_tail and correct_tail:
+                            return (
+                                f"{wrong_side} {' '.join(wrong_tail)}".strip(),
+                                f"{correct_side} {' '.join(correct_tail)}".strip(),
+                            )
+                    return expand_pair_with_context(
+                        changed_pair,
+                        wrong_side,
+                        correct_side,
+                        prefer_next=True,
+                    )
+            return wrong_side, correct_side
     if category_key == "pronouns":
         pair = pick_matching_pair(pronouns)
         if pair:
@@ -520,7 +573,32 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
     if category_key == "small_words":
         pair = pick_matching_pair(articles | prepositions | pronouns | negation)
         if pair:
-            return pair
+            wrong_side, correct_side = pair
+            for changed_pair in changed_pairs:
+                wrong_hits = [
+                    token for token in changed_pair["wrong_tokens"]
+                    if normalize_french(token) in (articles | prepositions | pronouns | negation)
+                ]
+                correct_hits = [
+                    token for token in changed_pair["correct_tokens"]
+                    if normalize_french(token) in (articles | prepositions | pronouns | negation)
+                ]
+                if wrong_hits or correct_hits:
+                    if len(changed_pair["wrong_tokens"]) > len(wrong_hits) and len(changed_pair["correct_tokens"]) > len(correct_hits):
+                        wrong_tail = changed_pair["wrong_tokens"][len(wrong_hits):]
+                        correct_tail = changed_pair["correct_tokens"][len(correct_hits):]
+                        if wrong_tail and correct_tail:
+                            return (
+                                f"{wrong_side} {' '.join(wrong_tail)}".strip(),
+                                f"{correct_side} {' '.join(correct_tail)}".strip(),
+                            )
+                    return expand_pair_with_context(
+                        changed_pair,
+                        wrong_side,
+                        correct_side,
+                        prefer_next=True,
+                    )
+            return wrong_side, correct_side
     if category_key == "verbs":
         for pair in changed_pairs:
             wrong_tokens = pair["wrong_tokens"]
