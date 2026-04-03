@@ -1857,13 +1857,13 @@ kbd {
 .side-panel-btn-placeholder::after {
   content: "\2192";
   position: absolute;
-  right: 12px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.86rem;
   line-height: 1;
   color: rgba(34, 34, 34, 0.5);
-  transition: color 180ms ease, opacity 180ms ease;
+  transition: color 180ms ease, opacity 180ms ease, transform 180ms ease;
 }
 
 .side-panel-btn:hover {
@@ -1880,6 +1880,7 @@ kbd {
 .side-panel-btn:hover::after,
 .side-panel-btn-placeholder:hover::after {
   color: rgba(34, 34, 34, 0.72);
+  transform: translateY(-50%) translateX(3px);
 }
 
 
