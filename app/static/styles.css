@@ -474,6 +474,7 @@ label span {
 .story-suggester-arrow {
   position: absolute;
   left: 14px;
+  display: inline-block;
   font-size: 0.96rem;
   line-height: 1;
   color: rgba(34, 34, 34, 0.5);
