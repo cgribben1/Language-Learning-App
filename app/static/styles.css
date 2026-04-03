@@ -1786,7 +1786,7 @@ kbd {
 #sidebar-home-btn,
 .side-panel-btn,
 .side-panel-btn-placeholder {
-  font-family: "Manrope", sans-serif !important;
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
 .side-panel-title {
