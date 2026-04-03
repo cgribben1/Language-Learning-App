@@ -2094,10 +2094,14 @@ kbd {
 .reference-grid .reminder-item-title {
   flex: 0 1 auto;
   min-width: 0;
-  font-family: "Manrope", sans-serif;
+  font-family: "Fraunces", serif;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--ink);
+}
+
+.reference-grid .reminder-item-title {
+  font-family: "Manrope", sans-serif;
 }
 
 .reference-grid .saved-vocab-english,
