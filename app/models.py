@@ -72,6 +72,9 @@ class EvaluationResponse(BaseModel):
     mistakes: list[str] = Field(default_factory=list)
     learner_token_labels: list[Literal["correct", "acceptable", "wrong"]] = Field(default_factory=list)
     reminders_triggered: list[str] = Field(default_factory=list)
+    reminder_key: str = ""
+    reminder_label: str = ""
+    reminder_explanation: str = ""
     encouraging_note: str = ""
     source: Literal["openai"]
 

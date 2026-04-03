@@ -306,7 +306,29 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
     unique: dict[str, dict[str, str]] = {}
     for item in triggers:
         unique[item["key"]] = item
+    dynamic_key = normalize_reminder_key(feedback.reminder_key or feedback.reminder_label)
+    dynamic_label = (feedback.reminder_label or "").strip()
+    dynamic_explanation = (feedback.reminder_explanation or "").strip()
+    if (
+        not feedback.is_correct
+        and dynamic_key
+        and dynamic_label
+        and dynamic_explanation
+    ):
+        unique[dynamic_key] = {
+            "key": dynamic_key,
+            "label": dynamic_label,
+            "explanation": dynamic_explanation,
+        }
     return list(unique.values())
+
+
+def normalize_reminder_key(value: str) -> str:
+    text = normalize_french(value or "")
+    if not text:
+        return ""
+    key = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+    return key[:64]
 
 
 def is_accent_feedback(text: str) -> bool:
@@ -1048,6 +1070,9 @@ class AIService:
 
     def _sanitize_feedback_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         cleaned = dict(payload)
+        cleaned["reminder_key"] = normalize_reminder_key(cleaned.get("reminder_key", ""))
+        cleaned["reminder_label"] = str(cleaned.get("reminder_label", "") or "").strip()
+        cleaned["reminder_explanation"] = str(cleaned.get("reminder_explanation", "") or "").strip()
         cleaned["tips"] = [
             tip
             for tip in cleaned.get("tips", [])
@@ -1079,6 +1104,15 @@ class AIService:
             or is_orthography_only_feedback(cleaned.get("encouraging_note", ""))
         ):
             cleaned["encouraging_note"] = ""
+
+        if (
+            not cleaned["reminder_key"]
+            or not cleaned["reminder_label"]
+            or not cleaned["reminder_explanation"]
+        ):
+            cleaned["reminder_key"] = ""
+            cleaned["reminder_label"] = ""
+            cleaned["reminder_explanation"] = ""
 
         return cleaned
 
@@ -2075,6 +2109,9 @@ class AIService:
                     "meaning_equivalent": {"type": "boolean"},
                     "has_required_construction_issue": {"type": "boolean"},
                     "required_construction_note": {"type": "string"},
+                    "reminder_key": {"type": "string"},
+                    "reminder_label": {"type": "string"},
+                    "reminder_explanation": {"type": "string"},
                     "naturalness_score": {"type": "integer", "minimum": 0, "maximum": 100},
                     "verdict": {"type": "string"},
                     "accepted_learner_sentence": {"type": "string"},
@@ -2092,6 +2129,9 @@ class AIService:
                     "meaning_equivalent",
                     "has_required_construction_issue",
                     "required_construction_note",
+                    "reminder_key",
+                    "reminder_label",
+                    "reminder_explanation",
                     "naturalness_score",
                     "verdict",
                     "accepted_learner_sentence",
@@ -2143,6 +2183,13 @@ class AIService:
                             "When there is no such issue, set has_required_construction_issue to false and required_construction_note to an empty string. "
                             f"If the learner uses a different but fully acceptable {self._language_name(request.language)} wording, set accepted_learner_sentence to a polished version of the learner's wording with proper accents and punctuation. "
                             "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_sentence to an empty string. "
+                            "If the learner made a repeatable kind of mistake that would be useful to track over time, return a reminder_key, reminder_label, and reminder_explanation. "
+                            "Only do this for broad recurring patterns, not one-off lexical choices tied to a specific sentence. "
+                            "Good reminder categories include things like missing a required preposition, dropping a small linking word, literal English word order, article choice, or verb form patterns. "
+                            "Make reminder_key short, stable, and snake_case, like missing_required_preposition or literal_word_order. "
+                            "Make reminder_label short and learner-friendly, ideally 2 to 6 words. "
+                            "Make reminder_explanation one short English sentence explaining the repeatable pattern. "
+                            "If there is no useful repeatable pattern, set reminder_key, reminder_label, and reminder_explanation to empty strings. "
                             "Only raise naturalness or idiomaticity issues when the learner's wording sounds clearly awkward, noticeably non-native, or distinctly less natural than standard everyday French. "
                             "Do not nitpick between two clearly natural, common phrasings that mean the same thing. "
                             "If the learner's French is already natural, do not offer a tiny stylistic swap as correction. "

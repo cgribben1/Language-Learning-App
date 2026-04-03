@@ -99,6 +99,8 @@ def record_reminder_hit(
     for item in items:
         if item.language == language and item.key == key:
             item.count += 1
+            item.label = label
+            item.explanation = explanation
             item.last_target = target
             item.last_answer = answer
             break
