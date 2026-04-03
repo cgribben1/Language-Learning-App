@@ -553,7 +553,7 @@ button {
   line-height: 1.45;
   white-space: nowrap;
   transform: translateX(0);
-  margin-right: calc(25% + 10px);
+  margin-right: calc(25% + 18px);
 }
 
 button:hover {
