@@ -1853,10 +1853,6 @@ kbd {
   background: rgba(0, 0, 0, 0.03);
 }
 
-.side-panel-btn:last-child > span::after,
-.side-panel-btn-placeholder:last-child > span::after {
-  display: none;
-}
 
 .side-panel-meta {
   display: grid;
