@@ -1810,7 +1810,7 @@ kbd {
   width: 100%;
   position: relative;
   justify-content: flex-start;
-  padding: 16px 0 9px;
+  padding: 0;
   border-radius: 0;
   background: transparent;
   border: 0;
@@ -1836,7 +1836,7 @@ kbd {
   display: inline-block;
   position: relative;
   width: 100%;
-  padding: 0 18px 7px 0;
+  padding: 14px 18px 10px 0;
   line-height: 1.15;
 }
 
@@ -1846,8 +1846,8 @@ kbd {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 2px;
+  bottom: 2px;
+  height: 1px;
   background: currentColor;
   transform-origin: right center;
   transform: scaleX(1);
