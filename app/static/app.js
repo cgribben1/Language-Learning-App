@@ -109,7 +109,7 @@ let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span>Suggest theme</span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
 const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span>Suggesting<span class="story-suggester-ellipsis" aria-hidden="true"></span></span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
-const STORY_SUGGESTER_DONE_MARKUP = '<span class="story-suggester-done-text">Done!</span>';
+const STORY_SUGGESTER_DONE_MARKUP = '<span class="story-suggester-done-text">Done</span>';
 
 function normalizeVocabValue(value) {
   return String(value || "")
