@@ -542,6 +542,11 @@ button:disabled {
   color: rgba(38, 29, 17, 0.72);
 }
 
+body.bauhaus-colors #toggle-hints-btn,
+body.bauhaus-colors #skip-btn {
+  color: rgba(26, 26, 26, 0.72) !important;
+}
+
 .action-row,
 .hint-toolbar,
 .prompt-header-row,
