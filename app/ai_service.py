@@ -386,6 +386,27 @@ def find_single_function_word_swap(
     return None
 
 
+def find_single_aligned_token_swap(
+    learner_answer: str,
+    target_sentence: str,
+) -> tuple[str, str, str, str] | None:
+    learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
+    target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
+    if len(learner_tokens) != len(target_tokens):
+        return None
+
+    mismatches: list[tuple[str, str, str, str]] = []
+    for learner_raw, target_raw in zip(learner_tokens, target_tokens):
+        learner_norm = normalize_french(learner_raw)
+        target_norm = normalize_french(target_raw)
+        if learner_norm and target_norm and learner_norm != target_norm:
+            mismatches.append((learner_raw, learner_norm, target_raw, target_norm))
+
+    if len(mismatches) == 1:
+        return mismatches[0]
+    return None
+
+
 def canonicalize_reminder_category(
     key_or_label: str,
     label: str = "",
@@ -1478,6 +1499,13 @@ class AIService:
                 for index, (learner_token, target_token) in enumerate(zip(learner_tokens, target_tokens)):
                     if normalize_french(learner_token) == normalize_french(target_token):
                         cleaned_labels[index] = "correct"
+                single_swap = find_single_aligned_token_swap(learner_answer, target_sentence)
+                if single_swap:
+                    learner_raw, _, _, _ = single_swap
+                    for index, learner_token in enumerate(learner_tokens):
+                        if learner_token == learner_raw and normalize_french(learner_token) != normalize_french(target_tokens[index]):
+                            cleaned_labels[index] = "wrong"
+                            break
             return cleaned_labels
         return []
 
@@ -1524,6 +1552,18 @@ class AIService:
         is_correct: bool,
     ) -> dict[str, Any]:
         if is_correct:
+            single_swap = find_single_aligned_token_swap(
+                request.learner_answer,
+                request.target_sentence,
+            )
+            if single_swap:
+                learner_raw, learner_norm, target_raw, target_norm = single_swap
+                if learner_norm != target_norm:
+                    return {
+                        **payload,
+                        "mistakes": [f'Use "{target_raw}" here, not "{learner_raw}".'],
+                        "tips": [],
+                    }
             function_swap = find_single_function_word_swap(
                 request.learner_answer,
                 request.target_sentence,
