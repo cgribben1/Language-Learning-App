@@ -2374,7 +2374,12 @@ function renderStorySoFar() {
     span.dataset.step = String(sentence.step);
     const text = formatCorrectSentence(sentence.french);
     const isLastSentence = index === previousSentences.length - 1;
-    span.textContent = text;
+    if (isLastSentence) {
+      const withoutEllipsis = text.replace(/\s*(?:\.{3}|…)+\s*$/u, "");
+      span.textContent = /[.!?]$/u.test(withoutEllipsis) ? withoutEllipsis : `${withoutEllipsis}.`;
+    } else {
+      span.textContent = text;
+    }
     storyBlock.appendChild(span);
     if (index < previousSentences.length - 1) {
       storyBlock.appendChild(document.createTextNode(" "));
