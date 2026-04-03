@@ -2668,7 +2668,7 @@ function animateCurrentSentenceIntoStory() {
       state.storyFlightCleanupTimer = setTimeout(() => {
         target.classList.remove("story-sentence-landed");
         state.storyFlightCleanupTimer = null;
-      }, 1680);
+      }, 2100);
       state.storyFlightFinishTimer = null;
       state.nextTransitionInProgress = false;
     };

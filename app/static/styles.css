@@ -1031,10 +1031,10 @@ kbd {
   display: grid;
   gap: 14px;
   margin-top: 14px;
-  padding: 10px 0 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
+  padding: 14px 16px;
+  border: 1px solid rgba(62, 41, 28, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 250, 242, 0.74);
 }
 
 .feedback-card {
@@ -1120,7 +1120,7 @@ kbd {
 }
 
 .story-sentence-landed {
-  animation: storySentenceLand 1880ms cubic-bezier(0.2, 0.92, 0.22, 1);
+  animation: storySentenceLand 2320ms cubic-bezier(0.2, 0.92, 0.22, 1);
 }
 
 @keyframes storySentenceLand {
@@ -1133,40 +1133,40 @@ kbd {
       0 0 0 rgba(166, 41, 13, 0),
       0 0 0 rgba(4, 119, 191, 0);
   }
-  22% {
+  24% {
     opacity: 0.9;
     transform: translateY(-3px) scale(1.08);
-    filter: brightness(1.06);
+    filter: brightness(1.1);
     text-shadow:
-      0 0 14px rgba(242, 183, 5, 0.28),
-      0 0 24px rgba(166, 41, 13, 0.12);
+      0 0 16px rgba(242, 183, 5, 0.36),
+      0 0 26px rgba(166, 41, 13, 0.16);
   }
-  44% {
+  46% {
     opacity: 1;
     transform: translateY(0) scale(1.24);
-    filter: brightness(1.18);
+    filter: brightness(1.24);
     text-shadow:
-      0 0 22px rgba(242, 183, 5, 0.68),
-      0 0 42px rgba(242, 183, 5, 0.38),
-      0 0 18px rgba(166, 41, 13, 0.24),
-      0 0 26px rgba(4, 119, 191, 0.12);
+      0 0 28px rgba(242, 183, 5, 0.84),
+      0 0 54px rgba(242, 183, 5, 0.48),
+      0 0 20px rgba(166, 41, 13, 0.3),
+      0 0 30px rgba(4, 119, 191, 0.15);
   }
-  68% {
+  72% {
     opacity: 1;
-    transform: translateY(0) scale(1.16);
-    filter: brightness(1.12);
+    transform: translateY(0) scale(1.18);
+    filter: brightness(1.14);
     text-shadow:
-      0 0 20px rgba(242, 183, 5, 0.46),
-      0 0 32px rgba(242, 183, 5, 0.24),
-      0 0 12px rgba(166, 41, 13, 0.16);
+      0 0 24px rgba(242, 183, 5, 0.58),
+      0 0 38px rgba(242, 183, 5, 0.3),
+      0 0 14px rgba(166, 41, 13, 0.18);
   }
-  86% {
+  90% {
     opacity: 1;
     transform: translateY(0) scale(1.05);
-    filter: brightness(1.04);
+    filter: brightness(1.06);
     text-shadow:
-      0 0 8px rgba(242, 183, 5, 0.18),
-      0 0 14px rgba(166, 41, 13, 0.08);
+      0 0 10px rgba(242, 183, 5, 0.24),
+      0 0 16px rgba(166, 41, 13, 0.1);
   }
   100% {
     opacity: 1;
@@ -1427,8 +1427,19 @@ kbd {
   margin-top: -8px;
 }
 
+.generating-panel h3,
+.checking-panel h3 {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+}
+
 .generating-copy {
   min-height: 3.1em;
+  font-family: "Fraunces", serif;
+}
+
+.checking-copy {
+  font-family: "Fraunces", serif;
 }
 
 .generating-copy .wave-char {
