@@ -89,6 +89,8 @@ const el = {
   restartBtn: document.querySelector("#restart-btn"),
   appMasthead: document.querySelector("#app-masthead"),
   sidebarHomeBtn: document.querySelector("#sidebar-home-btn"),
+  sidebarVocabBtn: document.querySelector("#sidebar-vocab-btn"),
+  sidebarErrorsBtn: document.querySelector("#sidebar-errors-btn"),
   sidebarLessonTitle: document.querySelector("#sidebar-lesson-title"),
   sidebarTheme: document.querySelector("#sidebar-theme"),
   sidebarLanguage: document.querySelector("#sidebar-language"),
@@ -1614,6 +1616,7 @@ function renderSetupView(message = "") {
   el.progressTotal.textContent = "0";
   el.storySoFarCard.classList.add("hidden");
   updateSidebarMeta();
+  setSidebarNavState("home");
   scrollWindowToTop();
 }
 
@@ -1631,6 +1634,7 @@ function renderGeneratingStoryScreen() {
   hideLessonScreens();
   el.emptyState.classList.add("hidden");
   el.generatingPanel.classList.remove("hidden");
+  setSidebarNavState(null);
   startGeneratingScreenAnimation();
   animatePanelIn(el.generatingPanel);
   scrollWindowToTop();
@@ -1944,6 +1948,7 @@ function renderLesson(preserveStoryFlight = false) {
   el.progressCurrent.textContent = state.lesson ? String(Math.min(state.currentIndex + 1, total || 0)) : "0";
   el.progressTotal.textContent = String(total);
   updateSidebarMeta();
+  setSidebarNavState(null);
 
     if (!sentence) {
       if (state.lesson && !state.lesson.is_complete) {
@@ -2097,6 +2102,7 @@ function renderFeedback(feedback) {
     hideLessonScreens();
     el.feedbackCard.classList.remove("hidden");
     updateSidebarMeta();
+    setSidebarNavState(null);
     animatePanelIn(el.feedbackCard);
     const verdictDuration = animateFeedbackLabel(buildVerdictDisplay(feedback));
   animateCorrectnessMeter(feedback.correctness_score);
@@ -2180,9 +2186,10 @@ function renderFinalPanel() {
   el.lessonHeader.classList.add("hidden");
   el.storySoFarCard.classList.add("hidden");
   el.storySoFarList.innerHTML = "";
-  hideLessonScreens();
-  el.finalPanel.classList.remove("hidden");
-  updateSidebarMeta();
+    hideLessonScreens();
+    el.finalPanel.classList.remove("hidden");
+    updateSidebarMeta();
+    setSidebarNavState(null);
   el.emptyState.classList.add("hidden");
   el.finalTitle.textContent = state.lesson.title;
   const finalEnglishText = state.lesson.sentences.map((sentence) => sentence.english).join(" ");
@@ -2213,6 +2220,7 @@ function renderCheckingScreen() {
   }
   el.checkingPanel.classList.remove("hidden");
   updateSidebarMeta();
+  setSidebarNavState(null);
   startCheckingEllipsisLoop();
   animatePanelIn(el.checkingPanel);
   scrollWindowToTop();
@@ -2397,6 +2405,24 @@ function updateSidebarMeta() {
   if (el.sidebarProgress) {
     el.sidebarProgress.textContent = `${progressValue} / ${requestedCount || 0}`;
   }
+}
+
+function setSidebarNavState(activeKey = null) {
+  const navMap = {
+    home: el.sidebarHomeBtn,
+    vocab: el.sidebarVocabBtn,
+    errors: el.sidebarErrorsBtn,
+  };
+
+  Object.entries(navMap).forEach(([key, node]) => {
+    if (!node) {
+      return;
+    }
+    const isActive = key === activeKey;
+    node.classList.toggle("is-active", isActive);
+    node.classList.toggle("is-inactive", !isActive);
+    node.setAttribute("aria-current", isActive ? "page" : "false");
+  });
 }
 
 async function generateLesson(event) {

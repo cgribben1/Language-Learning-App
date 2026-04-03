@@ -1825,6 +1825,7 @@ kbd {
   text-align: left;
   transition:
     color 180ms ease,
+    opacity 180ms ease,
     background-color 180ms ease;
 }
 
@@ -1874,6 +1875,7 @@ kbd {
 .side-panel-btn:hover {
   box-shadow: none;
   background: rgba(0, 0, 0, 0.03);
+  opacity: 1;
 }
 
 .side-panel-btn:hover > span::after,
@@ -1886,6 +1888,21 @@ kbd {
 .side-panel-btn-placeholder:hover::after {
   color: rgba(34, 34, 34, 0.72);
   transform: translateY(-50%) translateX(3px);
+}
+
+.side-panel-btn.is-active,
+.side-panel-btn-placeholder.is-active {
+  opacity: 1;
+}
+
+.side-panel-btn.is-inactive,
+.side-panel-btn-placeholder.is-inactive {
+  opacity: 0.38;
+}
+
+.side-panel-btn.is-inactive:hover,
+.side-panel-btn-placeholder.is-inactive:hover {
+  opacity: 1;
 }
 
 
