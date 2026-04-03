@@ -2845,7 +2845,8 @@ body.bauhaus-colors .side-panel-btn {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-body.bauhaus-colors .prompt-panel {
+body.bauhaus-colors .prompt-panel,
+body.bauhaus-colors .final-panel {
   background: rgba(244, 235, 221, 0.92);
   border-color: rgba(166, 41, 13, 0.18);
 }
