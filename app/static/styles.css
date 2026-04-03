@@ -583,7 +583,7 @@ label span {
 .story-suggester-ellipsis {
   display: inline-block !important;
   width: 3ch;
-  margin-left: 0.01rem;
+  margin-left: 0;
   color: inherit !important;
   text-align: left;
   white-space: pre;
