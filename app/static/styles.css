@@ -453,7 +453,7 @@ label span {
   border-radius: 14px;
   background: linear-gradient(135deg, #0477bf 0%, #4d66c2 42%, #6f4dbb 100%);
   border: 1px solid rgba(78, 77, 158, 0.24);
-  color: #fffdf9;
+  color: #fffdf9 !important;
   font-family: "Manrope", sans-serif;
   font-size: 0.84rem;
   font-weight: 700;
@@ -465,6 +465,7 @@ label span {
   display: inline-flex;
   align-items: center;
   margin: 0;
+  color: inherit !important;
 }
 
 .story-suggester-btn > span:last-child {
@@ -2831,6 +2832,10 @@ body.landing-bauhaus-colors #story-suggester-btn {
   color: #fffdf9 !important;
   border-color: rgba(78, 77, 158, 0.28) !important;
   box-shadow: 0 12px 24px rgba(58, 63, 140, 0.18) !important;
+}
+
+body.landing-bauhaus-colors #story-suggester-btn span {
+  color: #fffdf9 !important;
 }
 
 body.landing-bauhaus-colors #story-suggester-btn:hover {
