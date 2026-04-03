@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from .adventure_service import AdventureService
-from .ai_service import AIService, detect_reminder_triggers
+from .ai_service import AIService, build_reminder_example, detect_reminder_triggers
 from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse
 from .storage import load_reminders, load_vocab, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
@@ -93,6 +93,10 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     triggered = detect_reminder_triggers(request, feedback)
     for item in triggered:
+        example_wrong, example_correct = build_reminder_example(
+            request.learner_answer,
+            request.target_sentence,
+        )
         record_reminder_hit(
             language=request.language,
             key=item["key"],
@@ -100,6 +104,8 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             explanation=item["explanation"],
             target=request.target_sentence,
             answer=request.learner_answer,
+            example_wrong=example_wrong,
+            example_correct=example_correct,
         )
     feedback.reminders_triggered = [item["label"] for item in triggered]
     return feedback

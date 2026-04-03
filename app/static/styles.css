@@ -1292,6 +1292,7 @@ kbd {
   color: rgba(38, 29, 17, 0.98);
   font-family: "Manrope", sans-serif;
   font-size: 0.8rem;
+  font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -2202,6 +2203,40 @@ kbd {
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.reference-grid .reminder-examples-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.reference-grid .reminder-example-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.reference-grid .reminder-example-wrong,
+.reference-grid .reminder-example-correct {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.reference-grid .reminder-example-wrong {
+  color: var(--muted);
+}
+
+.reference-grid .reminder-example-arrow {
+  flex: 0 0 auto;
+  color: rgba(38, 29, 17, 0.58);
 }
 
 .reference-grid .saved-vocab-source,

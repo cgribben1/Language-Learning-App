@@ -2410,13 +2410,24 @@ function renderReminders(items) {
   items.forEach((item) => {
     const div = document.createElement("div");
     div.className = "reminder-item";
-    const conciseExplanation = makeReminderExplanationConcise(item.explanation);
+    const examples = Array.isArray(item.examples) ? item.examples.slice(0, 3) : [];
+    const fallbackExample = item.last_answer && item.last_target
+      ? [{ wrong: item.last_answer, correct: item.last_target }]
+      : [];
+    const visibleExamples = examples.length ? examples : fallbackExample;
+    const examplesMarkup = visibleExamples.map((example) => `
+      <li class="reminder-example-item">
+        <span class="reminder-example-wrong">${escapeHtml(example.wrong)}</span>
+        <span class="reminder-example-arrow">→</span>
+        <span class="reminder-example-correct">${escapeHtml(example.correct)}</span>
+      </li>
+    `).join("");
     div.innerHTML = `
       <div class="reminder-row">
         <strong class="reminder-item-title">${item.label}</strong>
         <span class="reminder-count">${item.count}x</span>
       </div>
-      <p class="reminder-item-explanation">${conciseExplanation}</p>
+      <ul class="reminder-examples-list">${examplesMarkup}</ul>
     `;
     el.remindersList.appendChild(div);
   });

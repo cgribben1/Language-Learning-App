@@ -79,6 +79,11 @@ class EvaluationResponse(BaseModel):
     source: Literal["openai"]
 
 
+class ReminderExample(BaseModel):
+    wrong: str
+    correct: str
+
+
 class PhraseExplainRequest(BaseModel):
     language: LanguageCode = "french"
     english_sentence: str
@@ -125,6 +130,7 @@ class ReminderItem(BaseModel):
     count: int = 0
     last_target: str = ""
     last_answer: str = ""
+    examples: list[ReminderExample] = Field(default_factory=list)
 
 
 class ReminderResponse(BaseModel):

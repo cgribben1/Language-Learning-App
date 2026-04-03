@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .models import LanguageCode, ReminderItem, SaveVocabRequest, SavedVocabItem
+from .models import LanguageCode, ReminderExample, ReminderItem, SaveVocabRequest, SavedVocabItem
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -89,6 +89,8 @@ def record_reminder_hit(
     explanation: str,
     target: str,
     answer: str,
+    example_wrong: str = "",
+    example_correct: str = "",
 ) -> list[ReminderItem]:
     _ensure_data_dir()
     existing_raw: list[dict[str, str]] = []
@@ -103,6 +105,18 @@ def record_reminder_hit(
             item.explanation = explanation
             item.last_target = target
             item.last_answer = answer
+            if example_wrong and example_correct:
+                normalized_wrong = example_wrong.strip().lower()
+                normalized_correct = example_correct.strip().lower()
+                item.examples = [
+                    example for example in item.examples
+                    if not (
+                        example.wrong.strip().lower() == normalized_wrong
+                        and example.correct.strip().lower() == normalized_correct
+                    )
+                ]
+                item.examples.insert(0, ReminderExample(wrong=example_wrong, correct=example_correct))
+                item.examples = item.examples[:3]
             break
     else:
         items.append(
@@ -114,6 +128,11 @@ def record_reminder_hit(
                 count=1,
                 last_target=target,
                 last_answer=answer,
+                examples=(
+                    [ReminderExample(wrong=example_wrong, correct=example_correct)]
+                    if example_wrong and example_correct
+                    else []
+                ),
             )
         )
 

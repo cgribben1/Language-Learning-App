@@ -270,8 +270,8 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
         if "entra en" in target and "entra en" not in learner and "entra " in learner:
             triggers.append(
                 {
-                    "key": "entrar_en_location",
-                    "label": "Use 'en' after entrar",
+                    "key": "prepositions",
+                    "label": "Prepositions",
                     "explanation": "In Spanish, entering a place is often phrased with 'entrar en ...', as in 'entro en un café'.",
                 }
             )
@@ -279,8 +279,8 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
         if not feedback.is_correct and " de " in target and " de " not in learner and " del " not in learner:
             triggers.append(
                 {
-                    "key": "missing_small_link_word",
-                    "label": "Watch the small linking words",
+                    "key": "prepositions",
+                    "label": "Prepositions",
                     "explanation": "Short words like 'de', 'en', 'a', and articles often carry the grammar. They are easy to miss but matter a lot.",
                 }
             )
@@ -288,8 +288,8 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
         if "entre dans" in target and "entre dans" not in learner and "entre " in learner:
             triggers.append(
                 {
-                    "key": "entrer_dans_location",
-                    "label": "Use 'dans' after entrer",
+                    "key": "prepositions",
+                    "label": "Prepositions",
                     "explanation": "In French, entering a place is usually phrased with 'entrer dans ...', as in 'j'entre dans un cafe'.",
                 }
             )
@@ -297,8 +297,8 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
         if not feedback.is_correct and " de " in target and " de " not in learner and " du " not in learner:
             triggers.append(
                 {
-                    "key": "missing_small_link_word",
-                    "label": "Watch the small linking words",
+                    "key": "prepositions",
+                    "label": "Prepositions",
                     "explanation": "Short words like 'de', 'dans', 'a', and articles often carry the grammar. They are easy to miss but matter a lot.",
                 }
             )
@@ -306,8 +306,12 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
     unique: dict[str, dict[str, str]] = {}
     for item in triggers:
         unique[item["key"]] = item
-    dynamic_key = normalize_reminder_key(feedback.reminder_key or feedback.reminder_label)
-    dynamic_label = (feedback.reminder_label or "").strip()
+    dynamic_key, dynamic_label = canonicalize_reminder_category(
+        feedback.reminder_key or feedback.reminder_label,
+        feedback.reminder_label,
+        feedback.reminder_explanation,
+        request.language,
+    )
     dynamic_explanation = (feedback.reminder_explanation or "").strip()
     if (
         not feedback.is_correct
@@ -329,6 +333,61 @@ def normalize_reminder_key(value: str) -> str:
         return ""
     key = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
     return key[:64]
+
+
+def canonicalize_reminder_category(
+    key_or_label: str,
+    label: str = "",
+    explanation: str = "",
+    language: str = "french",
+) -> tuple[str, str]:
+    combined = " ".join(
+        part for part in (normalize_reminder_key(key_or_label), normalize_french(label), normalize_french(explanation))
+        if part
+    )
+
+    category_rules = [
+        (("preposition", "dans", "de ", " de_", " en ", " a ", " al ", "del", "entrer", "entrar"), ("prepositions", "Prepositions")),
+        (("article", "determiner", "determiners", "noun"), ("articles", "Articles")),
+        (("pronoun", "object_pronoun", "clitic"), ("pronouns", "Pronouns")),
+        (("word_order", "literal", "order"), ("word_order", "Word order")),
+        (("verb", "conjug", "tense", "etre", "ser", "estar", "va", "vais"), ("verbs", "Verbs")),
+        (("agreement", "gender", "number", "plural", "singular", "masculine", "feminine"), ("agreement", "Agreement")),
+        (("negation", "ne_pas", "no "), ("negation", "Negation")),
+        (("linking", "small_link_word", "function_word"), ("small_words", "Small words")),
+    ]
+
+    for needles, category in category_rules:
+        if any(needle in combined for needle in needles):
+            return category
+
+    normalized_key = normalize_reminder_key(key_or_label or label)
+    if normalized_key:
+        return normalized_key, (label or normalized_key.replace("_", " ").title())
+    return "", ""
+
+
+def build_reminder_example(answer: str, target: str) -> tuple[str, str]:
+    answer_tokens = [token for token in re.split(r"\s+", (answer or "").strip()) if token]
+    target_tokens = [token for token in re.split(r"\s+", (target or "").strip()) if token]
+    if not answer_tokens or not target_tokens:
+        return answer.strip(), target.strip()
+
+    prefix = 0
+    while prefix < len(answer_tokens) and prefix < len(target_tokens) and normalize_french(answer_tokens[prefix]) == normalize_french(target_tokens[prefix]):
+        prefix += 1
+
+    suffix = 0
+    max_suffix = min(len(answer_tokens) - prefix, len(target_tokens) - prefix)
+    while suffix < max_suffix and normalize_french(answer_tokens[-(suffix + 1)]) == normalize_french(target_tokens[-(suffix + 1)]):
+        suffix += 1
+
+    answer_core = answer_tokens[prefix:len(answer_tokens) - suffix if suffix else len(answer_tokens)]
+    target_core = target_tokens[prefix:len(target_tokens) - suffix if suffix else len(target_tokens)]
+
+    wrong = " ".join(answer_core).strip() or " ".join(answer_tokens).strip()
+    correct = " ".join(target_core).strip() or " ".join(target_tokens).strip()
+    return wrong, correct
 
 
 def localize_reminder_wording(text: str, language: str = "french") -> str:
@@ -2205,15 +2264,12 @@ class AIService:
                             "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_sentence to an empty string. "
                             "If the learner made a repeatable kind of mistake that would be useful to track over time, return a reminder_key, reminder_label, and reminder_explanation. "
                             "Only do this for broad recurring patterns, not one-off lexical choices tied to a specific sentence. "
-                            "Good reminder categories include things like missing a required preposition, dropping a small linking word, literal English word order, article choice, or verb form patterns. "
-                            "Make reminder_key short, stable, and snake_case, like missing_required_preposition or literal_word_order. "
-                            "Make reminder_label specific and learner-friendly, ideally 2 to 6 words. "
-                            "Do not use vague labels like 'verb conjugation' or 'grammar issue' if you can name the actual pattern more precisely. "
-                            "For example, prefer labels like 'Third-person present tense', 'Missing preposition after entrer', or 'Wrong article with noun' over broad generic labels. "
-                            f"When naming a specific target-language word, verb, or construction in reminder_label, use the actual {self._language_name(request.language)} form rather than the English gloss. "
-                            f"For example, prefer labels like \"'être' conjugation\" or \"Missing 'dans' after entrer\" in {self._language_name(request.language)} mode. "
-                            "Make reminder_explanation one short English sentence explaining the repeatable pattern in a concrete way. "
-                            "Do not write generic explanations like 'check subject-verb agreement' if you can name the exact tense, pronoun pattern, or construction more specifically. "
+                            "Prefer broad category buckets rather than narrow micro-categories. "
+                            "Good reminder buckets include Prepositions, Articles, Pronouns, Word order, Verbs, Agreement, Negation, and Small words. "
+                            "Make reminder_key short, stable, and snake_case, like prepositions, verbs, or word_order. "
+                            "Make reminder_label broad and learner-friendly, ideally matching one of those bucket-style categories. "
+                            "Do not make reminder_label too narrow or sentence-specific. "
+                            "Use reminder_explanation only as a short internal summary of the pattern; the app may choose not to display it directly. "
                             "If there is no useful repeatable pattern, set reminder_key, reminder_label, and reminder_explanation to empty strings. "
                             "Only raise naturalness or idiomaticity issues when the learner's wording sounds clearly awkward, noticeably non-native, or distinctly less natural than standard everyday French. "
                             "Do not nitpick between two clearly natural, common phrasings that mean the same thing. "
