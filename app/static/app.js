@@ -77,6 +77,7 @@ const el = {
   phraseNote: document.querySelector("#phrase-note"),
   addPhraseBtn: document.querySelector("#add-phrase-btn"),
   closePhraseBtn: document.querySelector("#close-phrase-btn"),
+  feedbackReminderBanner: document.querySelector("#feedback-reminder-banner"),
   feedbackNotesLabel: document.querySelector("#feedback-notes-label"),
   notesList: document.querySelector("#notes-list"),
   vocabHints: document.querySelector("#vocab-hints"),
@@ -1947,6 +1948,39 @@ function animateNotesList(notes, startDelay = 0) {
   return noteDelay;
 }
 
+function showFeedbackReminderBanner(text, startDelay = 0) {
+  if (!el.feedbackReminderBanner) {
+    return;
+  }
+
+  el.feedbackReminderBanner.textContent = "";
+  el.feedbackReminderBanner.classList.add("hidden");
+  el.feedbackReminderBanner.classList.remove("feedback-reminder-banner-enter");
+
+  if (!text) {
+    return;
+  }
+
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reveal = () => {
+    el.feedbackReminderBanner.textContent = text;
+    el.feedbackReminderBanner.classList.remove("hidden");
+    if (prefersReducedMotion) {
+      return;
+    }
+    void el.feedbackReminderBanner.offsetWidth;
+    el.feedbackReminderBanner.classList.add("feedback-reminder-banner-enter");
+  };
+
+  if (startDelay <= 0) {
+    reveal();
+    return;
+  }
+
+  const timer = setTimeout(reveal, startDelay);
+  state.contentAnimationTimers.push(timer);
+}
+
 function renderLesson(preserveStoryFlight = false) {
   document.body.classList.remove("landing-bauhaus-colors");
   clearContentAnimations();
@@ -2170,12 +2204,13 @@ function renderFeedback(feedback) {
   closePhraseExplainer();
 
   const finalNotes = buildConciseNotes(feedback);
+  const reminderBannerText = feedback.reminders_triggered?.length
+    ? `New common error saved: ${feedback.reminders_triggered.join(", ")}`
+    : "";
+  showFeedbackReminderBanner(reminderBannerText, correctSentenceEndDelay + 120);
   const notes = [...finalNotes];
   if (feedback.reminders_triggered?.length) {
-    notes.push({
-      text: `New common error saved: ${feedback.reminders_triggered.join(", ")}`,
-      className: "feedback-reminder-note",
-    });
+    // reminder message now lives in its own banner above the notes list
   }
   const notesStartDelay = Math.max(correctSentenceEndDelay + 80, correctSentenceStartDelay + 240);
   animateNotesList(notes, notesStartDelay + 140);
