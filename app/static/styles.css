@@ -587,7 +587,7 @@ button:disabled {
 }
 
 .prompt-panel-waiting .english-prompt {
-  color: rgba(31, 29, 26, 0.82);
+  color: rgba(31, 29, 26, 0.76);
 }
 
 .waiting-bracketed-line {
@@ -597,8 +597,10 @@ button:disabled {
 
 .waiting-bracketed-dots {
   display: inline-block;
-  min-width: 3ch;
+  width: 3ch;
   text-align: left;
+  white-space: pre;
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .prompt-panel {

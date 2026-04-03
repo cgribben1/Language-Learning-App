@@ -383,7 +383,7 @@ function startWaitingPromptEllipsis() {
     return;
   }
 
-  const frames = ["", ".", "..", "..."];
+  const frames = ["\u00A0\u00A0\u00A0", ".\u00A0\u00A0", "..\u00A0", "..."];
   let index = 0;
   el.englishPrompt.innerHTML = `<span class="waiting-bracketed-line">[${baseText}<span class="waiting-bracketed-dots"></span>]</span>`;
   const dotsEl = el.englishPrompt.querySelector(".waiting-bracketed-dots");
