@@ -2668,7 +2668,7 @@ async function suggestStoryTheme() {
     });
     if (themeInput && response.suggestion) {
       clearContentAnimations();
-      animateInputValue(themeInput, response.suggestion, 30, 18);
+      animateInputValue(themeInput, response.suggestion.toLowerCase(), 30, 18);
       themeInput.focus();
       state.contentAnimationTimers.push(setTimeout(() => {
         const length = themeInput.value.length;
