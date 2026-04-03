@@ -1082,6 +1082,17 @@ kbd {
   border-top: 1px solid rgba(62, 41, 28, 0.1);
 }
 
+.story-so-far-header h3 {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+}
+
+.story-so-far-block,
+.story-sentence {
+  font-family: "Fraunces", serif;
+  font-weight: 400;
+}
+
 .story-flight-clone {
   position: fixed;
   z-index: 80;
