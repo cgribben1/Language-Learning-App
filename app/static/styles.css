@@ -1897,7 +1897,7 @@ kbd {
 
 .side-panel-btn.is-inactive,
 .side-panel-btn-placeholder.is-inactive {
-  opacity: 0.38;
+  opacity: 0.58;
 }
 
 .side-panel-btn.is-inactive:hover,
