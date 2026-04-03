@@ -1917,7 +1917,12 @@ function animateNotesList(notes, startDelay = 0) {
   if (prefersReducedMotion) {
     notes.forEach((note) => {
       const li = document.createElement("li");
-      li.textContent = note;
+      const noteText = typeof note === "string" ? note : note.text;
+      const noteClass = typeof note === "string" ? "" : note.className || "";
+      li.textContent = noteText;
+      if (noteClass) {
+        li.className = noteClass;
+      }
       el.notesList.appendChild(li);
     });
     return 0;
@@ -1926,13 +1931,18 @@ function animateNotesList(notes, startDelay = 0) {
   let noteDelay = startDelay;
   notes.forEach((note) => {
     const li = document.createElement("li");
+    const noteText = typeof note === "string" ? note : note.text;
+    const noteClass = typeof note === "string" ? "" : note.className || "";
 
     const starter = setTimeout(() => {
+      if (noteClass) {
+        li.className = noteClass;
+      }
       el.notesList.appendChild(li);
-      animateInlineSegments(li, buildPlainTextSegments(note), 0, 30);
+      animateInlineSegments(li, buildPlainTextSegments(noteText), 0, 30);
     }, noteDelay);
     state.contentAnimationTimers.push(starter);
-    noteDelay += note.split(/\s+/).filter(Boolean).length * 30 + 120;
+    noteDelay += noteText.split(/\s+/).filter(Boolean).length * 30 + 120;
   });
   return noteDelay;
 }
@@ -2162,7 +2172,10 @@ function renderFeedback(feedback) {
   const finalNotes = buildConciseNotes(feedback);
   const notes = [...finalNotes];
   if (feedback.reminders_triggered?.length) {
-    notes.push(`New common error saved: ${feedback.reminders_triggered.join(", ")}`);
+    notes.push({
+      text: `New common error saved: ${feedback.reminders_triggered.join(", ")}`,
+      className: "feedback-reminder-note",
+    });
   }
   const notesStartDelay = Math.max(correctSentenceEndDelay + 80, correctSentenceStartDelay + 240);
   animateNotesList(notes, notesStartDelay + 140);

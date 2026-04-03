@@ -1268,6 +1268,33 @@ kbd {
   max-width: none;
 }
 
+#notes-list li.feedback-reminder-note {
+  color: rgba(38, 29, 17, 0.96);
+  text-shadow: 0 0 0 rgba(4, 119, 191, 0);
+  transform-origin: left center;
+  animation: feedbackReminderPulse 860ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+
+@keyframes feedbackReminderPulse {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.985);
+    text-shadow: 0 0 0 rgba(4, 119, 191, 0), 0 0 0 rgba(166, 41, 13, 0);
+  }
+
+  38% {
+    opacity: 1;
+    transform: scale(1.03);
+    text-shadow: 0 0 14px rgba(4, 119, 191, 0.18), 0 0 20px rgba(166, 41, 13, 0.14);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    text-shadow: 0 0 0 rgba(4, 119, 191, 0), 0 0 0 rgba(166, 41, 13, 0);
+  }
+}
+
 .score-bar-fill {
   width: 0%;
   height: 100%;
