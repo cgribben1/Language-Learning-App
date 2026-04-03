@@ -1235,7 +1235,7 @@ kbd {
   padding: 14px 16px;
   border: 1px solid rgba(62, 41, 28, 0.14);
   border-radius: 20px;
-  background: rgba(58, 62, 60, 0.97);
+  background: rgba(150, 112, 76, 0.96);
 }
 
 .feedback-card {
@@ -1291,7 +1291,7 @@ kbd {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 250, 243, 0.96);
+  color: rgba(38, 29, 17, 0.94);
 }
 
 .story-so-far-block,
@@ -1301,7 +1301,7 @@ kbd {
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.74rem;
-  color: rgba(255, 250, 243, 0.88);
+  color: rgba(38, 29, 17, 0.92);
 }
 
 .story-sentence {
