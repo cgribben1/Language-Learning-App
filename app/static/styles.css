@@ -521,7 +521,7 @@ label span {
 }
 
 .story-suggester-loading {
-  gap: 14px;
+  gap: 18px;
 }
 
 .story-suggester-btn:not(.story-suggester-loading):not(.story-suggester-done):hover .story-suggester-sparkle {
@@ -2014,17 +2014,17 @@ kbd {
   }
   12.5% {
     opacity: 0.98;
-    transform: translate3d(1px, -1.5px, 0) scale(1.03);
+    transform: translate3d(0.6px, -0.9px, 0) scale(1.02);
     text-shadow: 0 0 2px rgba(255, 253, 249, 0.1);
   }
   25% {
     opacity: 0.94;
-    transform: translate3d(1.8px, 0, 0) scale(1.01);
+    transform: translate3d(1px, 0, 0) scale(1.01);
     text-shadow: 0 0 1px rgba(255, 253, 249, 0.06);
   }
   37.5% {
     opacity: 0.97;
-    transform: translate3d(1px, 1.5px, 0) scale(1.02);
+    transform: translate3d(0.6px, 0.9px, 0) scale(1.02);
     text-shadow: 0 0 2px rgba(255, 253, 249, 0.08);
   }
   50% {
@@ -2034,17 +2034,17 @@ kbd {
   }
   62.5% {
     opacity: 0.98;
-    transform: translate3d(-1px, -1.5px, 0) scale(1.03);
+    transform: translate3d(-0.6px, -0.9px, 0) scale(1.02);
     text-shadow: 0 0 2px rgba(255, 253, 249, 0.1);
   }
   75% {
     opacity: 0.94;
-    transform: translate3d(-1.8px, 0, 0) scale(1.01);
+    transform: translate3d(-1px, 0, 0) scale(1.01);
     text-shadow: 0 0 1px rgba(255, 253, 249, 0.06);
   }
   87.5% {
     opacity: 0.97;
-    transform: translate3d(-1px, 1.5px, 0) scale(1.02);
+    transform: translate3d(-0.6px, 0.9px, 0) scale(1.02);
     text-shadow: 0 0 2px rgba(255, 253, 249, 0.08);
   }
 }
