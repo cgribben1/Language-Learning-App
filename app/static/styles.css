@@ -450,7 +450,7 @@ label span {
   align-items: center;
   justify-content: center;
   padding-inline: 16px;
-  border-radius: 18px;
+  border-radius: 22px;
   background: linear-gradient(135deg, #0477bf 0%, #4d66c2 42%, #6f4dbb 100%);
   border: 1px solid rgba(78, 77, 158, 0.24);
   color: #fffdf9 !important;
@@ -517,7 +517,7 @@ label span {
 }
 
 .story-suggester-done .story-suggester-done-text {
-  animation: storySuggesterDoneSlide 340ms cubic-bezier(0.2, 0.9, 0.24, 1);
+  animation: storySuggesterDoneSlide 500ms cubic-bezier(0.2, 0.9, 0.24, 1);
 }
 
 .story-suggester-loader {
