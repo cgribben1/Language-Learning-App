@@ -1809,7 +1809,7 @@ kbd {
 .side-panel-btn {
   width: 100%;
   justify-content: flex-start;
-  padding: 9px 0;
+  padding: 12px 0;
   border-radius: 0;
   background: transparent;
   border: 0;
@@ -1843,7 +1843,7 @@ kbd {
   left: 12px;
   right: 12px;
   bottom: 0;
-  height: 2px;
+  height: 1px;
   background: currentColor;
 }
 
