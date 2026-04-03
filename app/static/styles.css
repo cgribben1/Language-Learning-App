@@ -545,12 +545,12 @@ label span {
 }
 
 .story-suggester-ellipsis {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: flex-start;
+  display: inline-block !important;
   width: 3ch;
   margin-left: 0.08rem;
   color: inherit !important;
+  text-align: left;
+  white-space: pre;
 }
 
 .story-suggester-loading.story-suggester-btn:disabled {
