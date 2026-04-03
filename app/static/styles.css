@@ -2222,6 +2222,7 @@ kbd {
 
 .nav-section {
   border-bottom: none;
+  gap: 4px;
 }
 
 .profile-section {
