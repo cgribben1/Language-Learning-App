@@ -1922,7 +1922,7 @@ kbd {
   color: rgba(34, 34, 34, 0.68);
   font-size: 1.18rem;
   transform: translateY(-50%);
-  right: 6px;
+  right: 8px;
 }
 
 .side-panel-btn.is-inactive,
