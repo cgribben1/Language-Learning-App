@@ -452,7 +452,8 @@ label span {
   color: #fffdf9;
   font-family: "Manrope", sans-serif;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1;
   box-shadow: 0 10px 22px rgba(65, 27, 40, 0.16);
 }
 
