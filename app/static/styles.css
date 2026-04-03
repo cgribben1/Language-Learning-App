@@ -1873,6 +1873,7 @@ kbd {
 }
 
 .side-panel-btn:hover {
+  transform: none;
   box-shadow: none;
   background: rgba(0, 0, 0, 0.03);
   opacity: 1;
@@ -1891,6 +1892,7 @@ kbd {
 
 .side-panel-btn.is-active:hover,
 .side-panel-btn-placeholder.is-active:hover {
+  transform: none;
   background: transparent;
   opacity: 1;
 }
