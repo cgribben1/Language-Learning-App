@@ -1235,7 +1235,7 @@ kbd {
   padding: 14px 16px;
   border: 1px solid rgba(62, 41, 28, 0.14);
   border-radius: 20px;
-  background: rgba(150, 112, 76, 0.96);
+  background: rgba(223, 196, 161, 0.96);
 }
 
 .feedback-card {
@@ -1288,9 +1288,10 @@ kbd {
 
 .story-so-far-header h3 {
   font-family: "Manrope", sans-serif;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  font-size: 0.82rem;
   color: rgba(38, 29, 17, 0.94);
 }
 
