@@ -490,7 +490,9 @@ button {
 }
 
 .generate-btn-label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .generate-btn-hint {
@@ -505,6 +507,7 @@ button {
   font-size: 0.68rem;
   font-weight: 500;
   letter-spacing: normal;
+  line-height: 1;
   opacity: 0.82;
   white-space: nowrap;
 }
