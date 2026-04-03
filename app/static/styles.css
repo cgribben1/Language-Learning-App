@@ -1869,7 +1869,7 @@ kbd {
   font-size: 0.96rem;
   line-height: 1;
   color: rgba(34, 34, 34, 0.5);
-  transition: color 260ms ease, opacity 260ms ease, transform 260ms ease;
+  transition: color 260ms ease, opacity 260ms ease;
 }
 
 .side-panel-btn:hover {
@@ -1887,7 +1887,6 @@ kbd {
 .side-panel-btn:hover::after,
 .side-panel-btn-placeholder:hover::after {
   color: rgba(34, 34, 34, 0.72);
-  transform: translateY(-50%) translateX(3px);
 }
 
 .side-panel-btn.is-active:hover,
