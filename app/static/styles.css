@@ -447,14 +447,14 @@ label span {
   margin-top: 0 !important;
   padding-inline: 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #e3c39a 0%, #f2e2c4 58%, #f7efe0 100%);
-  border: 1px solid rgba(103, 71, 43, 0.2);
+  background: linear-gradient(135deg, #c59a67 0%, #e3c39a 46%, #f2e2c4 100%);
+  border: 1px solid rgba(103, 71, 43, 0.24);
   color: #261d11;
   font-family: "Manrope", sans-serif;
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1;
-  box-shadow: 0 10px 22px rgba(89, 61, 36, 0.1);
+  box-shadow: 0 10px 22px rgba(89, 61, 36, 0.12);
 }
 
 .story-suggester-btn:hover {
@@ -2794,15 +2794,15 @@ body.landing-bauhaus-colors #generate-btn {
 }
 
 body.landing-bauhaus-colors #story-suggester-btn {
-  background: linear-gradient(135deg, #e3c39a 0%, #f2e2c4 58%, #f7efe0 100%) !important;
+  background: linear-gradient(135deg, #c59a67 0%, #e3c39a 46%, #f2e2c4 100%) !important;
   color: #261d11 !important;
-  border-color: rgba(103, 71, 43, 0.24) !important;
-  box-shadow: 0 12px 24px rgba(89, 61, 36, 0.12) !important;
+  border-color: rgba(103, 71, 43, 0.28) !important;
+  box-shadow: 0 12px 24px rgba(89, 61, 36, 0.14) !important;
 }
 
 body.landing-bauhaus-colors #story-suggester-btn:hover {
-  background: linear-gradient(135deg, #e8cda8 0%, #f5e8ce 58%, #fbf4e7 100%) !important;
-  box-shadow: 0 14px 28px rgba(89, 61, 36, 0.16) !important;
+  background: linear-gradient(135deg, #cfaa79 0%, #e8cda8 46%, #f5e8ce 100%) !important;
+  box-shadow: 0 14px 28px rgba(89, 61, 36, 0.18) !important;
 }
 
 body.bauhaus-colors #restart-btn {
