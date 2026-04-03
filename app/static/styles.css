@@ -516,7 +516,7 @@ label span {
   width: 0;
   overflow: hidden;
   white-space: nowrap;
-  animation: storySuggesterDoneType 420ms cubic-bezier(0.2, 0.9, 0.24, 1) forwards;
+  animation: storySuggesterDoneType 640ms cubic-bezier(0.2, 0.9, 0.24, 1) forwards;
 }
 
 .story-suggester-loading .story-suggester-sparkle {
@@ -540,6 +540,8 @@ label span {
 }
 
 .story-suggester-resetting > span {
+  opacity: 0;
+  transform: translateY(10px);
   animation: storySuggesterIdleReturn 650ms cubic-bezier(0.2, 0.9, 0.24, 1);
 }
 

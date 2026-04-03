@@ -2704,8 +2704,8 @@ async function suggestStoryTheme() {
         button.disabled = false;
         button.classList.remove("story-suggester-done");
         button.classList.remove("story-suggester-loading");
-        button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
         button.classList.add("story-suggester-resetting");
+        button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
         state.contentAnimationTimers.push(setTimeout(() => {
           button.classList.remove("story-suggester-resetting");
         }, 650));
