@@ -2222,12 +2222,12 @@ body.bauhaus-colors .side-panel {
 }
 
 body.bauhaus-colors .side-panel-btn {
-  background: rgba(255, 248, 239, 0.88);
+  background: transparent;
   color: rgba(34, 34, 34, 0.86);
 }
 
 body.bauhaus-colors .side-panel-btn {
-  background: rgba(255, 248, 239, 0.92) !important;
+  background: transparent !important;
   color: rgba(34, 34, 34, 0.86) !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
