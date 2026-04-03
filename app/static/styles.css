@@ -1721,6 +1721,10 @@ kbd {
   padding-bottom: 6px;
 }
 
+.nav-section {
+  border-bottom: none;
+}
+
 .profile-section {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
