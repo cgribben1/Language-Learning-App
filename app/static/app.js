@@ -2363,12 +2363,13 @@ function renderReminders(items) {
   repeated.forEach((item) => {
     const div = document.createElement("div");
     div.className = "reminder-item";
+    const conciseExplanation = makeReminderExplanationConcise(item.explanation);
     div.innerHTML = `
       <div class="reminder-row">
         <strong class="reminder-item-title">${item.label}</strong>
         <span class="reminder-count">${item.count}x</span>
       </div>
-      <p class="reminder-item-explanation">${item.explanation}</p>
+      <p class="reminder-item-explanation">${conciseExplanation}</p>
     `;
     el.remindersList.appendChild(div);
   });
@@ -2377,6 +2378,32 @@ function renderReminders(items) {
 async function loadReminders() {
   const data = await api(`/api/reminders?language=${encodeURIComponent(currentLanguage())}`);
   renderReminders(data.items);
+}
+
+function makeReminderExplanationConcise(text) {
+  const source = String(text || "").trim();
+  if (!source) {
+    return "";
+  }
+
+  let concise = source
+    .replace(/^remember to\s+/i, "")
+    .replace(/^watch out for\s+/i, "")
+    .replace(/^be careful with\s+/i, "")
+    .replace(/^common issue:\s*/i, "")
+    .replace(/^mistake:\s*/i, "");
+
+  const firstSentenceMatch = concise.match(/^(.+?[.!?])(?:\s|$)/);
+  if (firstSentenceMatch) {
+    concise = firstSentenceMatch[1];
+  }
+
+  concise = concise.replace(/\s+/g, " ").trim();
+  if (concise.length > 72) {
+    concise = `${concise.slice(0, 69).trimEnd()}...`;
+  }
+
+  return concise;
 }
 
 function updateSidebarMeta() {
