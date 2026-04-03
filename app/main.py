@@ -93,12 +93,15 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     triggered = detect_reminder_triggers(request, feedback)
     for item in triggered:
-        example_wrong, example_correct = build_reminder_example(
-            request.learner_answer,
-            request.target_sentence,
-            item["key"],
-            request.language,
-        )
+        example_wrong = (feedback.reminder_wrong_pattern or "").strip()
+        example_correct = (feedback.reminder_correct_pattern or "").strip()
+        if not example_wrong or not example_correct:
+            example_wrong, example_correct = build_reminder_example(
+                request.learner_answer,
+                request.target_sentence,
+                item["key"],
+                request.language,
+            )
         record_reminder_hit(
             language=request.language,
             key=item["key"],

@@ -75,6 +75,8 @@ class EvaluationResponse(BaseModel):
     reminder_key: str = ""
     reminder_label: str = ""
     reminder_explanation: str = ""
+    reminder_wrong_pattern: str = ""
+    reminder_correct_pattern: str = ""
     encouraging_note: str = ""
     source: Literal["openai"]
 
