@@ -122,25 +122,27 @@
         </section>
 
         <div id="prompt-panel" class="prompt-panel hidden">
-          <p class="context-note" id="context-note">Translate the following sentence...</p>
-          <div class="prompt-waiting-illustration" aria-hidden="true">
-            <div class="prompt-waiting-scroll">
-              <span class="prompt-waiting-scroll-top"></span>
-              <span class="prompt-waiting-scroll-sheet"></span>
-              <span class="prompt-waiting-scroll-line prompt-waiting-scroll-line-one"></span>
-              <span class="prompt-waiting-scroll-line prompt-waiting-scroll-line-two"></span>
-              <span class="prompt-waiting-scroll-line prompt-waiting-scroll-line-three"></span>
+          <div class="prompt-copy-stack">
+            <p class="context-note" id="context-note">Translate the following sentence...</p>
+            <div class="prompt-waiting-illustration" aria-hidden="true">
+              <div class="prompt-waiting-scroll">
+                <span class="prompt-waiting-scroll-top"></span>
+                <span class="prompt-waiting-scroll-sheet"></span>
+                <span class="prompt-waiting-scroll-line prompt-waiting-scroll-line-one"></span>
+                <span class="prompt-waiting-scroll-line prompt-waiting-scroll-line-two"></span>
+                <span class="prompt-waiting-scroll-line prompt-waiting-scroll-line-three"></span>
+              </div>
+              <div class="prompt-waiting-pen">
+                <span class="prompt-waiting-pen-body"></span>
+                <span class="prompt-waiting-pen-tip"></span>
+              </div>
+              <div class="prompt-waiting-pixel prompt-waiting-pixel-one"></div>
+              <div class="prompt-waiting-pixel prompt-waiting-pixel-two"></div>
+              <div class="prompt-waiting-pixel prompt-waiting-pixel-three"></div>
             </div>
-            <div class="prompt-waiting-pen">
-              <span class="prompt-waiting-pen-body"></span>
-              <span class="prompt-waiting-pen-tip"></span>
+            <div class="prompt-header-row">
+              <p class="english-prompt" id="english-prompt"></p>
             </div>
-            <div class="prompt-waiting-pixel prompt-waiting-pixel-one"></div>
-            <div class="prompt-waiting-pixel prompt-waiting-pixel-two"></div>
-            <div class="prompt-waiting-pixel prompt-waiting-pixel-three"></div>
-          </div>
-          <div class="prompt-header-row">
-            <p class="english-prompt" id="english-prompt"></p>
           </div>
 
           <div id="vocab-hints" class="vocab-hints hidden"></div>

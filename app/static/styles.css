@@ -809,6 +809,50 @@ body.bauhaus-colors #skip-btn {
   gap: 6px;
 }
 
+#prompt-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+#prompt-panel .prompt-copy-stack {
+  display: grid;
+  gap: 2px;
+}
+
+#prompt-panel .context-note {
+  margin: 0;
+}
+
+#prompt-panel .prompt-header-row {
+  display: block;
+  margin: 0;
+}
+
+#prompt-panel .english-prompt {
+  margin: 0;
+  font-size: clamp(1.18rem, 1.85vw, 1.56rem);
+  line-height: 1.18;
+}
+
+#answer-entry.answer-entry-form {
+  display: grid;
+  gap: 4px;
+  margin-top: 0;
+}
+
+#answer-entry .answer-toolbar-row {
+  margin: 0 0 4px;
+}
+
+#answer-entry .hint-toolbar {
+  gap: 3px;
+}
+
+#answer-entry > .action-row {
+  margin-top: -2px;
+}
+
 .prompt-panel-waiting {
   min-height: 352px;
   gap: 12px;
