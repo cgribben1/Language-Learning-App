@@ -1836,7 +1836,7 @@ kbd {
   display: inline-block;
   position: relative;
   width: 100%;
-  padding: 0 12px 3px;
+  padding: 0 18px 3px 12px;
   border-bottom: 1px solid currentColor;
 }
 
@@ -1845,7 +1845,7 @@ kbd {
   content: "";
   position: absolute;
   left: 12px;
-  right: 12px;
+  right: 18px;
   bottom: 0;
   height: 1px;
   background: rgba(255, 248, 239, 0.9);
@@ -1856,7 +1856,7 @@ kbd {
 
 .side-panel-btn::after,
 .side-panel-btn-placeholder::after {
-  content: "\2192";
+  content: "\27F6";
   position: absolute;
   right: 16px;
   top: 50%;
