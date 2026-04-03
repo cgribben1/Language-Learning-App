@@ -528,6 +528,14 @@ label span {
   animation: storySuggesterSparkleHover 2600ms linear infinite;
 }
 
+.story-suggester-btn:not(.story-suggester-loading):not(.story-suggester-done):hover .story-suggester-sparkle-left {
+  animation-delay: 0ms;
+}
+
+.story-suggester-btn:not(.story-suggester-loading):not(.story-suggester-done):hover .story-suggester-sparkle-right {
+  animation-delay: 420ms;
+}
+
 .story-suggester-loading .story-suggester-sparkle-left {
   animation-delay: 0ms;
 }
