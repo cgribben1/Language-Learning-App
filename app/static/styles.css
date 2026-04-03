@@ -495,24 +495,20 @@ button {
   line-height: 1;
 }
 
-.theme-field-header {
+.field-help-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
 }
 
-.theme-field-header span {
-  margin-bottom: 0;
-}
-
 .generate-shortcut-hint {
   margin: 0;
   color: var(--muted);
   font-family: "Manrope", sans-serif;
-  font-size: 0.68rem;
-  font-weight: 500;
-  line-height: 1;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.45;
   white-space: nowrap;
 }
 
