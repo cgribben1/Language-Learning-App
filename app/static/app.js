@@ -288,6 +288,41 @@ function clearStorySuggesterReset() {
   }
 }
 
+function animateStorySuggesterSparkles(button, previousSparkles) {
+  const nextSparkles = Array.from(button.querySelectorAll(".story-suggester-sparkle"));
+  if (!previousSparkles?.length || !nextSparkles.length) {
+    return;
+  }
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) {
+    return;
+  }
+
+  nextSparkles.forEach((node, index) => {
+    const previousRect = previousSparkles[index]?.getBoundingClientRect();
+    const nextRect = node.getBoundingClientRect();
+    if (!previousRect || !nextRect) {
+      return;
+    }
+    const dx = previousRect.left - nextRect.left;
+    const dy = previousRect.top - nextRect.top;
+    node.style.transition = "none";
+    node.style.transform = `translate(${dx}px, ${dy}px)`;
+  });
+
+  requestAnimationFrame(() => {
+    nextSparkles.forEach((node) => {
+      node.style.transition = "transform 380ms cubic-bezier(0.2, 0.9, 0.24, 1)";
+      node.style.transform = "";
+      const cleanup = () => {
+        node.style.transition = "";
+        node.removeEventListener("transitionend", cleanup);
+      };
+      node.addEventListener("transitionend", cleanup);
+    });
+  });
+}
+
 function startWaitingPromptEllipsis() {
   clearWaitingPromptEllipsis();
   if (!el.englishPrompt) {
@@ -2665,11 +2700,13 @@ async function suggestStoryTheme() {
   }
   const button = el.storySuggesterBtn;
   const themeInput = document.querySelector("#theme");
+  const previousSparkles = Array.from(button.querySelectorAll(".story-suggester-sparkle"));
   clearStorySuggesterReset();
   button.disabled = true;
   button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
   button.classList.add("story-suggester-loading");
   button.classList.remove("story-suggester-done");
+  animateStorySuggesterSparkles(button, previousSparkles);
   let suggestionApplied = false;
   try {
     const response = await api("/api/story-suggestion", {
