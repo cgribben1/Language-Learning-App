@@ -596,7 +596,7 @@ button:disabled {
 }
 
 .prompt-panel-waiting .answer-entry-form {
-  opacity: 0.56;
+  display: none;
 }
 
 .prompt-panel-waiting .answer-toolbar-row,
