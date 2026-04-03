@@ -1915,6 +1915,40 @@ function animateInputValue(target, text, startDelay = 0, baseDelay = 18) {
   return accumulatedDelay;
 }
 
+function animateInputDeletion(target, startDelay = 0, baseDelay = 24) {
+  if (!target) {
+    return Promise.resolve(startDelay);
+  }
+  const content = String(target.value || "");
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion || !content) {
+    target.value = "";
+    target.focus();
+    target.setSelectionRange(0, 0);
+    return Promise.resolve(startDelay);
+  }
+
+  let accumulatedDelay = startDelay;
+  target.focus();
+  target.setSelectionRange(content.length, content.length);
+  for (let index = content.length - 1; index >= 0; index -= 1) {
+    const nextValue = content.slice(0, index);
+    state.contentAnimationTimers.push(setTimeout(() => {
+      target.value = nextValue;
+      target.focus();
+      target.setSelectionRange(nextValue.length, nextValue.length);
+    }, accumulatedDelay));
+    accumulatedDelay += baseDelay;
+  }
+  state.contentAnimationTimers.push(setTimeout(() => {
+    target.focus();
+    target.setSelectionRange(0, 0);
+  }, accumulatedDelay));
+  return new Promise((resolve) => {
+    state.contentAnimationTimers.push(setTimeout(() => resolve(accumulatedDelay), accumulatedDelay));
+  });
+}
+
 function animateInlineSegments(target, segments, startDelay = 0, baseDelay = 24) {
   target.innerHTML = "";
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2702,6 +2736,8 @@ async function suggestStoryTheme() {
   const themeInput = document.querySelector("#theme");
   const previousSparkles = Array.from(button.querySelectorAll(".story-suggester-sparkle"));
   clearStorySuggesterReset();
+  clearContentAnimations();
+  const deletePromise = animateInputDeletion(themeInput, 0, 26);
   button.disabled = true;
   button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
   button.classList.add("story-suggester-loading");
@@ -2718,8 +2754,8 @@ async function suggestStoryTheme() {
         current_theme: themeInput?.value?.trim() || "",
       }),
     });
+    await deletePromise;
     if (themeInput && response.suggestion) {
-      clearContentAnimations();
       animateInputValue(themeInput, response.suggestion.toLowerCase(), 30, 18);
       themeInput.focus();
       state.contentAnimationTimers.push(setTimeout(() => {
