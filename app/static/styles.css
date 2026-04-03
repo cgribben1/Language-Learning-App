@@ -1095,6 +1095,7 @@ kbd {
 .story-sentence {
   font-family: "Fraunces", serif;
   font-weight: 400;
+  color: rgba(38, 29, 17, 0.62);
 }
 
 .story-flight-clone {

@@ -2374,14 +2374,12 @@ function renderStorySoFar() {
     span.dataset.step = String(sentence.step);
     const text = formatCorrectSentence(sentence.french);
     const isLastSentence = index === previousSentences.length - 1;
-    span.textContent = isLastSentence ? text.replace(/[.!?…]+$/u, "") : text;
+    span.textContent = text;
     storyBlock.appendChild(span);
     if (index < previousSentences.length - 1) {
       storyBlock.appendChild(document.createTextNode(" "));
     }
   });
-
-  storyBlock.appendChild(document.createTextNode("..."));
 
   el.storySoFarList.appendChild(storyBlock);
 }
