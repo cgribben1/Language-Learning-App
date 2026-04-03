@@ -1846,7 +1846,7 @@ kbd {
   left: 12px;
   right: 12px;
   bottom: 0;
-  height: 1px;
+  height: 2px;
   background: currentColor;
   transform-origin: right center;
   transform: scaleX(1);
