@@ -470,6 +470,9 @@ label span {
 
 .story-suggester-btn > span:last-child {
   justify-content: center;
+  font-family: "Manrope", sans-serif !important;
+  font-weight: 700 !important;
+  line-height: 1;
 }
 
 .story-suggester-arrow {
