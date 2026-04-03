@@ -513,7 +513,10 @@ label span {
   font-size: 0.95rem !important;
   font-weight: 700 !important;
   line-height: 1;
-  animation: storySuggesterDoneSlide 850ms cubic-bezier(0.2, 0.9, 0.24, 1);
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: storySuggesterDoneType 240ms cubic-bezier(0.2, 0.9, 0.24, 1) forwards;
 }
 
 .story-suggester-loading .story-suggester-sparkle {
@@ -2083,6 +2086,17 @@ kbd {
   100% {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes storySuggesterDoneType {
+  0% {
+    opacity: 0.2;
+    width: 0;
+  }
+  100% {
+    opacity: 1;
+    width: 4ch;
   }
 }
 
