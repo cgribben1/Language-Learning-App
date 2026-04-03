@@ -701,7 +701,6 @@ body.bauhaus-colors #skip-btn {
 
 .action-row,
 .hint-toolbar,
-.prompt-header-row,
 .lesson-header,
 .feedback-heading,
 .vocab-header {
@@ -779,12 +778,12 @@ body.bauhaus-colors #skip-btn {
 }
 
 #prompt-panel .context-note {
-  margin: 0;
+  margin: 0 0 14px;
 }
 
 #prompt-panel .prompt-header-row {
   display: block;
-  margin: 12px 0 0;
+  margin: 0;
 }
 
 #prompt-panel .english-prompt {
@@ -794,7 +793,7 @@ body.bauhaus-colors #skip-btn {
 }
 
 #prompt-panel .prompt-copy-stack > .context-note + .prompt-header-row {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 #answer-entry.answer-entry-form {
