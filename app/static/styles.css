@@ -1830,10 +1830,21 @@ kbd {
 
 .side-panel-btn > span,
 .side-panel-btn-placeholder > span {
-  display: block;
+  display: inline-block;
+  position: relative;
   width: 100%;
   padding: 0 12px 9px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+}
+
+.side-panel-btn > span::after,
+.side-panel-btn-placeholder > span::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.14);
 }
 
 .side-panel-btn:hover {
@@ -1842,9 +1853,9 @@ kbd {
   background: rgba(0, 0, 0, 0.03);
 }
 
-.side-panel-btn:last-child > span,
-.side-panel-btn-placeholder:last-child > span {
-  border-bottom: 0;
+.side-panel-btn:last-child > span::after,
+.side-panel-btn-placeholder:last-child > span::after {
+  display: none;
 }
 
 .side-panel-meta {
