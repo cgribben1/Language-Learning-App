@@ -723,6 +723,10 @@ body.bauhaus-colors #skip-btn {
   align-items: flex-end;
 }
 
+#answer-entry > .action-row {
+  margin-top: -4px;
+}
+
 .hint-toolbar {
   justify-content: flex-end;
   flex-shrink: 0;
