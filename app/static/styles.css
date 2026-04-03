@@ -478,7 +478,7 @@ label span {
   font-size: 0.96rem;
   font-weight: 400;
   line-height: 1;
-  color: rgba(255, 253, 249, 0.82);
+  color: #fffdf9;
   transform: scaleX(-1);
   transform-origin: center;
   pointer-events: none;
@@ -2837,6 +2837,10 @@ body.landing-bauhaus-colors #story-suggester-btn:hover {
   background: linear-gradient(135deg, #1483cb 0%, #5a73cd 42%, #7a58c4 100%) !important;
   box-shadow: 0 14px 28px rgba(58, 63, 140, 0.22) !important;
   transform: none !important;
+}
+
+body.landing-bauhaus-colors #story-suggester-btn .story-suggester-arrow {
+  color: #fffdf9 !important;
 }
 
 body.bauhaus-colors #restart-btn {
