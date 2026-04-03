@@ -1088,7 +1088,7 @@ kbd {
 .story-so-far-header h3 {
   font-family: "Manrope", sans-serif;
   font-weight: 700;
-  color: rgba(38, 29, 17, 0.62);
+  color: rgba(38, 29, 17, 0.72);
 }
 
 .story-so-far-block,
@@ -1096,6 +1096,13 @@ kbd {
   font-family: "Fraunces", serif;
   font-weight: 400;
   color: rgba(38, 29, 17, 0.78);
+}
+
+.story-so-far-placeholder {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-weight: 400;
+  color: rgba(38, 29, 17, 0.7);
 }
 
 .story-flight-clone {

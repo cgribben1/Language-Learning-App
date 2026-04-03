@@ -2358,7 +2358,11 @@ function renderStorySoFar() {
 
   const completedCount = state.currentIndex;
   if (completedCount === 0) {
-    el.storySoFarCard.classList.add("hidden");
+    el.storySoFarCard.classList.remove("hidden");
+    const placeholder = document.createElement("p");
+    placeholder.className = "story-so-far-placeholder";
+    placeholder.textContent = "[Your story will begin to take shape here as you translate each sentence.]";
+    el.storySoFarList.appendChild(placeholder);
     return;
   }
 
