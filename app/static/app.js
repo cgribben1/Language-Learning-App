@@ -20,6 +20,7 @@ const state = {
   generatingEllipsisTimer: null,
   generatingCopyTimer: null,
   generatingWaveTimer: null,
+  waitingPromptEllipsisTimer: null,
   devVersion: null,
   devReloadTimer: null,
   lastCheckingTipIndex: -1,
@@ -362,7 +363,40 @@ function clearCheckingEllipsis() {
   }
 }
 
+function clearWaitingPromptEllipsis() {
+  if (state.waitingPromptEllipsisTimer) {
+    clearTimeout(state.waitingPromptEllipsisTimer);
+    state.waitingPromptEllipsisTimer = null;
+  }
+}
+
+function startWaitingPromptEllipsis() {
+  clearWaitingPromptEllipsis();
+  if (!el.englishPrompt) {
+    return;
+  }
+
+  const baseText = "The next part of your story is still being written";
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) {
+    el.englishPrompt.textContent = `${baseText}...`;
+    return;
+  }
+
+  const frames = ["", ".", "..", "..."];
+  let index = 0;
+  const tick = () => {
+    el.englishPrompt.textContent = `${baseText}${frames[index]}`;
+    index = (index + 1) % frames.length;
+    const delay = index === 0 ? 1700 : 820;
+    state.waitingPromptEllipsisTimer = setTimeout(tick, delay);
+  };
+
+  tick();
+}
+
 function clearGeneratingScreenAnimation() {
+  clearWaitingPromptEllipsis();
   if (state.generatingEllipsisTimer) {
     clearTimeout(state.generatingEllipsisTimer);
     state.generatingEllipsisTimer = null;
@@ -2040,7 +2074,7 @@ function renderLesson(preserveStoryFlight = false) {
       el.promptPanel.classList.add("prompt-panel-waiting");
       el.lessonTitle.textContent = state.lesson.title;
       el.contextNote.textContent = "Preparing the next sentence...";
-      el.englishPrompt.textContent = "The next part of your story is still being written.";
+      startWaitingPromptEllipsis();
       el.answerInput.value = "";
       el.answerInput.disabled = true;
       el.checkBtn.disabled = true;
@@ -2067,6 +2101,7 @@ function renderLesson(preserveStoryFlight = false) {
   el.emptyState.classList.add("hidden");
   el.promptPanel.classList.remove("hidden");
   el.promptPanel.classList.remove("prompt-panel-waiting");
+  clearWaitingPromptEllipsis();
   el.verdictText.textContent = "Waiting for your answer";
   el.lessonTitle.textContent = state.lesson.title;
   el.contextNote.textContent = "Translate the following sentence...";
