@@ -368,7 +368,7 @@ h1 {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 0;
-  margin-bottom: -2px;
+  margin-bottom: 6px;
 }
 
 .answer-box {
@@ -682,16 +682,22 @@ button:disabled {
   color: var(--accent-dark);
   border: 1px solid rgba(178, 74, 45, 0.18);
   padding: 10px 14px;
+  min-height: 42px;
 }
 
 #toggle-hints-btn {
   min-width: 220px;
   width: 100%;
+  min-height: 42px;
 }
 
 #toggle-hints-btn,
 #skip-btn {
   color: rgba(38, 29, 17, 0.72);
+}
+
+#skip-btn {
+  min-height: 42px;
 }
 
 body.bauhaus-colors #toggle-hints-btn,
