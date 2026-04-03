@@ -450,7 +450,7 @@ label span {
   align-items: center;
   justify-content: center;
   padding-inline: 16px;
-  border-radius: 14px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #0477bf 0%, #4d66c2 42%, #6f4dbb 100%);
   border: 1px solid rgba(78, 77, 158, 0.24);
   color: #fffdf9 !important;
@@ -502,6 +502,23 @@ label span {
 .story-suggester-btn:disabled {
   cursor: wait;
   opacity: 0.72;
+}
+
+.story-suggester-success {
+  position: absolute;
+  left: 20px;
+  display: inline-block;
+  font-size: 0.94rem;
+  line-height: 1;
+  color: #e8fff0;
+  text-shadow: 0 0 10px rgba(98, 211, 143, 0.28);
+  pointer-events: none;
+}
+
+.story-suggester-done {
+  background: linear-gradient(135deg, #2f8f67 0%, #49b17b 58%, #86d8a7 100%) !important;
+  border-color: rgba(47, 143, 103, 0.26) !important;
+  box-shadow: 0 12px 24px rgba(47, 143, 103, 0.18) !important;
 }
 
 .story-suggester-loader {

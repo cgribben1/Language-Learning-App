@@ -28,6 +28,7 @@ const state = {
   savedVocabItems: [],
   completedStoryMemoryLessonIds: [],
   storySuggestTimer: null,
+  storySuggestResetTimer: null,
 };
 
 const el = {
@@ -108,6 +109,7 @@ let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Suggest theme</span>';
 const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-loader story-suggester-dice" aria-hidden="true"></span><span>Suggesting<span class="story-suggester-ellipsis"></span></span>';
+const STORY_SUGGESTER_DONE_MARKUP = '<span class="story-suggester-success" aria-hidden="true">&#10003;</span><span>Done!</span>';
 
 function normalizeVocabValue(value) {
   return String(value || "")
@@ -285,6 +287,13 @@ function clearStorySuggesterEllipsis() {
   const node = document.querySelector(".story-suggester-ellipsis");
   if (node) {
     node.textContent = "";
+  }
+}
+
+function clearStorySuggesterReset() {
+  if (state.storySuggestResetTimer) {
+    clearTimeout(state.storySuggestResetTimer);
+    state.storySuggestResetTimer = null;
   }
 }
 
@@ -1633,6 +1642,8 @@ function renderSetupView(message = "") {
   clearContentAnimations();
   clearStoryFlight();
   clearLessonPolling();
+  clearStorySuggesterEllipsis();
+  clearStorySuggesterReset();
   state.lesson = null;
   state.currentIndex = 0;
   state.lastAnswer = "";
@@ -2686,10 +2697,13 @@ async function suggestStoryTheme() {
   }
   const button = el.storySuggesterBtn;
   const themeInput = document.querySelector("#theme");
+  clearStorySuggesterReset();
   button.disabled = true;
   button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
   button.classList.add("story-suggester-loading");
+  button.classList.remove("story-suggester-done");
   startStorySuggesterEllipsis();
+  let suggestionApplied = false;
   try {
     const response = await api("/api/story-suggestion", {
       method: "POST",
@@ -2710,13 +2724,27 @@ async function suggestStoryTheme() {
       }, Math.max(60, response.suggestion.length * 18 + 40)));
     }
     updateSidebarMeta();
+    suggestionApplied = true;
   } catch (error) {
     alert(`Could not suggest a theme: ${error.message}`);
   } finally {
-    button.disabled = false;
     button.classList.remove("story-suggester-loading");
     clearStorySuggesterEllipsis();
-    button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
+    if (suggestionApplied) {
+      button.innerHTML = STORY_SUGGESTER_DONE_MARKUP;
+      button.classList.add("story-suggester-done");
+      button.disabled = true;
+      state.storySuggestResetTimer = setTimeout(() => {
+        button.disabled = false;
+        button.classList.remove("story-suggester-done");
+        button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
+        state.storySuggestResetTimer = null;
+      }, 2000);
+    } else {
+      button.disabled = false;
+      button.classList.remove("story-suggester-done");
+      button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
+    }
   }
 }
 
