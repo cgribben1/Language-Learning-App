@@ -2221,7 +2221,7 @@ kbd {
   font-size: 0.84rem;
   line-height: 1.35;
   color: var(--ink);
-  font-family: "Fraunces", serif !important;
+  font-family: "Manrope", sans-serif !important;
   font-weight: 400 !important;
 }
 
@@ -2230,7 +2230,7 @@ kbd {
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font-family: "Fraunces", serif !important;
+  font-family: "Manrope", sans-serif !important;
   font-weight: 400 !important;
 }
 
