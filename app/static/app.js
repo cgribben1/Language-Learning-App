@@ -1668,6 +1668,7 @@ function renderSetupView(message = "") {
     80,
     0.42,
   );
+  animatePanelIn(el.setupPanel);
   animateSetupFields();
   el.progressCurrent.textContent = "0";
   el.progressTotal.textContent = "0";
