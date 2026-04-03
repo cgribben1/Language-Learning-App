@@ -2367,7 +2367,6 @@ function renderStorySoFar() {
   const previousSentences = state.lesson.sentences.slice(0, completedCount);
   const storyBlock = document.createElement("div");
   storyBlock.className = "story-so-far-block story-line-text";
-  storyBlock.appendChild(document.createTextNode('"'));
 
   previousSentences.forEach((sentence, index) => {
     const span = document.createElement("span");
@@ -2380,7 +2379,7 @@ function renderStorySoFar() {
     }
   });
 
-  storyBlock.appendChild(document.createTextNode('..."'));
+  storyBlock.appendChild(document.createTextNode("..."));
 
   el.storySoFarList.appendChild(storyBlock);
 }

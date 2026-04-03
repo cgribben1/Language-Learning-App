@@ -1083,7 +1083,7 @@ kbd {
 }
 
 .story-so-far-header h3 {
-  font-family: "Manrope", sans-serif;
+  font-family: "Fraunces", serif;
   font-weight: 700;
 }
 
@@ -1136,37 +1136,37 @@ kbd {
   28% {
     opacity: 0.9;
     transform: translateY(-3px) scale(1.08);
-    filter: brightness(1.18);
+    filter: brightness(1.24);
     text-shadow:
-      0 0 22px rgba(242, 183, 5, 0.54),
-      0 0 34px rgba(166, 41, 13, 0.24);
+      0 0 24px rgba(255, 242, 184, 0.72),
+      0 0 38px rgba(255, 230, 140, 0.42);
   }
   52% {
     opacity: 1;
     transform: translateY(0) scale(1.24);
-    filter: brightness(1.38);
+    filter: brightness(1.5);
     text-shadow:
-      0 0 42px rgba(242, 183, 5, 1),
-      0 0 78px rgba(242, 183, 5, 0.72),
-      0 0 28px rgba(166, 41, 13, 0.42),
-      0 0 40px rgba(4, 119, 191, 0.22);
+      0 0 32px rgba(255, 251, 220, 0.98),
+      0 0 62px rgba(255, 243, 186, 0.96),
+      0 0 88px rgba(255, 228, 122, 0.62),
+      0 0 20px rgba(255, 255, 255, 0.5);
   }
   80% {
     opacity: 1;
     transform: translateY(0) scale(1.18);
-    filter: brightness(1.22);
+    filter: brightness(1.28);
     text-shadow:
-      0 0 32px rgba(242, 183, 5, 0.78),
-      0 0 50px rgba(242, 183, 5, 0.42),
-      0 0 18px rgba(166, 41, 13, 0.24);
+      0 0 28px rgba(255, 248, 208, 0.76),
+      0 0 54px rgba(255, 234, 150, 0.44),
+      0 0 14px rgba(255, 255, 255, 0.26);
   }
   94% {
     opacity: 1;
     transform: translateY(0) scale(1.05);
-    filter: brightness(1.08);
+    filter: brightness(1.12);
     text-shadow:
-      0 0 12px rgba(242, 183, 5, 0.3),
-      0 0 18px rgba(166, 41, 13, 0.12);
+      0 0 14px rgba(255, 245, 190, 0.34),
+      0 0 20px rgba(255, 255, 255, 0.14);
   }
   100% {
     opacity: 1;
