@@ -445,10 +445,10 @@ label span {
   align-self: stretch;
   width: 100%;
   margin-top: 0 !important;
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   padding-inline: 16px;
   border-radius: 14px;
   background: linear-gradient(135deg, #c59a67 0%, #e3c39a 46%, #f2e2c4 100%);
@@ -467,9 +467,16 @@ label span {
   margin: 0;
 }
 
+.story-suggester-btn > span:last-child {
+  justify-content: center;
+}
+
 .story-suggester-arrow {
+  position: absolute;
+  left: 14px;
   font-size: 0.95em;
   line-height: 1;
+  pointer-events: none;
 }
 
 .story-suggester-btn:hover {
