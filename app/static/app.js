@@ -2563,7 +2563,7 @@ async function generateLesson(event) {
     alert(`Could not generate lesson: ${error.message}`);
   } finally {
     button.disabled = false;
-    button.innerHTML = '<span class="generate-btn-label">Generate lesson!</span><span class="generate-btn-hint">Press <kbd>Enter</kbd> to continue.</span>';
+    button.innerHTML = '<span class="generate-btn-label">Generate lesson!</span>';
     button.classList.remove("button-loading");
     button.style.opacity = "";
     button.style.transform = "";

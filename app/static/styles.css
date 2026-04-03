@@ -495,28 +495,25 @@ button {
   line-height: 1;
 }
 
-.generate-btn-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  position: absolute;
-  right: 104px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-family: "Manrope", sans-serif !important;
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: normal;
-  line-height: 1;
-  opacity: 0.82;
-  white-space: nowrap;
+.theme-field-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.generate-btn-hint kbd {
-  color: #161616;
-  background: rgba(255, 255, 255, 0.62);
-  border-color: rgba(0, 0, 0, 0.18);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
+.theme-field-header span {
+  margin-bottom: 0;
+}
+
+.generate-shortcut-hint {
+  margin: 0;
+  color: var(--muted);
+  font-family: "Manrope", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 button:hover {
