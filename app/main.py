@@ -102,6 +102,16 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
                 item["key"],
                 request.language,
             )
+        example_wrong_focus = (feedback.reminder_wrong_focus or "").strip()
+        example_correct_focus = (feedback.reminder_correct_focus or "").strip()
+        if example_wrong_focus and example_wrong_focus.lower() not in example_wrong.lower():
+            example_wrong_focus = ""
+        if example_correct_focus and example_correct_focus.lower() not in example_correct.lower():
+            example_correct_focus = ""
+        if not example_wrong_focus:
+            example_wrong_focus = example_wrong
+        if not example_correct_focus:
+            example_correct_focus = example_correct
         record_reminder_hit(
             language=request.language,
             key=item["key"],
@@ -111,6 +121,8 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             answer=request.learner_answer,
             example_wrong=example_wrong,
             example_correct=example_correct,
+            example_wrong_focus=example_wrong_focus,
+            example_correct_focus=example_correct_focus,
         )
     feedback.reminders_triggered = [item["label"] for item in triggered]
     return feedback

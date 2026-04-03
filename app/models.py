@@ -77,6 +77,8 @@ class EvaluationResponse(BaseModel):
     reminder_explanation: str = ""
     reminder_wrong_pattern: str = ""
     reminder_correct_pattern: str = ""
+    reminder_wrong_focus: str = ""
+    reminder_correct_focus: str = ""
     encouraging_note: str = ""
     source: Literal["openai"]
 
@@ -84,6 +86,8 @@ class EvaluationResponse(BaseModel):
 class ReminderExample(BaseModel):
     wrong: str
     correct: str
+    wrong_focus: str = ""
+    correct_focus: str = ""
 
 
 class PhraseExplainRequest(BaseModel):

@@ -1416,6 +1416,8 @@ class AIService:
         cleaned["reminder_explanation"] = localize_reminder_wording(cleaned.get("reminder_explanation", ""), language)
         cleaned["reminder_wrong_pattern"] = str(cleaned.get("reminder_wrong_pattern", "") or "").strip()
         cleaned["reminder_correct_pattern"] = str(cleaned.get("reminder_correct_pattern", "") or "").strip()
+        cleaned["reminder_wrong_focus"] = str(cleaned.get("reminder_wrong_focus", "") or "").strip()
+        cleaned["reminder_correct_focus"] = str(cleaned.get("reminder_correct_focus", "") or "").strip()
         cleaned["tips"] = [
             tip
             for tip in cleaned.get("tips", [])
@@ -1458,6 +1460,8 @@ class AIService:
             cleaned["reminder_explanation"] = ""
             cleaned["reminder_wrong_pattern"] = ""
             cleaned["reminder_correct_pattern"] = ""
+            cleaned["reminder_wrong_focus"] = ""
+            cleaned["reminder_correct_focus"] = ""
 
         return cleaned
 
@@ -2478,6 +2482,8 @@ class AIService:
                     "reminder_explanation": {"type": "string"},
                     "reminder_wrong_pattern": {"type": "string"},
                     "reminder_correct_pattern": {"type": "string"},
+                    "reminder_wrong_focus": {"type": "string"},
+                    "reminder_correct_focus": {"type": "string"},
                     "naturalness_score": {"type": "integer", "minimum": 0, "maximum": 100},
                     "verdict": {"type": "string"},
                     "accepted_learner_sentence": {"type": "string"},
@@ -2500,6 +2506,8 @@ class AIService:
                     "reminder_explanation",
                     "reminder_wrong_pattern",
                     "reminder_correct_pattern",
+                    "reminder_wrong_focus",
+                    "reminder_correct_focus",
                     "naturalness_score",
                     "verdict",
                     "accepted_learner_sentence",
@@ -2551,7 +2559,7 @@ class AIService:
                             "When there is no such issue, set has_required_construction_issue to false and required_construction_note to an empty string. "
                             f"If the learner uses a different but fully acceptable {self._language_name(request.language)} wording, set accepted_learner_sentence to a polished version of the learner's wording with proper accents and punctuation. "
                             "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_sentence to an empty string. "
-                            "If the learner made a repeatable kind of mistake that would be useful to track over time, return a reminder_key, reminder_label, reminder_explanation, reminder_wrong_pattern, and reminder_correct_pattern. "
+                            "If the learner made a repeatable kind of mistake that would be useful to track over time, return a reminder_key, reminder_label, reminder_explanation, reminder_wrong_pattern, reminder_correct_pattern, reminder_wrong_focus, and reminder_correct_focus. "
                             "Only do this for broad recurring patterns, not one-off lexical choices tied to a specific sentence. "
                             "Prefer broad category buckets rather than narrow micro-categories. "
                             "Good reminder buckets include Prepositions, Articles, Pronouns, Word order, Verbs, Agreement, Negation, and Small words. "
@@ -2564,7 +2572,9 @@ class AIService:
                             "Keep the essential subject, noun, article, preposition, pronoun, or governing phrase whenever needed. "
                             "Good examples are 'il ont des' -> 'il a des', 'j'achete de la pain' -> 'j'achete du pain', and 'entrer la maison' -> 'entrer dans la maison'. "
                             "Do not return vague fragments like 'a' -> 'en' if fuller context is needed to understand the pattern. "
-                            "If there is no useful repeatable pattern, set reminder_key, reminder_label, reminder_explanation, reminder_wrong_pattern, and reminder_correct_pattern to empty strings. "
+                            "For reminder_wrong_focus and reminder_correct_focus, return just the key part inside those patterns that should be visually emphasized, such as 'de la' -> 'du', 'ont' -> 'a', or 'dans' -> 'en'. "
+                            "Each focus string must appear verbatim inside its corresponding pattern string. "
+                            "If there is no useful repeatable pattern, set reminder_key, reminder_label, reminder_explanation, reminder_wrong_pattern, reminder_correct_pattern, reminder_wrong_focus, and reminder_correct_focus to empty strings. "
                             "Only raise naturalness or idiomaticity issues when the learner's wording sounds clearly awkward, noticeably non-native, or distinctly less natural than standard everyday French. "
                             "Do not nitpick between two clearly natural, common phrasings that mean the same thing. "
                             "If the learner's French is already natural, do not offer a tiny stylistic swap as correction. "

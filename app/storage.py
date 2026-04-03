@@ -95,6 +95,8 @@ def record_reminder_hit(
     answer: str,
     example_wrong: str = "",
     example_correct: str = "",
+    example_wrong_focus: str = "",
+    example_correct_focus: str = "",
 ) -> list[ReminderItem]:
     _ensure_data_dir()
     existing_raw: list[dict[str, str]] = []
@@ -119,7 +121,15 @@ def record_reminder_hit(
                         and example.correct.strip().lower() == normalized_correct
                     )
                 ]
-                item.examples.insert(0, ReminderExample(wrong=example_wrong, correct=example_correct))
+                item.examples.insert(
+                    0,
+                    ReminderExample(
+                        wrong=example_wrong,
+                        correct=example_correct,
+                        wrong_focus=example_wrong_focus,
+                        correct_focus=example_correct_focus,
+                    ),
+                )
                 item.examples = item.examples[:3]
             break
     else:
@@ -133,7 +143,14 @@ def record_reminder_hit(
                 last_target=target,
                 last_answer=answer,
                 examples=(
-                    [ReminderExample(wrong=example_wrong, correct=example_correct)]
+                    [
+                        ReminderExample(
+                            wrong=example_wrong,
+                            correct=example_correct,
+                            wrong_focus=example_wrong_focus,
+                            correct_focus=example_correct_focus,
+                        )
+                    ]
                     if example_wrong and example_correct
                     else []
                 ),

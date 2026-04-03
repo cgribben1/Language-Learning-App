@@ -2243,6 +2243,13 @@ kbd {
   color: rgba(38, 29, 17, 0.58);
 }
 
+.reference-grid .pattern-example-focus {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.12em;
+  text-decoration-color: currentColor;
+}
+
 .reference-grid .saved-vocab-source,
 .reference-grid .reminder-item-meta {
   padding-top: 2px;

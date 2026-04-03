@@ -2420,9 +2420,9 @@ function renderReminders(items) {
     const visibleExamples = examples.length ? examples : fallbackExample;
     const examplesMarkup = visibleExamples.map((example) => `
       <li class="reminder-example-item">
-        <span class="reminder-example-wrong">${escapeHtml(example.wrong)}</span>
-        <span class="reminder-example-arrow">→</span>
-        <span class="reminder-example-correct">${escapeHtml(example.correct)}</span>
+        <span class="reminder-example-wrong">${renderPatternExampleSide(example.wrong, example.wrong_focus)}</span>
+        <span class="reminder-example-arrow">&rarr;</span>
+        <span class="reminder-example-correct">${renderPatternExampleSide(example.correct, example.correct_focus)}</span>
       </li>
     `).join("");
     div.innerHTML = `
@@ -2434,6 +2434,27 @@ function renderReminders(items) {
     `;
     el.remindersList.appendChild(div);
   });
+}
+
+function renderPatternExampleSide(text, focus) {
+  const source = String(text || "");
+  const needle = String(focus || "").trim();
+  if (!source) {
+    return "";
+  }
+  if (!needle) {
+    return escapeHtml(source);
+  }
+
+  const matchIndex = source.toLocaleLowerCase().indexOf(needle.toLocaleLowerCase());
+  if (matchIndex === -1) {
+    return escapeHtml(source);
+  }
+
+  const before = source.slice(0, matchIndex);
+  const matched = source.slice(matchIndex, matchIndex + needle.length);
+  const after = source.slice(matchIndex + needle.length);
+  return `${escapeHtml(before)}<span class="pattern-example-focus">${escapeHtml(matched)}</span>${escapeHtml(after)}`;
 }
 
 async function loadReminders() {
