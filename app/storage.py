@@ -12,6 +12,10 @@ REMINDERS_PATH = DATA_DIR / "reminders.json"
 ADVENTURE_BRAIN_DIR = DATA_DIR / "adventure_brains"
 
 
+def _read_json(path: Path):
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
 def _ensure_data_dir() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     ADVENTURE_BRAIN_DIR.mkdir(parents=True, exist_ok=True)
@@ -21,7 +25,7 @@ def load_vocab(language: LanguageCode = "french") -> list[SavedVocabItem]:
     _ensure_data_dir()
     if not VOCAB_PATH.exists():
         return []
-    raw = json.loads(VOCAB_PATH.read_text(encoding="utf-8"))
+    raw = _read_json(VOCAB_PATH)
     return [SavedVocabItem(**item) for item in raw if item.get("language", "french") == language]
 
 
@@ -30,14 +34,14 @@ def load_phrase_dictionary(language: LanguageCode = "french") -> dict[str, dict[
     dictionary_path = DATA_DIR / f"{language}_dictionary.json"
     if not dictionary_path.exists():
         return {}
-    return json.loads(dictionary_path.read_text(encoding="utf-8"))
+    return _read_json(dictionary_path)
 
 
 def save_vocab_item(request: SaveVocabRequest) -> list[SavedVocabItem]:
     _ensure_data_dir()
     existing_raw: list[dict[str, str]] = []
     if VOCAB_PATH.exists():
-        existing_raw = json.loads(VOCAB_PATH.read_text(encoding="utf-8"))
+        existing_raw = _read_json(VOCAB_PATH)
     items = [SavedVocabItem(**item) for item in existing_raw]
     candidate = SavedVocabItem(**request.model_dump())
 
@@ -77,7 +81,7 @@ def load_reminders(language: LanguageCode = "french") -> list[ReminderItem]:
     _ensure_data_dir()
     if not REMINDERS_PATH.exists():
         return []
-    raw = json.loads(REMINDERS_PATH.read_text(encoding="utf-8"))
+    raw = _read_json(REMINDERS_PATH)
     return [ReminderItem(**item) for item in raw if item.get("language", "french") == language]
 
 
@@ -95,7 +99,7 @@ def record_reminder_hit(
     _ensure_data_dir()
     existing_raw: list[dict[str, str]] = []
     if REMINDERS_PATH.exists():
-        existing_raw = json.loads(REMINDERS_PATH.read_text(encoding="utf-8"))
+        existing_raw = _read_json(REMINDERS_PATH)
     items = [ReminderItem(**item) for item in existing_raw]
 
     for item in items:
