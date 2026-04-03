@@ -578,12 +578,21 @@ button:disabled {
   display: none;
   position: relative;
   width: 180px;
-  height: 104px;
-  margin: 2px auto 0;
+  height: 86px;
+  margin: 0 auto -4px;
 }
 
 .prompt-panel-waiting .prompt-waiting-illustration {
   display: block;
+}
+
+.prompt-panel {
+  min-height: 352px;
+}
+
+.prompt-panel-waiting {
+  min-height: 352px;
+  gap: 12px;
 }
 
 .prompt-panel-waiting .answer-entry-form {
