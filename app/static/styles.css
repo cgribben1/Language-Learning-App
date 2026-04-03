@@ -1139,6 +1139,8 @@ kbd {
 
 .story-sentence-landed {
   animation: storySentenceLand 2240ms cubic-bezier(0.18, 0.92, 0.22, 1);
+  transform-origin: 50% 58%;
+  will-change: transform, box-shadow, text-shadow, filter, background-color;
 }
 
 @keyframes storySentenceLand {
@@ -1159,47 +1161,51 @@ kbd {
   26% {
     opacity: 0.9;
     transform: translateY(-1px) scale(1.02);
-    filter: brightness(1.14);
-    background: rgba(255, 247, 214, 0.22);
+    filter: brightness(1.18) saturate(1.08);
+    background: radial-gradient(circle at 50% 58%, rgba(255, 254, 240, 0.42) 0%, rgba(255, 244, 194, 0.24) 42%, rgba(255, 247, 214, 0.08) 72%, rgba(255, 245, 208, 0) 100%);
     box-shadow:
-      0 0 14px rgba(255, 249, 220, 0.34),
-      0 0 28px rgba(255, 238, 172, 0.22),
-      inset 0 0 8px rgba(255, 255, 255, 0.14);
+      0 0 16px rgba(255, 252, 230, 0.54),
+      0 0 32px rgba(255, 242, 182, 0.34),
+      0 0 52px rgba(255, 228, 138, 0.18),
+      inset 0 0 10px rgba(255, 255, 255, 0.22);
     text-shadow:
-      0 0 12px rgba(255, 250, 218, 0.52),
-      0 0 24px rgba(255, 238, 172, 0.28),
-      0 0 8px rgba(255, 255, 255, 0.16);
+      0 0 10px rgba(255, 255, 245, 0.78),
+      0 0 22px rgba(255, 249, 214, 0.56),
+      0 0 38px rgba(255, 234, 150, 0.3),
+      0 0 8px rgba(255, 255, 255, 0.22);
   }
   44% {
     opacity: 1;
-    transform: translateY(0) scale(1.04);
-    filter: brightness(1.22);
-    background: rgba(255, 249, 220, 0.24);
+    transform: translateY(0) scale(1.035);
+    filter: brightness(1.3) saturate(1.16);
+    background: radial-gradient(circle at 50% 58%, rgba(255, 255, 249, 0.62) 0%, rgba(255, 250, 222, 0.42) 34%, rgba(255, 241, 180, 0.24) 56%, rgba(255, 245, 208, 0.08) 78%, rgba(255, 245, 208, 0) 100%);
     box-shadow:
-      0 0 18px rgba(255, 252, 228, 0.52),
-      0 0 36px rgba(255, 240, 168, 0.34),
-      0 0 60px rgba(255, 226, 130, 0.2),
-      inset 0 0 10px rgba(255, 255, 255, 0.16);
+      0 0 18px rgba(255, 255, 242, 0.86),
+      0 0 36px rgba(255, 249, 210, 0.62),
+      0 0 64px rgba(255, 233, 152, 0.34),
+      0 0 92px rgba(255, 220, 112, 0.16),
+      inset 0 0 14px rgba(255, 255, 255, 0.28);
     text-shadow:
-      0 0 16px rgba(255, 255, 240, 0.72),
-      0 0 30px rgba(255, 248, 214, 0.46),
-      0 0 44px rgba(255, 235, 146, 0.26),
-      0 0 12px rgba(255, 255, 255, 0.24);
+      0 0 12px rgba(255, 255, 250, 0.96),
+      0 0 28px rgba(255, 252, 230, 0.72),
+      0 0 52px rgba(255, 238, 172, 0.42),
+      0 0 78px rgba(255, 228, 124, 0.2),
+      0 0 14px rgba(255, 255, 255, 0.32);
   }
   70% {
     opacity: 1;
     transform: translateY(0) scale(1.02);
-    filter: brightness(1.1);
-    background: rgba(255, 246, 210, 0.1);
+    filter: brightness(1.13) saturate(1.04);
+    background: radial-gradient(circle at 50% 58%, rgba(255, 252, 232, 0.26) 0%, rgba(255, 246, 204, 0.12) 52%, rgba(255, 245, 208, 0) 100%);
     box-shadow:
-      0 0 12px rgba(255, 249, 220, 0.22),
-      0 0 22px rgba(255, 236, 163, 0.12),
-      0 0 32px rgba(255, 222, 120, 0.08),
-      inset 0 0 6px rgba(255, 255, 255, 0.1);
+      0 0 14px rgba(255, 251, 226, 0.34),
+      0 0 28px rgba(255, 240, 168, 0.18),
+      0 0 44px rgba(255, 228, 128, 0.1),
+      inset 0 0 8px rgba(255, 255, 255, 0.12);
     text-shadow:
-      0 0 10px rgba(255, 252, 226, 0.26),
-      0 0 18px rgba(255, 240, 168, 0.14),
-      0 0 8px rgba(255, 255, 255, 0.12);
+      0 0 10px rgba(255, 255, 245, 0.46),
+      0 0 22px rgba(255, 244, 192, 0.24),
+      0 0 10px rgba(255, 255, 255, 0.14);
   }
   88% {
     opacity: 1;
