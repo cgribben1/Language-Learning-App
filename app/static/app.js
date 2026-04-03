@@ -2367,19 +2367,22 @@ function renderStorySoFar() {
   const previousSentences = state.lesson.sentences.slice(0, completedCount);
   const storyBlock = document.createElement("div");
   storyBlock.className = "story-so-far-block story-line-text";
+  storyBlock.appendChild(document.createTextNode('"'));
 
   previousSentences.forEach((sentence, index) => {
     const span = document.createElement("span");
     span.className = "story-sentence";
     span.dataset.step = String(sentence.step);
-    span.textContent = formatCorrectSentence(sentence.french);
+    const text = formatCorrectSentence(sentence.french);
+    const isLastSentence = index === previousSentences.length - 1;
+    span.textContent = isLastSentence ? text.replace(/[.!?…]+$/u, "") : text;
     storyBlock.appendChild(span);
     if (index < previousSentences.length - 1) {
       storyBlock.appendChild(document.createTextNode(" "));
     }
   });
 
-  storyBlock.appendChild(document.createTextNode("..."));
+  storyBlock.appendChild(document.createTextNode('..."'));
 
   el.storySoFarList.appendChild(storyBlock);
 }
