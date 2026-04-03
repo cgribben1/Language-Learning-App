@@ -1829,6 +1829,7 @@ kbd {
 }
 
 .side-panel-btn-placeholder {
+  position: relative;
   cursor: default;
   color: rgba(34, 34, 34, 0.86);
   font-weight: 800;
@@ -1844,13 +1845,13 @@ kbd {
   line-height: 1.15;
 }
 
-.side-panel-btn > span::after,
-.side-panel-btn-placeholder > span::after {
+.side-panel-btn::before,
+.side-panel-btn-placeholder::before {
   content: "";
   position: absolute;
   left: 0;
-  right: 0;
-  bottom: 2px;
+  right: 18px;
+  bottom: 12px;
   height: 1px;
   background: currentColor;
   transform-origin: right center;
@@ -1876,8 +1877,8 @@ kbd {
   background: rgba(0, 0, 0, 0.03);
 }
 
-.side-panel-btn:hover > span::after,
-.side-panel-btn-placeholder:hover > span::after {
+.side-panel-btn:hover::before,
+.side-panel-btn-placeholder:hover::before {
   transform: scaleX(0);
   opacity: 0.25;
 }
