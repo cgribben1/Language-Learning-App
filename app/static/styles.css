@@ -1032,9 +1032,9 @@ kbd {
   gap: 14px;
   margin-top: 14px;
   padding: 14px 16px;
-  border: 1px solid rgba(62, 41, 28, 0.12);
-  border-radius: 20px;
-  background: rgba(228, 214, 191, 0.92);
+  border: 1px solid rgba(62, 41, 28, 0.14);
+  border-radius: 10px;
+  background: rgba(220, 204, 178, 0.94);
 }
 
 .feedback-card {
