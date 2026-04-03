@@ -107,6 +107,9 @@ const el = {
 
 let selectedPhraseData = null;
 
+const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Suggest theme</span>';
+const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Thinking...</span>';
+
 function normalizeVocabValue(value) {
   return String(value || "")
     .normalize("NFD")
@@ -2654,7 +2657,7 @@ async function suggestStoryTheme() {
   const button = el.storySuggesterBtn;
   const themeInput = document.querySelector("#theme");
   button.disabled = true;
-  button.textContent = "Thinking...";
+  button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
   try {
     const response = await api("/api/story-suggestion", {
       method: "POST",
@@ -2678,7 +2681,7 @@ async function suggestStoryTheme() {
     showStorySuggestionNote(`Could not suggest a theme: ${error.message}`);
   } finally {
     button.disabled = false;
-    button.textContent = "Suggest theme";
+    button.innerHTML = STORY_SUGGESTER_IDLE_MARKUP;
   }
 }
 
