@@ -1033,7 +1033,7 @@ kbd {
   margin-top: 14px;
   padding: 14px 16px;
   border: 1px solid rgba(62, 41, 28, 0.14);
-  border-radius: 10px;
+  border-radius: 3px;
   background: rgba(220, 204, 178, 0.94);
 }
 
@@ -1078,6 +1078,8 @@ kbd {
 }
 
 .story-so-far-header {
+  display: inline-grid;
+  justify-self: start;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(62, 41, 28, 0.1);
 }
