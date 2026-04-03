@@ -451,7 +451,7 @@ label span {
   justify-content: center;
   padding-inline: 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0477bf 0%, #6f4dbb 46%, #d6def6 100%);
+  background: linear-gradient(135deg, #0477bf 0%, #4d66c2 42%, #6f4dbb 100%);
   border: 1px solid rgba(78, 77, 158, 0.24);
   color: #fffdf9;
   font-family: "Manrope", sans-serif;
@@ -2827,14 +2827,14 @@ body.landing-bauhaus-colors #generate-btn {
 }
 
 body.landing-bauhaus-colors #story-suggester-btn {
-  background: linear-gradient(135deg, #0477bf 0%, #6f4dbb 46%, #d6def6 100%) !important;
+  background: linear-gradient(135deg, #0477bf 0%, #4d66c2 42%, #6f4dbb 100%) !important;
   color: #fffdf9 !important;
   border-color: rgba(78, 77, 158, 0.28) !important;
   box-shadow: 0 12px 24px rgba(58, 63, 140, 0.18) !important;
 }
 
 body.landing-bauhaus-colors #story-suggester-btn:hover {
-  background: linear-gradient(135deg, #1483cb 0%, #7a58c4 46%, #e3e8fb 100%) !important;
+  background: linear-gradient(135deg, #1483cb 0%, #5a73cd 42%, #7a58c4 100%) !important;
   box-shadow: 0 14px 28px rgba(58, 63, 140, 0.22) !important;
   transform: none !important;
 }
