@@ -577,13 +577,13 @@ label span {
   white-space: nowrap;
   font-family: "Manrope", sans-serif !important;
   font-weight: 700 !important;
-  animation: storySuggesterTypedWord 520ms steps(10, end) forwards;
+  animation: storySuggesterTypedWord 260ms steps(10, end) forwards;
 }
 
 .story-suggester-ellipsis {
   display: inline-block !important;
   width: 3ch;
-  margin-left: 0.08rem;
+  margin-left: 0.01rem;
   color: inherit !important;
   text-align: left;
   white-space: pre;
