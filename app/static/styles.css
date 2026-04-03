@@ -1833,7 +1833,7 @@ kbd {
   display: inline-block;
   position: relative;
   width: 100%;
-  padding: 0 12px 9px;
+  padding: 0 12px 3px;
 }
 
 .side-panel-btn > span::after,
