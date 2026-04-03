@@ -441,8 +441,11 @@ label span {
 }
 
 .story-suggester-btn {
+  grid-column: auto !important;
+  justify-self: stretch !important;
   align-self: stretch;
   width: 100%;
+  margin-top: 0 !important;
   padding-inline: 16px;
   border-radius: 14px;
   background: rgba(255, 253, 249, 0.86);
@@ -2856,6 +2859,10 @@ body.bauhaus-colors #restart-btn {
 
   .theme-input-row {
     grid-template-columns: 1fr;
+  }
+
+  .story-suggester-btn {
+    grid-column: auto !important;
   }
 
   .site-footer {
