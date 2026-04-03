@@ -1737,26 +1737,26 @@ class AIService:
         )
 
     def _resolve_lesson_job(self, job: dict[str, Any]) -> None:
-        future: Future[list[LessonSentence]] | None = job.get("future")
+        future: Future[LessonSentence] | None = job.get("future")
         if future is None or job["status"] != "generating" or not future.done():
             return
 
         try:
-            remaining_sentences = future.result()
+            next_sentence = future.result()
         except Exception as exc:
             job["status"] = "failed"
             job["error_message"] = (
-                "The lesson started, but the remaining sentences failed to generate. "
+                "The lesson started, but the next sentence failed to generate. "
                 "Please try generating a new lesson."
             )
             job["future"] = None
             job["background_exception"] = exc
             return
 
-        job["sentences"].extend(remaining_sentences)
-        job["status"] = "ready"
+        job["sentences"].append(next_sentence)
         job["error_message"] = ""
         job["future"] = None
+        self._schedule_next_lesson_sentence(job)
 
     def _generate_lesson_with_background_continuation(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
         title, first_sentence = self._generate_lesson_openai_initial(request)
@@ -1770,20 +1770,31 @@ class AIService:
             "future": None,
         }
 
-        remaining_count = request.sentence_count - 1
-        if remaining_count <= 0:
-            job["status"] = "ready"
-        else:
-            job["future"] = self.lesson_executor.submit(
-                self._generate_lesson_openai_remaining,
-                request,
-                title,
-                first_sentence,
-            )
+        self._schedule_next_lesson_sentence(job)
 
         with self.lesson_jobs_lock:
             self.lesson_jobs[lesson_id] = job
         return self._build_lesson_response(job)
+
+    def _schedule_next_lesson_sentence(self, job: dict[str, Any]) -> None:
+        request: LessonRequest = job["request"]
+        if len(job["sentences"]) >= request.sentence_count:
+            job["status"] = "ready"
+            job["future"] = None
+            return
+
+        title: str = job["title"]
+        existing_sentences = [
+            LessonSentence(**sentence.model_dump()) if isinstance(sentence, LessonSentence) else LessonSentence(**sentence)
+            for sentence in job["sentences"]
+        ]
+        job["status"] = "generating"
+        job["future"] = self.lesson_executor.submit(
+            self._generate_lesson_openai_next_sentence,
+            request,
+            title,
+            existing_sentences,
+        )
 
     def _generate_lesson_openai_initial(self, request: LessonRequest) -> tuple[str, LessonSentence]:
         schema = {
@@ -1882,6 +1893,68 @@ class AIService:
         sentences = self._repair_sentence_language_roles(sentences, request.language)
         sentences = self._align_sentence_pairs(sentences, request.difficulty, request.language)
         return self._enrich_vocab_hints(sentences, request.difficulty, request.language)
+
+    def _generate_lesson_openai_next_sentence(
+        self,
+        request: LessonRequest,
+        title: str,
+        existing_sentences: list[LessonSentence],
+    ) -> LessonSentence:
+        next_step = len(existing_sentences) + 1
+        schema = {
+            "name": "lesson_next_step",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "sentence": self._lesson_sentence_schema(1, 1)["items"],
+                },
+                "required": ["sentence"],
+            },
+        }
+
+        prior_summary = "\n".join(
+            (
+                f"Sentence {sentence.step} English: {sentence.english}\n"
+                f"Sentence {sentence.step} {self._language_name(request.language)}: {sentence.french}\n"
+                f"Sentence {sentence.step} context note: {sentence.context_note}"
+            )
+            for sentence in existing_sentences
+        )
+
+        response = self._responses_create_with_retry(
+            **self._response_create_options(
+                model=self.lesson_model,
+                max_output_tokens=max(320, min(self.lesson_max_output_tokens, 520)),
+                reasoning_effort=self.lesson_reasoning_effort,
+            ),
+            input=[
+                {"role": "system", "content": self._lesson_system_prompt(request.language)},
+                {
+                    "role": "user",
+                    "content": (
+                        f"{self._lesson_constraints(request)}\n\n"
+                        f"The lesson title is already fixed as: {title}\n"
+                        f"Sentences 1 to {len(existing_sentences)} have already been shown to the learner. Continue from them without rewriting them.\n\n"
+                        f"{prior_summary}\n\n"
+                        f"Return exactly sentence {next_step} only.\n"
+                        f"The sentence.step value must be exactly {next_step}.\n"
+                        "This new sentence must continue the same characters, situation, tone, and format naturally.\n"
+                        "Do not recap the whole story. Do not jump ahead abruptly. Just write the immediate next beat."
+                    ),
+                },
+            ],
+            text={"format": {"type": "json_schema", **schema}},
+        )
+
+        payload = json.loads(response.output_text)
+        next_sentence = LessonSentence(**payload["sentence"])
+        next_sentence.step = next_step
+        next_sentence = self._repair_sentence_language_roles([next_sentence], request.language)[0]
+        next_sentence = self._align_sentence_pairs([next_sentence], request.difficulty, request.language)[0]
+        next_sentence = self._enrich_vocab_hints([next_sentence], request.difficulty, request.language)[0]
+        return next_sentence
 
     def _generate_lesson_openai(self, request: LessonRequest, lesson_id: str) -> LessonResponse:
         schema = {
