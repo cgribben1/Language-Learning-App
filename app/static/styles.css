@@ -1914,6 +1914,11 @@ kbd {
   opacity: 1;
 }
 
+.side-panel-btn.is-active::after,
+.side-panel-btn-placeholder.is-active::after {
+  opacity: 0;
+}
+
 .side-panel-btn.is-inactive,
 .side-panel-btn-placeholder.is-inactive {
   opacity: 0.58;
