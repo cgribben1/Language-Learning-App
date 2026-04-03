@@ -558,12 +558,16 @@ label span {
 
 .story-suggester-loading > span:nth-child(2) {
   min-width: 7.1rem;
+  justify-content: flex-start !important;
 }
 
 .story-suggester-loading-label {
   display: inline-flex !important;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  width: 100%;
+  font-family: "Manrope", sans-serif !important;
+  font-weight: 700 !important;
 }
 
 .story-suggester-loading-word {
@@ -571,6 +575,8 @@ label span {
   width: 0;
   overflow: hidden;
   white-space: nowrap;
+  font-family: "Manrope", sans-serif !important;
+  font-weight: 700 !important;
   animation: storySuggesterTypedWord 520ms steps(10, end) forwards;
 }
 
