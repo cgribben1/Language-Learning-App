@@ -2793,6 +2793,18 @@ body.landing-bauhaus-colors #generate-btn {
   color: #fffdf9 !important;
 }
 
+body.landing-bauhaus-colors #story-suggester-btn {
+  background: linear-gradient(135deg, #a6290d 0%, #7f2447 38%, #0477bf 100%) !important;
+  color: #fffdf9 !important;
+  border-color: rgba(92, 34, 49, 0.22) !important;
+  box-shadow: 0 12px 24px rgba(65, 27, 40, 0.18) !important;
+}
+
+body.landing-bauhaus-colors #story-suggester-btn:hover {
+  background: linear-gradient(135deg, #b22d11 0%, #8a2950 38%, #1483cb 100%) !important;
+  box-shadow: 0 14px 28px rgba(65, 27, 40, 0.24) !important;
+}
+
 body.bauhaus-colors #restart-btn {
   background: linear-gradient(135deg, #a6290d 0%, #7f2447 38%, #0477bf 100%) !important;
   color: #fffdf9 !important;
