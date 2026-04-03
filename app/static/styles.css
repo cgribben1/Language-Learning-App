@@ -461,6 +461,12 @@ label span {
   box-shadow: 0 10px 22px rgba(89, 61, 36, 0.12);
 }
 
+.story-suggester-btn span {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
 .story-suggester-arrow {
   font-size: 0.95em;
   line-height: 1;
