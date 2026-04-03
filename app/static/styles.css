@@ -2228,6 +2228,8 @@ kbd {
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
+  font-family: "Fraunces", serif;
+  font-weight: 400;
 }
 
 .reference-grid .reminder-example-wrong {
