@@ -179,7 +179,7 @@ body {
 }
 
 #prompt-panel > .context-note + .prompt-header-row {
-  margin-top: -28px;
+  margin-top: -16px;
 }
 
 .lesson-header {
@@ -768,6 +768,10 @@ body.bauhaus-colors #skip-btn {
   margin: 0 0 -10px;
 }
 
+#prompt-panel .english-prompt {
+  margin-top: -6px;
+}
+
 .prompt-waiting-illustration {
   display: none;
   position: relative;
@@ -802,7 +806,7 @@ body.bauhaus-colors #skip-btn {
 }
 
 #prompt-panel {
-  gap: 10px;
+  gap: 6px;
 }
 
 .prompt-panel-waiting {
