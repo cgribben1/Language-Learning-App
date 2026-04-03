@@ -1082,7 +1082,7 @@ kbd {
 .generating-panel,
 .checking-panel,
 .story-so-far-card {
-  padding: 18px;
+  padding: 18px 18px 8px;
   border-radius: 20px;
   border: 1px solid rgba(62, 41, 28, 0.1);
   background: rgba(255, 250, 242, 0.74);
