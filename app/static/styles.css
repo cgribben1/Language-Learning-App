@@ -1890,6 +1890,24 @@ kbd {
   transform: translateY(-50%) translateX(3px);
 }
 
+.side-panel-btn.is-active:hover,
+.side-panel-btn-placeholder.is-active:hover {
+  background: transparent;
+  opacity: 1;
+}
+
+.side-panel-btn.is-active:hover::after,
+.side-panel-btn-placeholder.is-active:hover::after {
+  color: rgba(34, 34, 34, 0.5);
+  transform: translateY(-50%);
+}
+
+.side-panel-btn.is-active:hover > span::after,
+.side-panel-btn-placeholder.is-active:hover > span::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
 .side-panel-btn.is-active,
 .side-panel-btn-placeholder.is-active {
   opacity: 1;
