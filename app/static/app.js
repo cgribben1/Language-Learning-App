@@ -923,6 +923,9 @@ function promoteAcceptableDifferenceLabels(answer, targetSentence, learnerTokenL
   if (!isCorrect || cleanedLabels.length !== learnerWordCount) {
     return cleanedLabels;
   }
+  if (cleanedLabels.length && cleanedLabels.every((label) => label === "correct")) {
+    return cleanedLabels;
+  }
   if (normalizeFrenchText(answer) === normalizeFrenchText(targetSentence)) {
     return cleanedLabels.map(() => "correct");
   }
