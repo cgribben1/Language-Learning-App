@@ -1813,7 +1813,6 @@ kbd {
   border-radius: 0;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: none;
   color: rgba(34, 34, 34, 0.86);
   font-weight: 800;
@@ -1829,21 +1828,23 @@ kbd {
   cursor: default;
 }
 
-.side-panel-btn:last-child {
-  border-bottom: 0;
-}
-
 .side-panel-btn > span,
 .side-panel-btn-placeholder > span {
   display: block;
   width: 100%;
-  padding: 0 12px;
+  padding: 0 12px 9px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
 }
 
 .side-panel-btn:hover {
   transform: translateY(-2px);
   box-shadow: none;
   background: rgba(0, 0, 0, 0.03);
+}
+
+.side-panel-btn:last-child > span,
+.side-panel-btn-placeholder:last-child > span {
+  border-bottom: 0;
 }
 
 .side-panel-meta {
