@@ -570,25 +570,6 @@ label span {
   font-weight: 700 !important;
 }
 
-.story-suggester-loading-word {
-  display: inline-block !important;
-  width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  font-family: "Manrope", sans-serif !important;
-  font-weight: 700 !important;
-  animation: storySuggesterTypedWord 260ms steps(10, end) forwards;
-}
-
-.story-suggester-ellipsis {
-  display: inline-block !important;
-  width: 3ch;
-  margin-left: 0;
-  color: inherit !important;
-  text-align: left;
-  white-space: pre;
-}
-
 .story-suggester-loading.story-suggester-btn:disabled {
   opacity: 0.94;
 }
@@ -2116,14 +2097,6 @@ kbd {
   }
 }
 
-@keyframes storySuggesterTypedWord {
-  from {
-    width: 0;
-  }
-  to {
-    width: 10ch;
-  }
-}
 }
 
 .final-story-block {

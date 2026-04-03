@@ -27,7 +27,6 @@ const state = {
   funFactQueueByLanguage: {},
   savedVocabItems: [],
   completedStoryMemoryLessonIds: [],
-  storySuggestTimer: null,
   storySuggestResetTimer: null,
 };
 
@@ -108,7 +107,7 @@ const el = {
 let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span>Suggest theme</span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
-const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span class="story-suggester-loading-label"><span class="story-suggester-loading-word">Suggesting</span><span class="story-suggester-ellipsis" aria-hidden="true"></span></span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
+const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span class="story-suggester-loading-label">Thinking...</span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
 const STORY_SUGGESTER_DONE_MARKUP = '<span class="story-suggester-done-text">Done</span>';
 
 function normalizeVocabValue(value) {
@@ -287,39 +286,6 @@ function clearStorySuggesterReset() {
   if (el.storySuggesterBtn) {
     el.storySuggesterBtn.classList.remove("story-suggester-resetting");
   }
-}
-
-function clearStorySuggesterEllipsis() {
-  if (state.storySuggestTimer) {
-    clearTimeout(state.storySuggestTimer);
-    state.storySuggestTimer = null;
-  }
-  const node = document.querySelector(".story-suggester-ellipsis");
-  if (node) {
-    node.textContent = "";
-  }
-}
-
-function startStorySuggesterEllipsis() {
-  clearStorySuggesterEllipsis();
-  const node = document.querySelector(".story-suggester-ellipsis");
-  if (!node) {
-    return;
-  }
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (prefersReducedMotion) {
-    node.textContent = "...";
-    return;
-  }
-  const frames = ["", ".", "..", "..."];
-  let index = 0;
-  const tick = () => {
-    node.textContent = frames[index].padEnd(3, "\u00A0");
-    index = (index + 1) % frames.length;
-    const delay = index === 0 ? 720 : 480;
-    state.storySuggestTimer = setTimeout(tick, delay);
-  };
-  state.storySuggestTimer = setTimeout(tick, 560);
 }
 
 function startWaitingPromptEllipsis() {
@@ -1645,7 +1611,6 @@ function renderSetupView(message = "") {
   clearContentAnimations();
   clearStoryFlight();
   clearLessonPolling();
-  clearStorySuggesterEllipsis();
   clearStorySuggesterReset();
   state.lesson = null;
   state.currentIndex = 0;
@@ -2705,7 +2670,6 @@ async function suggestStoryTheme() {
   button.innerHTML = STORY_SUGGESTER_LOADING_MARKUP;
   button.classList.add("story-suggester-loading");
   button.classList.remove("story-suggester-done");
-  startStorySuggesterEllipsis();
   let suggestionApplied = false;
   try {
     const response = await api("/api/story-suggestion", {
@@ -2732,7 +2696,6 @@ async function suggestStoryTheme() {
     alert(`Could not suggest a theme: ${error.message}`);
   } finally {
     button.classList.remove("story-suggester-loading");
-    clearStorySuggesterEllipsis();
     if (suggestionApplied) {
       button.innerHTML = STORY_SUGGESTER_DONE_MARKUP;
       button.classList.add("story-suggester-done");
