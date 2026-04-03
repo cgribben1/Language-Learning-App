@@ -454,6 +454,7 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
             return pair
     if category_key == "verbs":
         best_pair: tuple[str, str] | None = None
+        best_pair_meta: dict[str, Any] | None = None
         best_score = -1.0
         for pair in changed_pairs:
             wrong_tokens = pair["wrong_tokens"]
@@ -464,8 +465,22 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
                     if score > best_score:
                         best_score = score
                         best_pair = (wrong_token.strip(), correct_token.strip())
-        if best_pair and all(best_pair):
-            return best_pair
+                        best_pair_meta = pair
+        if best_pair and all(best_pair) and best_pair_meta:
+            wrong_side, correct_side = best_pair
+            wrong_tokens = best_pair_meta["wrong_tokens"]
+            correct_tokens = best_pair_meta["correct_tokens"]
+
+            if len(wrong_tokens) <= 2 and len(correct_tokens) <= 2 and (len(wrong_tokens) > 1 or len(correct_tokens) > 1):
+                return " ".join(wrong_tokens).strip(), " ".join(correct_tokens).strip()
+
+            if best_pair_meta["i1"] > 0 and best_pair_meta["j1"] > 0:
+                anchor_wrong = answer_tokens[best_pair_meta["i1"] - 1].strip()
+                anchor_correct = target_tokens[best_pair_meta["j1"] - 1].strip()
+                if anchor_wrong and anchor_correct:
+                    return f"{anchor_wrong} {wrong_side}".strip(), f"{anchor_correct} {correct_side}".strip()
+
+            return wrong_side, correct_side
 
     pair = min(
         changed_pairs,
