@@ -1837,7 +1837,6 @@ kbd {
   position: relative;
   width: 100%;
   padding: 0 18px 3px 12px;
-  border-bottom: 1px solid currentColor;
 }
 
 .side-panel-btn > span::after,
@@ -1848,9 +1847,9 @@ kbd {
   right: 18px;
   bottom: 0;
   height: 1px;
-  background: rgba(255, 248, 239, 0.9);
-  transform-origin: left center;
-  transform: scaleX(0);
+  background: currentColor;
+  transform-origin: right center;
+  transform: scaleX(1);
   transition: transform 260ms ease, opacity 260ms ease;
 }
 
@@ -1874,8 +1873,8 @@ kbd {
 
 .side-panel-btn:hover > span::after,
 .side-panel-btn-placeholder:hover > span::after {
-  transform: scaleX(1);
-  opacity: 1;
+  transform: scaleX(0);
+  opacity: 0.25;
 }
 
 .side-panel-btn:hover::after,
