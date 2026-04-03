@@ -1235,6 +1235,8 @@ kbd {
 .story-so-far-header h3 {
   font-family: "Manrope", sans-serif;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: rgba(255, 250, 243, 0.96);
 }
 
