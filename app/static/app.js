@@ -2392,17 +2392,20 @@ function makeReminderExplanationConcise(text) {
     .replace(/^common issue:\s*/i, "")
     .replace(/^mistake:\s*/i, "");
 
-  const firstSentenceMatch = concise.match(/^(.+?[.!?])(?:\s|$)/);
-  if (firstSentenceMatch) {
-    concise = firstSentenceMatch[1];
+  const firstClauseMatch = concise.match(/^(.+?)(?:[.!?;:]|\s+-\s+|,\s+(?:as|when|while|because|so|but)\b|$)/i);
+  if (firstClauseMatch?.[1]) {
+    concise = firstClauseMatch[1];
   }
 
   concise = concise.replace(/\s+/g, " ").trim();
-  if (concise.length > 72) {
-    concise = `${concise.slice(0, 69).trimEnd()}...`;
+
+  if (concise.length > 68) {
+    const shortened = concise.slice(0, 68);
+    const lastSpace = shortened.lastIndexOf(" ");
+    concise = (lastSpace > 24 ? shortened.slice(0, lastSpace) : shortened).trim();
   }
 
-  return concise;
+  return concise.replace(/[.!?;:,\s]+$/g, "");
 }
 
 function updateSidebarMeta() {
