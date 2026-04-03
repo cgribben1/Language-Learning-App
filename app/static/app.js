@@ -2379,6 +2379,8 @@ function renderStorySoFar() {
     }
   });
 
+  storyBlock.appendChild(document.createTextNode("..."));
+
   el.storySoFarList.appendChild(storyBlock);
 }
 
