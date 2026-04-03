@@ -560,6 +560,20 @@ label span {
   min-width: 7.1rem;
 }
 
+.story-suggester-loading-label {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-suggester-loading-word {
+  display: inline-block !important;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: storySuggesterTypedWord 520ms steps(10, end) forwards;
+}
+
 .story-suggester-ellipsis {
   display: inline-block !important;
   width: 3ch;
@@ -2093,6 +2107,15 @@ kbd {
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes storySuggesterTypedWord {
+  from {
+    width: 0;
+  }
+  to {
+    width: 10ch;
   }
 }
 }

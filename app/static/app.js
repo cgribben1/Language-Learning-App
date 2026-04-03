@@ -108,7 +108,7 @@ const el = {
 let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span>Suggest theme</span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
-const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span>Suggesting<span class="story-suggester-ellipsis" aria-hidden="true"></span></span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
+const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-sparkle story-suggester-sparkle-left" aria-hidden="true">&#10022;</span><span class="story-suggester-loading-label"><span class="story-suggester-loading-word">Suggesting</span><span class="story-suggester-ellipsis" aria-hidden="true"></span></span><span class="story-suggester-sparkle story-suggester-sparkle-right" aria-hidden="true">&#10022;</span>';
 const STORY_SUGGESTER_DONE_MARKUP = '<span class="story-suggester-done-text">Done</span>';
 
 function normalizeVocabValue(value) {
@@ -319,7 +319,7 @@ function startStorySuggesterEllipsis() {
     const delay = index === 0 ? 720 : 480;
     state.storySuggestTimer = setTimeout(tick, delay);
   };
-  tick();
+  state.storySuggestTimer = setTimeout(tick, 560);
 }
 
 function startWaitingPromptEllipsis() {
