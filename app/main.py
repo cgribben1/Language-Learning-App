@@ -96,6 +96,8 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
         example_wrong, example_correct = build_reminder_example(
             request.learner_answer,
             request.target_sentence,
+            item["key"],
+            request.language,
         )
         record_reminder_hit(
             language=request.language,

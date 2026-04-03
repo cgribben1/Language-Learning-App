@@ -119,6 +119,15 @@ LANGUAGE_NAMES = {
     "spanish": "Spanish",
 }
 
+FRENCH_ARTICLES = {"un", "une", "des", "le", "la", "les", "du", "de", "de la", "de l", "au", "aux", "ce", "cet", "cette", "ces"}
+SPANISH_ARTICLES = {"un", "una", "unos", "unas", "el", "la", "los", "las", "del", "al", "este", "esta", "estos", "estas"}
+FRENCH_PREPOSITIONS = {"a", "à", "de", "dans", "en", "sur", "sous", "chez", "pour", "par", "avec", "sans", "vers", "entre", "avant", "apres", "après", "depuis"}
+SPANISH_PREPOSITIONS = {"a", "de", "en", "con", "sin", "por", "para", "sobre", "entre", "desde", "hasta"}
+FRENCH_PRONOUNS = {"je", "j", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "me", "te", "se", "le", "la", "les", "lui", "leur", "y", "en"}
+SPANISH_PRONOUNS = {"yo", "tu", "tú", "el", "él", "ella", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "me", "te", "se", "lo", "la", "los", "las", "le", "les", "nos", "os"}
+FRENCH_NEGATION = {"ne", "n", "pas", "plus", "jamais", "rien", "personne"}
+SPANISH_NEGATION = {"no", "nunca", "jamás", "nadie", "nada"}
+
 
 def counter_overlap(reference_tokens: list[str], candidate_tokens: list[str]) -> tuple[int, int]:
     reference_counts = Counter(reference_tokens)
@@ -367,26 +376,105 @@ def canonicalize_reminder_category(
     return "", ""
 
 
-def build_reminder_example(answer: str, target: str) -> tuple[str, str]:
+def build_reminder_example(answer: str, target: str, category_key: str = "", language: str = "french") -> tuple[str, str]:
     answer_tokens = [token for token in re.split(r"\s+", (answer or "").strip()) if token]
     target_tokens = [token for token in re.split(r"\s+", (target or "").strip()) if token]
     if not answer_tokens or not target_tokens:
         return answer.strip(), target.strip()
 
-    prefix = 0
-    while prefix < len(answer_tokens) and prefix < len(target_tokens) and normalize_french(answer_tokens[prefix]) == normalize_french(target_tokens[prefix]):
-        prefix += 1
+    normalized_answer = [normalize_french(token) for token in answer_tokens]
+    normalized_target = [normalize_french(token) for token in target_tokens]
+    matcher = SequenceMatcher(None, normalized_answer, normalized_target)
+    changed_pairs: list[dict[str, Any]] = []
 
-    suffix = 0
-    max_suffix = min(len(answer_tokens) - prefix, len(target_tokens) - prefix)
-    while suffix < max_suffix and normalize_french(answer_tokens[-(suffix + 1)]) == normalize_french(target_tokens[-(suffix + 1)]):
-        suffix += 1
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        changed_pairs.append(
+            {
+                "tag": tag,
+                "i1": i1,
+                "i2": i2,
+                "j1": j1,
+                "j2": j2,
+                "wrong_tokens": answer_tokens[i1:i2],
+                "correct_tokens": target_tokens[j1:j2],
+            }
+        )
 
-    answer_core = answer_tokens[prefix:len(answer_tokens) - suffix if suffix else len(answer_tokens)]
-    target_core = target_tokens[prefix:len(target_tokens) - suffix if suffix else len(target_tokens)]
+    if not changed_pairs:
+        return answer.strip(), target.strip()
 
-    wrong = " ".join(answer_core).strip() or " ".join(answer_tokens).strip()
-    correct = " ".join(target_core).strip() or " ".join(target_tokens).strip()
+    articles = SPANISH_ARTICLES if language == "spanish" else FRENCH_ARTICLES
+    prepositions = SPANISH_PREPOSITIONS if language == "spanish" else FRENCH_PREPOSITIONS
+    pronouns = SPANISH_PRONOUNS if language == "spanish" else FRENCH_PRONOUNS
+    negation = SPANISH_NEGATION if language == "spanish" else FRENCH_NEGATION
+
+    def pick_matching_pair(vocabulary: set[str]) -> tuple[str, str] | None:
+        for pair in changed_pairs:
+            wrong_tokens = pair["wrong_tokens"]
+            correct_tokens = pair["correct_tokens"]
+            wrong_hits = [token for token in wrong_tokens if normalize_french(token) in vocabulary]
+            correct_hits = [token for token in correct_tokens if normalize_french(token) in vocabulary]
+            if wrong_hits and correct_hits:
+                return " ".join(wrong_hits).strip(), " ".join(correct_hits).strip()
+            if wrong_hits:
+                return " ".join(wrong_hits).strip(), " ".join(correct_tokens).strip()
+            if correct_hits:
+                wrong_side = " ".join(wrong_tokens).strip()
+                correct_side = " ".join(correct_hits).strip()
+                if not wrong_side and pair["i1"] > 0 and pair["j1"] > 0:
+                    anchor_wrong = answer_tokens[pair["i1"] - 1]
+                    anchor_correct = target_tokens[pair["j1"] - 1]
+                    wrong_side = anchor_wrong
+                    correct_side = f"{anchor_correct} {correct_side}".strip()
+                return wrong_side, correct_side
+        return None
+
+    category_key = normalize_reminder_key(category_key)
+    if category_key == "articles":
+        pair = pick_matching_pair(articles)
+        if pair:
+            return pair
+    if category_key == "prepositions":
+        pair = pick_matching_pair(prepositions)
+        if pair:
+            return pair
+    if category_key == "pronouns":
+        pair = pick_matching_pair(pronouns)
+        if pair:
+            return pair
+    if category_key == "negation":
+        pair = pick_matching_pair(negation)
+        if pair:
+            return pair
+    if category_key == "small_words":
+        pair = pick_matching_pair(articles | prepositions | pronouns | negation)
+        if pair:
+            return pair
+    if category_key == "verbs":
+        best_pair: tuple[str, str] | None = None
+        best_score = -1.0
+        for pair in changed_pairs:
+            wrong_tokens = pair["wrong_tokens"]
+            correct_tokens = pair["correct_tokens"]
+            for wrong_token in wrong_tokens or [""]:
+                for correct_token in correct_tokens or [""]:
+                    score = SequenceMatcher(None, normalize_french(wrong_token), normalize_french(correct_token)).ratio()
+                    if score > best_score:
+                        best_score = score
+                        best_pair = (wrong_token.strip(), correct_token.strip())
+        if best_pair and all(best_pair):
+            return best_pair
+
+    pair = min(
+        changed_pairs,
+        key=lambda item: max(len(" ".join(item["wrong_tokens"]).strip()), len(" ".join(item["correct_tokens"]).strip())),
+    )
+    wrong_tokens = pair["wrong_tokens"]
+    correct_tokens = pair["correct_tokens"]
+    wrong = " ".join(wrong_tokens).strip() or " ".join(answer_tokens).strip()
+    correct = " ".join(correct_tokens).strip() or " ".join(target_tokens).strip()
     return wrong, correct
 
 
