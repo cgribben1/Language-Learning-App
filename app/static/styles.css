@@ -358,7 +358,7 @@ h1 {
 
 .answer-entry-form {
   display: grid;
-  gap: 10px;
+  gap: 4px;
   margin-top: -16px;
 }
 
@@ -367,7 +367,7 @@ h1 {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-bottom: -4px;
+  margin-bottom: -2px;
 }
 
 .answer-box {
