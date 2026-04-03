@@ -107,7 +107,7 @@ const el = {
 let selectedPhraseData = null;
 
 const STORY_SUGGESTER_IDLE_MARKUP = '<span class="story-suggester-arrow" aria-hidden="true">&#x2794;</span><span>Suggest theme</span>';
-const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-loader" aria-hidden="true"><span class="story-suggester-loader-pixel story-suggester-loader-pixel-one"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-two"></span><span class="story-suggester-loader-pixel story-suggester-loader-pixel-three"></span></span><span>Suggesting<span class="story-suggester-ellipsis"></span></span>';
+const STORY_SUGGESTER_LOADING_MARKUP = '<span class="story-suggester-loader story-suggester-dice" aria-hidden="true"></span><span>Suggesting<span class="story-suggester-ellipsis"></span></span>';
 
 function normalizeVocabValue(value) {
   return String(value || "")
