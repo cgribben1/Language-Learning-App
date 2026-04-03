@@ -775,6 +775,7 @@ body.bauhaus-colors #skip-btn {
 #prompt-panel .prompt-copy-stack {
   display: grid;
   gap: 0;
+  padding-top: 10px;
 }
 
 #prompt-panel .context-note {
