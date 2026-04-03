@@ -1270,21 +1270,23 @@ kbd {
 
 .feedback-notes-header {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
   margin-bottom: 6px;
+  flex-wrap: nowrap;
 }
 
 .feedback-notes-header .mini-label {
   margin: 0;
+  flex: 0 0 auto;
 }
 
 .feedback-reminder-banner {
   margin: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  text-align: right;
+  text-align: left;
   color: rgba(38, 29, 17, 0.98);
   font-family: "Manrope", sans-serif;
   font-size: 0.8rem;
