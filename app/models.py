@@ -143,6 +143,38 @@ class ReminderResponse(BaseModel):
     items: list[ReminderItem]
 
 
+class StoryMemoryEntry(BaseModel):
+    lesson_id: str
+    language: LanguageCode = "french"
+    title: str
+    theme: str
+    difficulty: DifficultyLevel
+    lesson_type: str
+    completed_at: str
+    one_line_summary: str
+    synopsis: str
+    setting: str = ""
+    tone: str = ""
+    plot_beats: list[str] = Field(default_factory=list)
+    vocab_domains: list[str] = Field(default_factory=list)
+    grammar_focuses: list[str] = Field(default_factory=list)
+    freshness_note: str = ""
+
+
+class StoryBrainResponse(BaseModel):
+    items: list[StoryMemoryEntry]
+
+
+class StoryCompleteRequest(BaseModel):
+    lesson_id: str
+    language: LanguageCode = "french"
+    title: str
+    difficulty: DifficultyLevel
+    theme: str
+    lesson_type: str
+    sentences: list[LessonSentence] = Field(default_factory=list)
+
+
 class AdventureStartRequest(BaseModel):
     difficulty: DifficultyLevel = "A2"
     theme: str = "lost festival lanterns"

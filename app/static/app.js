@@ -26,6 +26,7 @@ const state = {
   lastFunFactIndexByLanguage: {},
   funFactQueueByLanguage: {},
   savedVocabItems: [],
+  completedStoryMemoryLessonIds: [],
 };
 
 const el = {
@@ -2249,9 +2250,36 @@ function renderFinalPanel() {
   reserveTextBlockHeight(el.finalFrenchStory, finalFrenchText);
   animateFastNaturalText(el.finalEnglishStory, finalEnglishText, 20);
   animateFastNaturalText(el.finalFrenchStory, finalFrenchText, 70);
+  void persistCompletedStoryMemory();
   animatePanelIn(el.finalPanel);
   launchCelebrationBurst();
   scrollWindowToTop();
+}
+
+async function persistCompletedStoryMemory() {
+  if (!state.lesson?.lesson_id) {
+    return;
+  }
+  if (state.completedStoryMemoryLessonIds.includes(state.lesson.lesson_id)) {
+    return;
+  }
+  try {
+    await api("/api/story-brain/complete", {
+      method: "POST",
+      body: JSON.stringify({
+        lesson_id: state.lesson.lesson_id,
+        language: state.lesson.language || currentLanguage(),
+        title: state.lesson.title,
+        difficulty: state.lesson.difficulty,
+        theme: state.lesson.theme,
+        lesson_type: state.lesson.lesson_type,
+        sentences: state.lesson.sentences,
+      }),
+    });
+    state.completedStoryMemoryLessonIds.push(state.lesson.lesson_id);
+  } catch (error) {
+    // Story memory is additive only; generation should continue even if this save fails.
+  }
 }
 
 function renderCheckingScreen() {

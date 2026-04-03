@@ -11,8 +11,8 @@ from fastapi.staticfiles import StaticFiles
 
 from .adventure_service import AdventureService
 from .ai_service import AIService, build_reminder_example, detect_reminder_triggers
-from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse
-from .storage import load_reminders, load_vocab, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
+from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest
+from .storage import load_reminders, load_story_brain, load_vocab, record_completed_story, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -164,6 +164,18 @@ def add_vocab(request: SaveVocabRequest) -> SavedVocabResponse:
 @app.get("/api/reminders", response_model=ReminderResponse)
 def get_reminders(language: str = Query(default="french")) -> ReminderResponse:
     return ReminderResponse(items=load_reminders(language))
+
+
+@app.get("/api/story-brain", response_model=StoryBrainResponse)
+def get_story_brain(language: str = Query(default="french")) -> StoryBrainResponse:
+    return StoryBrainResponse(items=load_story_brain(language))
+
+
+@app.post("/api/story-brain/complete", response_model=StoryBrainResponse)
+def complete_story(request: StoryCompleteRequest) -> StoryBrainResponse:
+    entry = ai_service.summarize_completed_story(request)
+    items, _ = record_completed_story(entry)
+    return StoryBrainResponse(items=[item for item in items if item.language == request.language])
 
 
 @app.get("/api/vocab/export")

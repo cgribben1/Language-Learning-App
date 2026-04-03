@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+from datetime import datetime, UTC
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -16,8 +17,8 @@ from typing import Any
 
 from openai import APIConnectionError, APIError, APITimeoutError, BadRequestError, OpenAI, RateLimitError
 
-from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, LessonSentence, PhraseExplainRequest, PhraseExplainResponse, VocabHint
-from .storage import load_phrase_dictionary
+from .models import EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, LessonSentence, PhraseExplainRequest, PhraseExplainResponse, StoryCompleteRequest, StoryMemoryEntry, VocabHint
+from .storage import build_story_memory_guidance, load_phrase_dictionary
 
 try:
     import winreg
@@ -2098,7 +2099,7 @@ class AIService:
 
     def _lesson_constraints(self, request: LessonRequest) -> str:
         language_name = self._language_name(request.language)
-        return (
+        constraints = (
             "Create one lesson using these non-negotiable settings:\n"
             f"- Language: {language_name}\n"
             f"- Difficulty: {request.difficulty}\n"
@@ -2125,6 +2126,148 @@ class AIService:
             "- If using dialogue, keep speaker labels consistent in both languages.\n"
             "- If using a film scene, keep the same setting and dramatic situation throughout.\n"
             f"- If a sentence contains two or more genuinely difficult {language_name} words or phrases, include hints for more than one of them instead of only choosing a single hint."
+        )
+        memory_guidance = build_story_memory_guidance(request.language)
+        if memory_guidance:
+            constraints += f"\n\n{memory_guidance}"
+        return constraints
+
+    def summarize_completed_story(self, request: StoryCompleteRequest) -> StoryMemoryEntry:
+        if not request.sentences:
+            raise RuntimeError("Cannot summarize an empty story.")
+        if not self.enabled:
+            return self._fallback_story_memory_entry(request)
+
+        sentence_pairs = "\n".join(
+            (
+                f"Step {sentence.step} English: {sentence.english}\n"
+                f"Step {sentence.step} {self._language_name(request.language)}: {sentence.french}"
+            )
+            for sentence in request.sentences
+        )
+        schema = {
+            "name": "story_memory_summary",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "one_line_summary": {"type": "string"},
+                    "synopsis": {"type": "string"},
+                    "setting": {"type": "string"},
+                    "tone": {"type": "string"},
+                    "plot_beats": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 4,
+                        "items": {"type": "string"},
+                    },
+                    "vocab_domains": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 5,
+                        "items": {"type": "string"},
+                    },
+                    "grammar_focuses": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 4,
+                        "items": {"type": "string"},
+                    },
+                    "freshness_note": {"type": "string"},
+                },
+                "required": [
+                    "one_line_summary",
+                    "synopsis",
+                    "setting",
+                    "tone",
+                    "plot_beats",
+                    "vocab_domains",
+                    "grammar_focuses",
+                    "freshness_note",
+                ],
+            },
+        }
+
+        try:
+            response = self._responses_create_with_retry(
+                **self._response_create_options(
+                    model=self.lesson_model,
+                    max_output_tokens=520,
+                    reasoning_effort="low",
+                ),
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You summarize completed language-learning stories for future novelty control. "
+                            "Return compact, concrete metadata describing what this story was about so future stories can avoid repeating it. "
+                            "Be specific about setting, plot beats, vocabulary domains, and grammar focus. "
+                            "Write everything in English. "
+                            "Keep one_line_summary to one sentence. "
+                            "Keep synopsis to 1-2 short sentences. "
+                            "Plot beats should be broad narrative beats, not sentence-level paraphrases. "
+                            "Vocab domains should be broad lexical fields like mythology, weather, travel, family, emotions, magic, food, movement, place words. "
+                            "Grammar focuses should be broad learner-relevant areas like prepositions, negation, agreement, articles, common verbs, past tense, pronouns, or word order. "
+                            "freshness_note should say what a future story should avoid repeating."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Language: {self._language_name(request.language)}\n"
+                            f"Title: {request.title}\n"
+                            f"Theme: {request.theme}\n"
+                            f"Difficulty: {request.difficulty}\n"
+                            f"Lesson type: {request.lesson_type}\n\n"
+                            f"Story sentences:\n{sentence_pairs}"
+                        ),
+                    },
+                ],
+                text={"format": {"type": "json_schema", **schema}},
+            )
+            payload = json.loads(response.output_text)
+            return StoryMemoryEntry(
+                lesson_id=request.lesson_id,
+                language=request.language,
+                title=request.title,
+                theme=request.theme,
+                difficulty=request.difficulty,
+                lesson_type=request.lesson_type,
+                completed_at=datetime.now(UTC).isoformat(),
+                one_line_summary=payload["one_line_summary"].strip(),
+                synopsis=payload["synopsis"].strip(),
+                setting=payload["setting"].strip(),
+                tone=payload["tone"].strip(),
+                plot_beats=[item.strip() for item in payload["plot_beats"] if item.strip()],
+                vocab_domains=[item.strip() for item in payload["vocab_domains"] if item.strip()],
+                grammar_focuses=[item.strip() for item in payload["grammar_focuses"] if item.strip()],
+                freshness_note=payload["freshness_note"].strip(),
+            )
+        except Exception:
+            return self._fallback_story_memory_entry(request)
+
+    def _fallback_story_memory_entry(self, request: StoryCompleteRequest) -> StoryMemoryEntry:
+        english_sentences = [sentence.english.strip() for sentence in request.sentences if sentence.english.strip()]
+        synopsis = " ".join(english_sentences[:2]).strip() or request.theme
+        one_line = synopsis if len(synopsis) <= 160 else synopsis[:157].rstrip() + "..."
+        plot_beats = english_sentences[:3] if english_sentences else [request.theme]
+        return StoryMemoryEntry(
+            lesson_id=request.lesson_id,
+            language=request.language,
+            title=request.title,
+            theme=request.theme,
+            difficulty=request.difficulty,
+            lesson_type=request.lesson_type,
+            completed_at=datetime.now(UTC).isoformat(),
+            one_line_summary=one_line,
+            synopsis=one_line,
+            setting=request.theme,
+            tone="Not specified",
+            plot_beats=plot_beats,
+            vocab_domains=[request.theme],
+            grammar_focuses=["General lesson review"],
+            freshness_note=f"Avoid repeating the same setup as '{request.title}'.",
         )
 
     def _lesson_sentence_schema(self, min_items: int, max_items: int) -> dict[str, Any]:
