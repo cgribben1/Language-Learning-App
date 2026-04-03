@@ -1858,7 +1858,7 @@ kbd {
 .side-panel-btn-placeholder::after {
   content: "\2794";
   position: absolute;
-  right: 16px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.96rem;
