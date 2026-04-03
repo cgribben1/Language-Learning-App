@@ -1786,7 +1786,7 @@ kbd {
 #sidebar-home-btn,
 .side-panel-btn,
 .side-panel-btn-placeholder {
-  font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-family: "Manrope", sans-serif !important;
 }
 
 .side-panel-title {
@@ -1819,9 +1819,9 @@ kbd {
   background: transparent;
   border: 0;
   box-shadow: none;
-  color: rgba(34, 34, 34, 0.86);
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0;
   text-align: left;
   transition:
     color 180ms ease,
@@ -1830,9 +1830,9 @@ kbd {
 
 .side-panel-btn-placeholder {
   cursor: default;
-  color: rgba(34, 34, 34, 0.86);
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .side-panel-btn > span,
