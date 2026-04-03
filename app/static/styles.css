@@ -1844,7 +1844,7 @@ kbd {
   right: 12px;
   bottom: 0;
   height: 2px;
-  background: rgba(0, 0, 0, 0.2);
+  background: currentColor;
 }
 
 .side-panel-btn:hover {
