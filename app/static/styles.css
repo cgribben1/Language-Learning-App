@@ -1799,10 +1799,10 @@ kbd {
 .side-panel-actions {
   display: grid;
   gap: 0;
-  padding: 4px 0;
-  border-radius: 4px;
-  background: rgba(255, 248, 239, 0.72);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
   overflow: hidden;
 }
 
