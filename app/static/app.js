@@ -2208,7 +2208,7 @@ function renderFeedback(feedback) {
 
   const finalNotes = buildConciseNotes(feedback);
   const reminderBannerText = feedback.reminders_triggered?.length
-    ? `New common error saved: "${feedback.reminders_triggered.join(", ")}"`
+    ? `New pattern saved: "${feedback.reminders_triggered.join(", ")}"`
     : "";
   showFeedbackReminderBanner(reminderBannerText, correctSentenceEndDelay + 120);
   const notes = [...finalNotes];
@@ -2405,7 +2405,7 @@ function renderReminders(items) {
   if (!items.length) {
     const empty = document.createElement("div");
     empty.className = "empty-vocab";
-    empty.textContent = "Common error patterns will appear here once the app spots them.";
+    empty.textContent = "Patterns will appear here once the app starts spotting them.";
     el.remindersList.appendChild(empty);
     return;
   }
