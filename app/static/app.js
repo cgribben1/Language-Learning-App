@@ -2150,7 +2150,7 @@ function renderHints() {
     div.innerHTML = `
       <div class="vocab-hint-row">
         <div><strong>${frenchDisplay}</strong> -> ${hint.english}</div>
-        <button class="ghost-btn vocab-hint-save-btn" type="button">${alreadySaved ? "Added already" : "Add"}</button>
+        <button class="ghost-btn vocab-hint-save-btn" type="button">${alreadySaved ? "Added" : "Add"}</button>
       </div>
     `;
     const saveBtn = div.querySelector(".vocab-hint-save-btn");
@@ -2159,7 +2159,7 @@ function renderHints() {
       event.preventDefault();
       event.stopPropagation();
       if (isVocabItemAlreadySaved(hint.english, frenchDisplay)) {
-        saveBtn.textContent = "Added already";
+        saveBtn.textContent = "Added";
         saveBtn.disabled = true;
         return;
       }
@@ -2375,7 +2375,7 @@ async function explainPhrase(phrase, anchorElement) {
   el.phraseMeaning.textContent = data.english_meaning;
   el.phraseNote.textContent = data.usage_note || data.save_note || "";
   const alreadySaved = isVocabItemAlreadySaved(selectedPhraseData.english, selectedPhraseData.french);
-  el.addPhraseBtn.textContent = alreadySaved ? "Added already" : "Add to vocab list";
+  el.addPhraseBtn.textContent = alreadySaved ? "Added" : "Add to vocab list";
   el.addPhraseBtn.disabled = alreadySaved;
   el.phraseExplainer.classList.remove("hidden");
   el.phraseExplainer.style.visibility = "hidden";
@@ -2705,7 +2705,7 @@ function revealAndSkip() {
 async function addSelectedPhraseToVocab() {
   if (!selectedPhraseData) return;
   if (isVocabItemAlreadySaved(selectedPhraseData.english, selectedPhraseData.french)) {
-    el.addPhraseBtn.textContent = "Added already";
+    el.addPhraseBtn.textContent = "Added";
     el.addPhraseBtn.disabled = true;
     return;
   }
