@@ -1080,12 +1080,13 @@ kbd {
 .story-so-far-header {
   display: inline-grid;
   justify-self: start;
+  padding-right: 18px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(62, 41, 28, 0.1);
 }
 
 .story-so-far-header h3 {
-  font-family: "Fraunces", serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 400;
 }
 
