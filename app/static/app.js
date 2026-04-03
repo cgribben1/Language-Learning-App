@@ -313,7 +313,7 @@ function startStorySuggesterEllipsis() {
   const tick = () => {
     node.textContent = frames[index].padEnd(3, "\u00A0");
     index = (index + 1) % frames.length;
-    const delay = index === 0 ? 900 : 640;
+    const delay = index === 0 ? 720 : 480;
     state.storySuggestTimer = setTimeout(tick, delay);
   };
   tick();
