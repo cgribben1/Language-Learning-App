@@ -174,14 +174,6 @@ body {
   margin: 0;
 }
 
-.prompt-panel > .context-note + .prompt-header-row {
-  margin-top: -18px;
-}
-
-#prompt-panel > .context-note + .prompt-header-row {
-  margin-top: -16px;
-}
-
 .lesson-header {
   display: flex;
   align-items: flex-start;
@@ -362,13 +354,6 @@ h1 {
 
 .answer-entry-form {
   display: grid;
-  gap: 2px;
-  margin-top: -16px;
-}
-
-#answer-entry.answer-entry-form {
-  gap: 0;
-  margin-top: -20px;
 }
 
 .answer-toolbar-row {
@@ -378,10 +363,6 @@ h1 {
   gap: 12px;
   margin-top: 0;
   margin-bottom: 3px;
-}
-
-#answer-entry .answer-toolbar-row {
-  margin-bottom: 2px;
 }
 
 .answer-box {
@@ -736,14 +717,6 @@ body.bauhaus-colors #skip-btn {
   align-items: flex-end;
 }
 
-#answer-entry > .action-row {
-  margin-top: -4px;
-}
-
-#answer-entry > .action-row {
-  margin-top: -10px;
-}
-
 .hint-toolbar {
   justify-content: flex-end;
   flex-shrink: 0;
@@ -755,21 +728,9 @@ body.bauhaus-colors #skip-btn {
   width: 220px;
 }
 
-#answer-entry .hint-toolbar {
-  gap: 3px;
-}
-
 .prompt-header-row {
   align-items: center;
-  margin: 0 0 -6px;
-}
-
-#prompt-panel .prompt-header-row {
-  margin: 8px 0 -6px;
-}
-
-#prompt-panel .english-prompt {
-  margin-top: 0;
+  margin: 0;
 }
 
 .prompt-waiting-illustration {
@@ -799,10 +760,6 @@ body.bauhaus-colors #skip-btn {
   text-align: left;
   white-space: pre;
   font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
-
-.prompt-panel {
-  min-height: 352px;
 }
 
 #prompt-panel {
