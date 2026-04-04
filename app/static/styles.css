@@ -1793,13 +1793,17 @@ kbd {
 }
 
 .checking-copy {
-  margin-top: -8px;
+  margin-top: 4px;
 }
 
 .generating-panel h3,
 .checking-panel h3 {
   font-family: "Manrope", sans-serif;
   font-weight: 700;
+}
+
+.checking-panel h3 {
+  margin: -6px 0 10px;
 }
 
 .generating-copy {
