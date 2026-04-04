@@ -2575,9 +2575,6 @@ kbd {
 }
 
 .reference-grid .vocab-header {
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-  border-bottom: 1.5px solid rgba(62, 41, 28, 0.14);
 }
 
 .reference-grid .vocab-card .saved-vocab-list,
