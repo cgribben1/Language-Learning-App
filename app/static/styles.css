@@ -2575,6 +2575,7 @@ kbd {
 }
 
 .reference-grid .vocab-header {
+  align-items: flex-end;
   padding-bottom: 10px;
   margin-bottom: 10px;
   border-bottom: 1.5px solid rgba(62, 41, 28, 0.14);
