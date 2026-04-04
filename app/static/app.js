@@ -2152,7 +2152,7 @@ function showFeedbackReminderBanner(text, startDelay = 0) {
     return;
   }
 
-  el.feedbackReminderBanner.textContent = "";
+  el.feedbackReminderBanner.innerHTML = "";
   el.feedbackReminderBanner.classList.add("hidden");
   el.feedbackReminderBanner.classList.remove("feedback-reminder-banner-enter");
 
@@ -2162,7 +2162,7 @@ function showFeedbackReminderBanner(text, startDelay = 0) {
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const reveal = () => {
-    el.feedbackReminderBanner.textContent = text;
+    el.feedbackReminderBanner.innerHTML = text;
     el.feedbackReminderBanner.classList.remove("hidden");
     if (prefersReducedMotion) {
       return;
@@ -2407,7 +2407,7 @@ function renderFeedback(feedback) {
     ? `${feedback.reminder_wrong_pattern} → ${feedback.reminder_correct_pattern}`
     : feedback.reminders_triggered?.join(", ") || "";
   const reminderBannerText = reminderPatternText
-    ? `"${reminderPatternText}" added to Patterns`
+    ? `<span class="feedback-reminder-pattern">"${escapeHtml(reminderPatternText)}"</span> <span class="feedback-reminder-target">added to Patterns</span>`
     : "";
   showFeedbackReminderBanner(reminderBannerText, correctSentenceEndDelay + 120);
   const notes = [...finalNotes];
