@@ -2224,22 +2224,18 @@ kbd {
 .side-panel-section {
   display: grid;
   gap: 8px;
-  padding-bottom: 0;
-  border-bottom: none;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .sidebar-wordmark + .side-panel-section {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding-top: 10px;
+  border-bottom: none;
+  padding-bottom: 6px;
 }
 
 .nav-section {
+  border-bottom: none;
   gap: 4px;
-}
-
-.side-panel-section + .side-panel-section {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding-top: 10px;
 }
 
 .profile-section {
