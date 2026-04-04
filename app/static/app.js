@@ -3114,7 +3114,7 @@ function revealAndSkip() {
     naturalness_score: 0,
     suggested_sentence: sentence.french,
     more_common_sentence: sentence.french,
-    tips: ["Read the target answer aloud once before moving on."],
+    tips: ["Read the target answer before moving on."],
     mistakes: [],
     learner_token_labels: [],
     encouraging_note: "Skipping quickly is fine when you want to keep the lesson flowing.",
