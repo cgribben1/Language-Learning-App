@@ -2615,6 +2615,9 @@ kbd {
   background: rgba(244, 235, 221, 0.92);
   border-color: rgba(62, 41, 28, 0.12);
   color: var(--ink);
+  padding: 7px 11px;
+  min-height: 34px;
+  font-size: 0.9rem;
 }
 
 .reference-grid .saved-vocab-list {
