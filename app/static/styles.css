@@ -2690,7 +2690,7 @@ kbd {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .reference-grid .reminder-example-item {
@@ -2698,6 +2698,10 @@ kbd {
   align-items: baseline;
   gap: 6px;
   min-width: 0;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgba(255, 250, 242, 0.78);
+  border: 1px solid rgba(62, 41, 28, 0.08);
   font-size: 0.84rem;
   line-height: 1.35;
   color: var(--ink);
