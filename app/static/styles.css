@@ -2743,6 +2743,11 @@ kbd {
   text-decoration-color: currentColor;
 }
 
+.reference-grid .reminder-example-wrong .pattern-example-focus {
+  color: #b88422;
+  text-decoration-color: #b88422;
+}
+
 .reference-grid .saved-vocab-source,
 .reference-grid .reminder-item-meta {
   padding-top: 2px;
