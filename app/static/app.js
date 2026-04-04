@@ -2428,10 +2428,8 @@ function renderFeedback(feedback) {
   closePhraseExplainer();
 
   const finalNotes = buildConciseNotes(feedback);
-  const reminderPatternText = feedback.reminder_wrong_focus && feedback.reminder_correct_focus
-    ? `${feedback.reminder_wrong_focus} → ${feedback.reminder_correct_focus}`
-    : feedback.reminder_wrong_pattern && feedback.reminder_correct_pattern
-      ? `${feedback.reminder_wrong_pattern} → ${feedback.reminder_correct_pattern}`
+  const reminderPatternText = feedback.reminder_wrong_pattern && feedback.reminder_correct_pattern
+    ? `${feedback.reminder_wrong_pattern} → ${feedback.reminder_correct_pattern}`
     : feedback.reminders_triggered?.join(", ") || "";
   const reminderBannerText = reminderPatternText
     ? `<span class="feedback-reminder-pattern">"${escapeHtml(reminderPatternText)}"</span> <span class="feedback-reminder-target">added to Patterns</span>`
