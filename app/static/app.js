@@ -2920,25 +2920,19 @@ function updateSidebarMeta() {
   const progressValue = lesson ? Math.min(state.currentIndex + 1, requestedCount || 0) : 0;
 
   if (el.sidebarLessonTitle) {
-    el.sidebarLessonTitle.textContent = lesson?.title || "Choose your story";
+    el.sidebarLessonTitle.textContent = lesson?.title || "-";
   }
   if (el.sidebarTheme) {
-    el.sidebarTheme.textContent =
-      lesson?.theme ||
-      document.querySelector("#theme")?.value?.trim() ||
-      "Greek myth";
+    el.sidebarTheme.textContent = lesson?.theme || "-";
   }
   if (el.sidebarLanguage) {
-    el.sidebarLanguage.textContent = currentLanguage() === "spanish" ? "Spanish" : "French";
+    el.sidebarLanguage.textContent = lesson ? (currentLanguage() === "spanish" ? "Spanish" : "French") : "-";
   }
   if (el.sidebarDifficulty) {
-    el.sidebarDifficulty.textContent =
-      lesson?.difficulty ||
-      document.querySelector("#difficulty")?.value ||
-      "A1";
+    el.sidebarDifficulty.textContent = lesson?.difficulty || "-";
   }
   if (el.sidebarProgress) {
-    el.sidebarProgress.textContent = `${progressValue} / ${requestedCount || 0}`;
+    el.sidebarProgress.textContent = lesson ? `${progressValue} / ${requestedCount || 0}` : "-";
   }
 }
 
