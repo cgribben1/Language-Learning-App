@@ -2893,6 +2893,7 @@ class AIService:
                             "Return exactly one label per learner token, in order. "
                             "If the learner clearly attempts a target word with the wrong inflection, spelling, or agreement, treat it as an attempted wrong token, not as an omitted word. "
                             "For example, a close attempt like 'vais' for 'va' is not an omission of 'va'. "
+                            "Never treat a target word as omitted when the learner has already made a recognizable attempt at that same word nearby. "
                             "Use 'correct' for tokens that are right as written. "
                             "Use 'acceptable' sparingly, only when a token is clearly acceptable but noticeably not the target phrasing. "
                             "Use 'wrong' for incorrect tokens. "

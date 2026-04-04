@@ -1062,6 +1062,7 @@ function getOmittedTargetInsertions(answer, targetSentence) {
 
     if (currentLooksLikeAttempt) {
       i += 1;
+      j += 1;
       continue;
     }
 
