@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from .models import LanguageCode, ReminderExample, ReminderItem, SaveVocabRequest, SavedVocabItem, StoryMemoryEntry
@@ -23,6 +24,83 @@ def _read_json(path: Path):
 def _ensure_data_dir() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     ADVENTURE_BRAIN_DIR.mkdir(parents=True, exist_ok=True)
+
+
+_PATTERN_ARROW_RE = re.compile(r"\s*(?:->|→|=>|&rarr;)\s*")
+
+
+def _split_pattern_parts(value: str) -> list[str]:
+    return [part.strip() for part in _PATTERN_ARROW_RE.split(str(value or "")) if part.strip()]
+
+
+def _normalize_pattern_example(
+    wrong: str,
+    correct: str,
+    wrong_focus: str = "",
+    correct_focus: str = "",
+) -> ReminderExample | None:
+    wrong_parts = _split_pattern_parts(wrong)
+    correct_parts = _split_pattern_parts(correct)
+
+    normalized_wrong = wrong_parts[0] if wrong_parts else str(wrong or "").strip()
+    normalized_correct = correct_parts[-1] if correct_parts else str(correct or "").strip()
+
+    if not normalized_correct and len(wrong_parts) >= 2:
+        normalized_correct = wrong_parts[-1]
+
+    if normalized_wrong == normalized_correct and len(wrong_parts) >= 2:
+        normalized_correct = wrong_parts[-1]
+
+    normalized_wrong = normalized_wrong.strip()
+    normalized_correct = normalized_correct.strip()
+    if not normalized_wrong or not normalized_correct:
+        return None
+
+    normalized_wrong_focus = str(wrong_focus or "").strip()
+    normalized_correct_focus = str(correct_focus or "").strip()
+
+    if normalized_wrong_focus and normalized_wrong_focus not in normalized_wrong:
+        normalized_wrong_focus = ""
+    if normalized_correct_focus and normalized_correct_focus not in normalized_correct:
+        normalized_correct_focus = ""
+
+    return ReminderExample(
+        wrong=normalized_wrong,
+        correct=normalized_correct,
+        wrong_focus=normalized_wrong_focus,
+        correct_focus=normalized_correct_focus,
+    )
+
+
+def _sanitize_reminder_item(item: ReminderItem) -> tuple[ReminderItem, bool]:
+    changed = False
+    cleaned_examples: list[ReminderExample] = []
+    seen_pairs: set[tuple[str, str]] = set()
+
+    for example in item.examples:
+        cleaned = _normalize_pattern_example(
+            example.wrong,
+            example.correct,
+            example.wrong_focus,
+            example.correct_focus,
+        )
+        if cleaned is None:
+            changed = True
+            continue
+
+        pair_key = (cleaned.wrong.strip().lower(), cleaned.correct.strip().lower())
+        if pair_key in seen_pairs:
+            changed = True
+            continue
+        seen_pairs.add(pair_key)
+        cleaned_examples.append(cleaned)
+        if cleaned != example:
+            changed = True
+
+    if changed:
+        item.examples = cleaned_examples[:3]
+
+    return item, changed
 
 
 def load_vocab(language: LanguageCode = "french") -> list[SavedVocabItem]:
@@ -86,7 +164,17 @@ def load_reminders(language: LanguageCode = "french") -> list[ReminderItem]:
     if not REMINDERS_PATH.exists():
         return []
     raw = _read_json(REMINDERS_PATH)
-    return [ReminderItem(**item) for item in raw if item.get("language", "french") == language]
+    items = [ReminderItem(**item) for item in raw]
+    changed = False
+    for item in items:
+        _, item_changed = _sanitize_reminder_item(item)
+        changed = changed or item_changed
+    if changed:
+        REMINDERS_PATH.write_text(
+            json.dumps([item.model_dump() for item in items], ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    return [item for item in items if item.language == language]
 
 
 def record_reminder_hit(
@@ -116,8 +204,16 @@ def record_reminder_hit(
             item.last_target = target
             item.last_answer = answer
             if example_wrong and example_correct:
-                normalized_wrong = example_wrong.strip().lower()
-                normalized_correct = example_correct.strip().lower()
+                normalized_example = _normalize_pattern_example(
+                    example_wrong,
+                    example_correct,
+                    example_wrong_focus,
+                    example_correct_focus,
+                )
+                if normalized_example is None:
+                    break
+                normalized_wrong = normalized_example.wrong.strip().lower()
+                normalized_correct = normalized_example.correct.strip().lower()
                 item.examples = [
                     example for example in item.examples
                     if not (
@@ -125,18 +221,16 @@ def record_reminder_hit(
                         and example.correct.strip().lower() == normalized_correct
                     )
                 ]
-                item.examples.insert(
-                    0,
-                    ReminderExample(
-                        wrong=example_wrong,
-                        correct=example_correct,
-                        wrong_focus=example_wrong_focus,
-                        correct_focus=example_correct_focus,
-                    ),
-                )
+                item.examples.insert(0, normalized_example)
                 item.examples = item.examples[:3]
             break
     else:
+        normalized_example = _normalize_pattern_example(
+            example_wrong,
+            example_correct,
+            example_wrong_focus,
+            example_correct_focus,
+        )
         items.append(
             ReminderItem(
                 language=language,
@@ -147,15 +241,8 @@ def record_reminder_hit(
                 last_target=target,
                 last_answer=answer,
                 examples=(
-                    [
-                        ReminderExample(
-                            wrong=example_wrong,
-                            correct=example_correct,
-                            wrong_focus=example_wrong_focus,
-                            correct_focus=example_correct_focus,
-                        )
-                    ]
-                    if example_wrong and example_correct
+                    [normalized_example]
+                    if normalized_example is not None
                     else []
                 ),
             )
