@@ -2403,8 +2403,11 @@ function renderFeedback(feedback) {
   closePhraseExplainer();
 
   const finalNotes = buildConciseNotes(feedback);
-  const reminderBannerText = feedback.reminders_triggered?.length
-    ? `"${feedback.reminders_triggered.join(", ")}" added to "Patterns"`
+  const reminderPatternText = feedback.reminder_wrong_pattern && feedback.reminder_correct_pattern
+    ? `${feedback.reminder_wrong_pattern} → ${feedback.reminder_correct_pattern}`
+    : feedback.reminders_triggered?.join(", ") || "";
+  const reminderBannerText = reminderPatternText
+    ? `"${reminderPatternText}" added to Patterns`
     : "";
   showFeedbackReminderBanner(reminderBannerText, correctSentenceEndDelay + 120);
   const notes = [...finalNotes];
