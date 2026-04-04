@@ -1643,6 +1643,7 @@ kbd {
   margin: 0;
   padding-left: 18px;
   max-width: none;
+  min-height: 1.5em;
 }
 
 #notes-list li + li {
