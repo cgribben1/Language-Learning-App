@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import uuid
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from .adventure_service import AdventureService
-from .ai_service import AIService, build_reminder_example, detect_reminder_triggers
+from .ai_service import AIService, build_reminder_example, detect_reminder_triggers, normalize_french
 from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest, StorySuggestionRequest, StorySuggestionResponse
 from .storage import load_reminders, load_story_brain, load_vocab, record_completed_story, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
@@ -31,6 +32,54 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 ai_service = AIService()
 adventure_service = AdventureService()
+
+_PATTERN_FUNCTION_WORDS = {
+    "french": {
+        "a", "à", "de", "du", "des", "d", "en", "dans", "sur", "sous", "chez", "vers", "pour",
+        "par", "avec", "sans", "entre", "avant", "apres", "après", "depuis", "le", "la", "les",
+        "un", "une", "au", "aux", "de la", "de l", "ce", "cet", "cette", "ces", "je", "j",
+        "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "ne", "pas", "y", "l", "m",
+        "t", "s",
+    },
+    "spanish": {
+        "a", "de", "del", "al", "en", "con", "sin", "por", "para", "sobre", "entre", "desde",
+        "hasta", "el", "la", "los", "las", "un", "una", "unos", "unas", "este", "esta",
+        "estos", "estas", "yo", "tu", "tú", "el", "él", "ella", "nosotros", "vosotros",
+        "ellos", "ellas", "no", "se", "lo", "le", "la",
+    },
+}
+
+
+def _pattern_tokens(text: str) -> list[str]:
+    return [token for token in re.split(r"\s+", (text or "").strip()) if token]
+
+
+def _has_content_token(tokens: list[str], language: str) -> bool:
+    function_words = _PATTERN_FUNCTION_WORDS.get(language, set())
+    return any(normalize_french(token) not in function_words for token in tokens)
+
+
+def _pattern_has_sufficient_context(wrong: str, correct: str, key: str, language: str) -> bool:
+    normalized_wrong = normalize_french(wrong)
+    normalized_correct = normalize_french(correct)
+    if not normalized_wrong or not normalized_correct or normalized_wrong == normalized_correct:
+        return False
+
+    wrong_tokens = _pattern_tokens(wrong)
+    correct_tokens = _pattern_tokens(correct)
+    if not wrong_tokens or not correct_tokens:
+        return False
+
+    normalized_key = (key or "").strip().lower()
+    if normalized_key in {"verbs", "agreement", "articles"}:
+        return len(wrong_tokens) >= 2 and len(correct_tokens) >= 2
+    if normalized_key in {"prepositions", "small_words", "pronouns", "negation"}:
+        return (
+            len(wrong_tokens) >= 2
+            and len(correct_tokens) >= 2
+            and (_has_content_token(wrong_tokens, language) or _has_content_token(correct_tokens, language))
+        )
+    return len(wrong_tokens) >= 2 or len(correct_tokens) >= 2
 
 
 def _build_dev_version() -> str:
@@ -94,12 +143,21 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
     triggered = detect_reminder_triggers(request, feedback)
     saved_labels: list[str] = []
     for item in triggered:
-        example_wrong, example_correct = build_reminder_example(
-            request.learner_answer,
-            request.target_sentence,
-            item["key"],
-            request.language,
-        )
+        model_wrong = (feedback.reminder_wrong_pattern or "").strip()
+        model_correct = (feedback.reminder_correct_pattern or "").strip()
+        if _pattern_has_sufficient_context(model_wrong, model_correct, item["key"], request.language):
+            example_wrong, example_correct = model_wrong, model_correct
+        else:
+            example_wrong, example_correct = build_reminder_example(
+                request.learner_answer,
+                request.target_sentence,
+                item["key"],
+                request.language,
+            )
+
+        if not _pattern_has_sufficient_context(example_wrong, example_correct, item["key"], request.language):
+            continue
+
         example_wrong_focus = (feedback.reminder_wrong_focus or "").strip()
         example_correct_focus = (feedback.reminder_correct_focus or "").strip()
         if example_wrong_focus and example_wrong_focus.lower() not in example_wrong.lower():
