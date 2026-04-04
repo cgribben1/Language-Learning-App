@@ -1480,9 +1480,24 @@ function getCheckingFactForCurrentLanguage() {
   return pickNextFunFact(currentLanguage());
 }
 
+function getFiniteScoreValue(score) {
+  if (typeof score === "number") {
+    return Number.isFinite(score) ? score : null;
+  }
+  if (typeof score === "string") {
+    const trimmed = score.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function buildConciseVerdict(feedback) {
   const rawVerdict = normalizeQuotationMarks((feedback.verdict || "").trim());
-  const score = Number(feedback.correctness_score) || 0;
+  const score = getFiniteScoreValue(feedback.correctness_score) ?? 0;
 
   if (feedback.is_correct && score >= 96) {
     return "Correct.";
@@ -1519,17 +1534,18 @@ function buildConciseVerdict(feedback) {
 function buildVerdictDisplay(feedback) {
   const verdict = buildConciseVerdict(feedback);
   const normalized = verdict.toLowerCase();
+  const score = getFiniteScoreValue(feedback.correctness_score);
 
   if (normalized === "answer revealed.") {
     return `👀 ${verdict}`;
   }
-  if (feedback.is_correct && Number(feedback.correctness_score) >= 96) {
+  if (feedback.is_correct && (score ?? 0) >= 96) {
     return `✅ ${verdict}`;
   }
   if (feedback.is_correct) {
     return `🟡 ${verdict}`;
   }
-  if (Number(feedback.correctness_score) >= 45) {
+  if ((score ?? 0) >= 45) {
     return `🟠 ${verdict}`;
   }
   return `❌ ${verdict}`;
@@ -1738,8 +1754,8 @@ function buildConciseNotes(feedback) {
 }
 
 function animateCorrectnessMeter(score) {
-  const numericScore = Number(score);
-  const hasNumericScore = Number.isFinite(numericScore);
+  const numericScore = getFiniteScoreValue(score);
+  const hasNumericScore = numericScore !== null;
   const target = hasNumericScore ? Math.max(0, Math.min(100, numericScore)) : 0;
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
