@@ -650,9 +650,12 @@ def build_reminder_example(answer: str, target: str, category_key: str = "", lan
             if expanded:
                 return expanded
             if wrong_tokens and correct_tokens:
-                if len(wrong_tokens) <= 2 and len(correct_tokens) <= 2:
-                    return " ".join(wrong_tokens).strip(), " ".join(correct_tokens).strip()
-                return wrong_tokens[0].strip(), correct_tokens[0].strip()
+                return expand_pair_with_context(
+                    pair,
+                    " ".join(wrong_tokens).strip(),
+                    " ".join(correct_tokens).strip(),
+                    prefer_next=False,
+                )
             expanded = expand_with_subject_context(pair)
             if expanded:
                 return expanded
