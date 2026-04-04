@@ -1666,11 +1666,11 @@ kbd {
 }
 
 .feedback-reminder-pattern {
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .feedback-reminder-target {
-  font-weight: 400;
+  font-weight: 700;
 }
 
 .feedback-reminder-banner-enter {

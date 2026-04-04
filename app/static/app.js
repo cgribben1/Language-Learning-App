@@ -1005,6 +1005,25 @@ function getOmittedTargetInsertions(answer, targetSentence) {
       continue;
     }
 
+    const learnerNextMatchesCurrentTarget =
+      i + 1 < learnerWords.length && learnerWords[i + 1].normalized === targetWords[j].normalized;
+    const currentLearnerMatchesNextTarget =
+      j + 1 < targetWords.length && learnerWords[i].normalized === targetWords[j + 1].normalized;
+
+    if (learnerNextMatchesCurrentTarget && !currentLearnerMatchesNextTarget) {
+      i += 1;
+      continue;
+    }
+
+    if (currentLearnerMatchesNextTarget && !learnerNextMatchesCurrentTarget) {
+      const learnerIndex = learnerWords[i].index;
+      const existing = insertions.get(learnerIndex) || [];
+      existing.push(targetWords[j].part);
+      insertions.set(learnerIndex, existing);
+      j += 1;
+      continue;
+    }
+
     if (dp[i][j + 1] > dp[i + 1][j]) {
       const learnerIndex = learnerWords[i].index;
       const existing = insertions.get(learnerIndex) || [];
