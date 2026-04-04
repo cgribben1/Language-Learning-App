@@ -1583,9 +1583,7 @@ kbd {
   line-height: 1.2;
   letter-spacing: 0.02em;
   color: rgba(38, 29, 17, 0.72);
-  text-align: right;
-  justify-self: end;
-  width: 100%;
+  text-align: left;
 }
 
 .final-brain-status-loading {
