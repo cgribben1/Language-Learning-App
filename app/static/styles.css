@@ -2695,7 +2695,7 @@ kbd {
 
 .reference-grid .reminder-example-item {
   display: grid;
-  grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr);
+  grid-template-columns: fit-content(48%) auto minmax(0, 1fr);
   align-items: center;
   column-gap: 8px;
   min-width: 0;
@@ -2725,6 +2725,10 @@ kbd {
 .reference-grid .reminder-example-wrong {
   color: var(--muted);
   text-align: left;
+}
+
+.reference-grid .reminder-example-correct {
+  justify-self: start;
 }
 
 .reference-grid .reminder-example-arrow {
