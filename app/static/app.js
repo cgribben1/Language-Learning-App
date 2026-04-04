@@ -1908,10 +1908,21 @@ function animateInputValue(target, text, startDelay = 0, baseDelay = 18) {
   const content = String(text || "");
   for (let index = 0; index < content.length; index += 1) {
     const nextValue = content.slice(0, index + 1);
+    const currentChar = content[index];
+    const previousChar = index > 0 ? content[index - 1] : "";
     state.contentAnimationTimers.push(setTimeout(() => {
       target.value = nextValue;
     }, accumulatedDelay));
-    accumulatedDelay += baseDelay;
+
+    let stepDelay = baseDelay + Math.round((Math.random() - 0.5) * 12);
+    if (currentChar === " ") {
+      stepDelay += 16;
+    } else if (/[,.!?/:-]/.test(currentChar)) {
+      stepDelay += 26;
+    } else if (previousChar === " ") {
+      stepDelay += 6;
+    }
+    accumulatedDelay += Math.max(9, stepDelay);
   }
   return accumulatedDelay;
 }
