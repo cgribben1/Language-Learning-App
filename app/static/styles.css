@@ -529,6 +529,10 @@ label span {
   box-shadow: 0 12px 24px rgba(47, 143, 103, 0.18) !important;
 }
 
+.story-suggester-done:disabled {
+  opacity: 1 !important;
+}
+
 .story-suggester-done .story-suggester-done-text {
   display: inline-flex;
   align-items: center;
