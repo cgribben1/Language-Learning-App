@@ -538,7 +538,7 @@ label span {
   font-weight: 700 !important;
   line-height: 1;
   opacity: 1;
-  color: var(--brand-cream) !important;
+  color: rgba(26, 26, 26, 0.96) !important;
   width: 0;
   overflow: hidden;
   white-space: nowrap;
