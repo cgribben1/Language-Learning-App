@@ -2753,7 +2753,10 @@ kbd {
 
 .reference-grid .reminder-example-correct .pattern-example-focus {
   color: #3f8a48;
-  text-decoration: none;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.12em;
+  text-decoration-color: currentColor;
 }
 
 .reference-grid .saved-vocab-source,
