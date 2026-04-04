@@ -2864,6 +2864,8 @@ class AIService:
                             "For verbs, keep the subject when it matters for the conjugation. "
                             "For articles or agreement, keep the noun when that is what makes the pattern meaningful. "
                             "For prepositions, keep the governing word or phrase that licenses the preposition. "
+                            "Never return a bare conjugation fragment like 'vais' -> 'va' when the subject is what makes the pattern meaningful; prefer 'Thésée vais' -> 'Thésée va' or 'je vais' -> 'il va' style context as appropriate. "
+                            "In general, if the changed word would be ambiguous on its own, expand the pattern until the grammatical role is obvious. "
                             "Good examples are 'il ont des' -> 'il a des', 'j'achete de la pain' -> 'j'achete du pain', and 'entrer la maison' -> 'entrer dans la maison'. "
                             "Do not return vague fragments like 'a' -> 'en' if fuller context is needed to understand the pattern. "
                             "Bad examples are fragments like 'vais' -> 'va' when 'Thésée vais' -> 'Thésée va' would make the pattern clearer. "
