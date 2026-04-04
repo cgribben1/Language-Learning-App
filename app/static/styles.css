@@ -2745,7 +2745,7 @@ kbd {
 
 .reference-grid .reminder-example-wrong .pattern-example-focus {
   color: #b88422;
-  text-decoration-color: #b88422;
+  text-decoration: none;
 }
 
 .reference-grid .saved-vocab-source,
