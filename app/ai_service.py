@@ -2219,6 +2219,7 @@ class AIService:
             "If the requested lesson type is story, every line must visibly remain narration. "
             "If the requested lesson type is story, the lesson must have a real narrative arc with a beginning, development, and a meaningful ending. "
             "Do not produce stories that are just a list of related actions; something should happen, change, be revealed, be solved, or reach a clear stopping point by the end. "
+            "When the requested theme points to a known myth, legend, fairy tale, historical episode, literary world, or other recognizable narrative tradition, prefer adapting a real canonical story, episode, or character situation from that tradition rather than inventing a merely style-adjacent plot. "
             "If the requested lesson type is film_scene, every line must feel cinematic and stay in the same scene. "
             "Do not ignore the theme. The theme must be obvious in the title and throughout the lesson."
         )
@@ -2248,7 +2249,8 @@ class AIService:
             f"- If the requested level is low, choose simpler {language_name} even if that makes the lesson less stylistically rich.\n"
             "- Every sentence must connect logically to the one before it.\n"
             "- Avoid generic filler. Make the theme obvious in the wording, setting, and actions.\n"
-            "- For story mode, if the theme points to a known existing narrative world or tradition, adapt a recognizable existing story or episode instead of inventing a bland generic plot.\n"
+            "- For story mode, if the theme points to a known existing narrative world or tradition, adapt a recognizable canonical story, episode, or character situation from it whenever reasonably possible.\n"
+            "- For story mode, do not default to an original story that merely imitates the theme's style if a real well-known source story would fit the request.\n"
             "- For story mode, the lesson must tell a story with a setup, a development, and a clear ending or payoff.\n"
             "- For story mode, the final sentence must feel like a genuine ending: it should resolve something, reveal something important, complete an action, or leave the story at a meaningful stopping point.\n"
             "- For story mode, avoid flat sequences where characters simply do one thing after another with no consequence, twist, goal, or resolution.\n"
