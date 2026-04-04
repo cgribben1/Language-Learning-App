@@ -1528,6 +1528,7 @@ class AIService:
         self,
         tokens: Any,
         learner_answer: str,
+        target_sentence: str = "",
         learner_token_labels: list[str] | None = None,
     ) -> list[dict[str, str]]:
         if not isinstance(tokens, list):
@@ -1561,6 +1562,32 @@ class AIService:
                     continue
                 token["status"] = learner_token_labels[label_index]
                 label_index += 1
+
+        target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
+        if len(target_tokens) == len(learner_tokens):
+            submitted_index = 0
+            for token in cleaned:
+                if token["status"] == "missing":
+                    continue
+                if normalize_french(token["text"]) == normalize_french(target_tokens[submitted_index]):
+                    token["status"] = "correct"
+                submitted_index += 1
+
+            single_swap = find_single_aligned_token_swap(learner_answer, target_sentence)
+            if single_swap:
+                learner_raw, _, _, _ = single_swap
+                submitted_index = 0
+                for token in cleaned:
+                    if token["status"] == "missing":
+                        continue
+                    if (
+                        token["text"] == learner_raw
+                        and submitted_index < len(target_tokens)
+                        and normalize_french(token["text"]) != normalize_french(target_tokens[submitted_index])
+                    ):
+                        token["status"] = "wrong"
+                        break
+                    submitted_index += 1
 
         return cleaned
 
@@ -3151,6 +3178,7 @@ class AIService:
         payload["learner_display_tokens"] = self._sanitize_learner_display_tokens(
             payload.get("learner_display_tokens"),
             request.learner_answer,
+            request.target_sentence,
             payload.get("learner_token_labels"),
         ) or self._build_fallback_display_tokens(
             request.learner_answer,
