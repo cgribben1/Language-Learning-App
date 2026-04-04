@@ -1515,6 +1515,46 @@ class AIService:
 
         return cleaned
 
+    def _sanitize_learner_display_tokens(
+        self,
+        tokens: Any,
+        learner_answer: str,
+        learner_token_labels: list[str] | None = None,
+    ) -> list[dict[str, str]]:
+        if not isinstance(tokens, list):
+            return []
+
+        allowed_statuses = {"correct", "acceptable", "wrong", "missing", "neutral"}
+        cleaned: list[dict[str, str]] = []
+        for token in tokens:
+            if not isinstance(token, dict):
+                continue
+            text = str(token.get("text", "") or "").strip()
+            status = str(token.get("status", "") or "").strip().lower()
+            if not text or status not in allowed_statuses:
+                continue
+            cleaned.append({"text": text, "status": status})
+
+        learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
+        submitted_tokens = [token for token in cleaned if token["status"] != "missing"]
+        if learner_tokens and len(submitted_tokens) != len(learner_tokens):
+            return []
+
+        if learner_tokens:
+            for index, learner_token in enumerate(learner_tokens):
+                if submitted_tokens[index]["text"] != learner_token:
+                    return []
+
+        if learner_token_labels and len(learner_token_labels) == len(learner_tokens):
+            label_index = 0
+            for token in cleaned:
+                if token["status"] == "missing":
+                    continue
+                token["status"] = learner_token_labels[label_index]
+                label_index += 1
+
+        return cleaned
+
     def _sanitize_token_labels(self, labels: Any, learner_answer: str, target_sentence: str = "") -> list[str]:
         learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
         raw_labels = labels if isinstance(labels, list) else []
@@ -1572,6 +1612,23 @@ class AIService:
                 continue
             labels.append("correct" if is_correct else "wrong")
         return labels
+
+    def _build_fallback_display_tokens(
+        self,
+        learner_answer: str,
+        learner_token_labels: list[str] | None = None,
+    ) -> list[dict[str, str]]:
+        learner_tokens = [part for part in re.split(r"\s+", learner_answer.strip()) if part]
+        labels = learner_token_labels if isinstance(learner_token_labels, list) else []
+        if len(labels) != len(learner_tokens):
+            labels = ["neutral" for _ in learner_tokens]
+        return [
+            {
+                "text": token,
+                "status": label if label in {"correct", "acceptable", "wrong"} else "neutral",
+            }
+            for token, label in zip(learner_tokens, labels)
+        ]
 
     def _ensure_minimal_specific_feedback(
         self,
@@ -2811,6 +2868,21 @@ class AIService:
                         "type": "array",
                         "items": {"type": "string", "enum": ["correct", "acceptable", "wrong"]},
                     },
+                    "learner_display_tokens": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "text": {"type": "string"},
+                                "status": {
+                                    "type": "string",
+                                    "enum": ["correct", "acceptable", "wrong", "missing", "neutral"],
+                                },
+                            },
+                            "required": ["text", "status"],
+                        },
+                    },
                     "encouraging_note": {"type": "string"},
                 },
                 "required": [
@@ -2832,6 +2904,7 @@ class AIService:
                     "tips",
                     "mistakes",
                     "learner_token_labels",
+                    "learner_display_tokens",
                     "encouraging_note",
                 ],
             },
@@ -2927,6 +3000,13 @@ class AIService:
                             "If the learner response is mostly unusable or unrelated, prefer no reminder pattern over a bad one. "
                             "Also return learner_token_labels for the learner answer tokens split by spaces. "
                             "Return exactly one label per learner token, in order. "
+                            "Also return learner_display_tokens for exactly how the learner answer should be shown in the feedback UI. "
+                            "Each learner_display_tokens item must have text and status. "
+                            "Keep the learner's submitted tokens in their original order for submitted words. "
+                            "Only insert a token with status 'missing' when a target word was truly omitted and there was no recognizable learner attempt at it nearby. "
+                            "If the learner attempted the word but got it wrong, keep the learner's attempted token with status 'wrong' instead of inserting a missing token. "
+                            "For example, if the learner wrote an article attempt like 'la' or 'une' in the relevant slot, do not also invent an omitted article token. "
+                            "If there are no genuine omissions, learner_display_tokens should just cover the learner's submitted tokens. "
                             "If the learner clearly attempts a target word with the wrong inflection, spelling, or agreement, treat it as an attempted wrong token, not as an omitted word. "
                             "For example, a close attempt like 'vais' for 'va' is not an omission of 'va'. "
                             "Never treat a target word as omitted when the learner has already made a recognizable attempt at that same word nearby. "
@@ -3001,6 +3081,10 @@ class AIService:
                 "tips": [],
                 "mistakes": [],
                 "learner_token_labels": ["correct" for token in re.split(r"\s+", request.learner_answer.strip()) if token],
+                "learner_display_tokens": [
+                    {"text": token, "status": "correct"}
+                    for token in re.split(r"\s+", request.learner_answer.strip()) if token
+                ],
                 "encouraging_note": "",
             }
             correctness_score = max(correctness_score, 100)
@@ -3025,6 +3109,10 @@ class AIService:
                 "tips": [],
                 "mistakes": [],
                 "learner_token_labels": ["correct" for token in re.split(r"\s+", request.learner_answer.strip()) if token],
+                "learner_display_tokens": [
+                    {"text": token, "status": "correct"}
+                    for token in re.split(r"\s+", request.learner_answer.strip()) if token
+                ],
                 "encouraging_note": "",
             }
             correctness_score = max(correctness_score, 100)
@@ -3050,6 +3138,14 @@ class AIService:
             request.learner_answer,
             request.target_sentence,
             is_correct=is_correct,
+        )
+        payload["learner_display_tokens"] = self._sanitize_learner_display_tokens(
+            payload.get("learner_display_tokens"),
+            request.learner_answer,
+            payload.get("learner_token_labels"),
+        ) or self._build_fallback_display_tokens(
+            request.learner_answer,
+            payload.get("learner_token_labels"),
         )
         return EvaluationResponse(
             is_correct=is_correct,

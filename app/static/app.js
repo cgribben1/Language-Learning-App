@@ -1131,9 +1131,28 @@ function promoteAcceptableDifferenceLabels(answer, targetSentence, learnerTokenL
   return cleanedLabels;
 }
 
-function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = []) {
+function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = [], learnerDisplayTokens = []) {
   if (!(answer || "").trim() || /^No answer entered\.?$/i.test((answer || "").trim())) {
     return '<span class="answer-word answer-word-neutral">No answer entered.</span>';
+  }
+
+  if (Array.isArray(learnerDisplayTokens) && learnerDisplayTokens.length) {
+    return learnerDisplayTokens
+      .map((token) => {
+        const text = String(token?.text || "");
+        const status = String(token?.status || "neutral");
+        const cssClass = status === "correct"
+          ? "answer-word-correct"
+          : status === "acceptable"
+            ? "answer-word-acceptable"
+            : status === "wrong"
+              ? "answer-word-wrong"
+              : status === "missing"
+                ? "answer-word-missing"
+                : "answer-word-neutral";
+        return `<span class="answer-word ${cssClass}">${escapeHtml(text)}</span>`;
+      })
+      .join(" ");
   }
 
   const learnerParts = tokenizeWithSpaces(answer);
@@ -1685,8 +1704,8 @@ function compressFeedbackNote(note) {
   return compact;
 }
 
-function buildLearnerAnswerSegments(answer, correctSentence, learnerTokenLabels = []) {
-  const markup = buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels);
+function buildLearnerAnswerSegments(answer, correctSentence, learnerTokenLabels = [], learnerDisplayTokens = []) {
+  const markup = buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels, learnerDisplayTokens);
   return markup
     .split(/(<span class="answer-word [^"]+">.*?<\/span>)/g)
     .filter(Boolean)
@@ -2478,6 +2497,7 @@ function renderFeedback(feedback) {
     learnerAnswerDisplay,
     canonicalTargetSentence,
     learnerTokenLabels,
+    feedback.learner_display_tokens || [],
   );
   const correctSentenceMarkup = buildCorrectSentenceMarkup(displayedCorrectSentence);
   el.feedbackQuestionText.textContent = "";
@@ -2493,7 +2513,12 @@ function renderFeedback(feedback) {
     );
   const yourAnswerEndDelay = animateInlineSegments(
     el.learnerAnswer,
-    buildLearnerAnswerSegments(learnerAnswerDisplay, canonicalTargetSentence, learnerTokenLabels),
+    buildLearnerAnswerSegments(
+      learnerAnswerDisplay,
+      canonicalTargetSentence,
+      learnerTokenLabels,
+      feedback.learner_display_tokens || [],
+    ),
     Math.max(yourAnswerStartDelay + 120, questionSentenceEndDelay + 40),
     28,
   );

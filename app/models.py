@@ -58,6 +58,11 @@ class EvaluationRequest(BaseModel):
     vocab_hints: list[VocabHint] = Field(default_factory=list)
 
 
+class LearnerDisplayToken(BaseModel):
+    text: str
+    status: Literal["correct", "acceptable", "wrong", "missing", "neutral"]
+
+
 class EvaluationResponse(BaseModel):
     is_correct: bool
     correctness_score: int = Field(ge=0, le=100)
@@ -71,6 +76,7 @@ class EvaluationResponse(BaseModel):
     tips: list[str] = Field(default_factory=list)
     mistakes: list[str] = Field(default_factory=list)
     learner_token_labels: list[Literal["correct", "acceptable", "wrong"]] = Field(default_factory=list)
+    learner_display_tokens: list[LearnerDisplayToken] = Field(default_factory=list)
     reminders_triggered: list[str] = Field(default_factory=list)
     reminder_key: str = ""
     reminder_label: str = ""
