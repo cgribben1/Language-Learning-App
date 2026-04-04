@@ -1738,7 +1738,9 @@ function buildConciseNotes(feedback) {
 }
 
 function animateCorrectnessMeter(score) {
-  const target = Math.max(0, Math.min(100, Number(score) || 0));
+  const numericScore = Number(score);
+  const hasNumericScore = Number.isFinite(numericScore);
+  const target = hasNumericScore ? Math.max(0, Math.min(100, numericScore)) : 0;
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   if (state.correctnessAnimationFrame) {
@@ -1748,7 +1750,11 @@ function animateCorrectnessMeter(score) {
   el.correctnessBar.classList.remove("score-bar-fill-animate");
   void el.correctnessBar.offsetWidth;
   el.correctnessBar.style.width = "0%";
-  el.correctnessScore.textContent = "0";
+  el.correctnessScore.textContent = hasNumericScore ? "0" : "-";
+
+  if (!hasNumericScore) {
+    return;
+  }
 
   if (prefersReducedMotion) {
     el.correctnessBar.style.width = `${target}%`;
@@ -3088,7 +3094,7 @@ function revealAndSkip() {
   state.lastAnswer = "";
   renderFeedback({
     verdict: "Revealed target answer.",
-    correctness_score: 0,
+    correctness_score: null,
     naturalness_score: 0,
     suggested_sentence: sentence.french,
     more_common_sentence: sentence.french,
