@@ -112,6 +112,10 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             example_wrong_focus = example_wrong
         if not example_correct_focus:
             example_correct_focus = example_correct
+        feedback.reminder_wrong_pattern = example_wrong
+        feedback.reminder_correct_pattern = example_correct
+        feedback.reminder_wrong_focus = example_wrong_focus
+        feedback.reminder_correct_focus = example_correct_focus
         record_reminder_hit(
             language=request.language,
             key=item["key"],

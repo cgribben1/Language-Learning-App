@@ -997,6 +997,10 @@ function getOmittedTargetInsertions(answer, targetSentence) {
   const append = [];
   let i = 0;
   let j = 0;
+  const learnerHasLaterMatch = (startIndex, normalized) =>
+    learnerWords.slice(startIndex + 1).some((item) => item.normalized === normalized);
+  const targetHasLaterMatch = (startIndex, normalized) =>
+    targetWords.slice(startIndex + 1).some((item) => item.normalized === normalized);
 
   while (i < learnerWords.length && j < targetWords.length) {
     if (learnerWords[i].normalized === targetWords[j].normalized) {
@@ -1009,13 +1013,15 @@ function getOmittedTargetInsertions(answer, targetSentence) {
       i + 1 < learnerWords.length && learnerWords[i + 1].normalized === targetWords[j].normalized;
     const currentLearnerMatchesNextTarget =
       j + 1 < targetWords.length && learnerWords[i].normalized === targetWords[j + 1].normalized;
+    const learnerHasCurrentTargetLater = learnerHasLaterMatch(i, targetWords[j].normalized);
+    const targetHasCurrentLearnerLater = targetHasLaterMatch(j, learnerWords[i].normalized);
 
-    if (learnerNextMatchesCurrentTarget && !currentLearnerMatchesNextTarget) {
+    if ((learnerNextMatchesCurrentTarget || learnerHasCurrentTargetLater) && !currentLearnerMatchesNextTarget) {
       i += 1;
       continue;
     }
 
-    if (currentLearnerMatchesNextTarget && !learnerNextMatchesCurrentTarget) {
+    if ((currentLearnerMatchesNextTarget || targetHasCurrentLearnerLater) && !learnerNextMatchesCurrentTarget && !learnerHasCurrentTargetLater) {
       const learnerIndex = learnerWords[i].index;
       const existing = insertions.get(learnerIndex) || [];
       existing.push(targetWords[j].part);
@@ -2422,8 +2428,10 @@ function renderFeedback(feedback) {
   closePhraseExplainer();
 
   const finalNotes = buildConciseNotes(feedback);
-  const reminderPatternText = feedback.reminder_wrong_pattern && feedback.reminder_correct_pattern
-    ? `${feedback.reminder_wrong_pattern} → ${feedback.reminder_correct_pattern}`
+  const reminderPatternText = feedback.reminder_wrong_focus && feedback.reminder_correct_focus
+    ? `${feedback.reminder_wrong_focus} → ${feedback.reminder_correct_focus}`
+    : feedback.reminder_wrong_pattern && feedback.reminder_correct_pattern
+      ? `${feedback.reminder_wrong_pattern} → ${feedback.reminder_correct_pattern}`
     : feedback.reminders_triggered?.join(", ") || "";
   const reminderBannerText = reminderPatternText
     ? `<span class="feedback-reminder-pattern">"${escapeHtml(reminderPatternText)}"</span> <span class="feedback-reminder-target">added to Patterns</span>`
