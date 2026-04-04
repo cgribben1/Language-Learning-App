@@ -2761,6 +2761,9 @@ function renderReminders(items) {
     const visibleExamples = examples.length ? examples : fallbackExample;
     const examplesMarkup = visibleExamples.map((example) => `
       <li class="reminder-example-item">
+        <span class="reminder-example-wrong">${renderPatternExampleSide(example.wrong, example.wrong_focus)}</span>
+        <span class="reminder-example-arrow">&rarr;</span>
+        <span class="reminder-example-correct">${renderPatternExampleSide(example.correct, example.correct_focus)}</span>
         <button
           class="reminder-example-delete"
           type="button"
@@ -2769,9 +2772,6 @@ function renderReminders(items) {
           data-reminder-wrong="${escapeHtml(example.wrong)}"
           data-reminder-correct="${escapeHtml(example.correct)}"
         >x</button>
-        <span class="reminder-example-wrong">${renderPatternExampleSide(example.wrong, example.wrong_focus)}</span>
-        <span class="reminder-example-arrow">&rarr;</span>
-        <span class="reminder-example-correct">${renderPatternExampleSide(example.correct, example.correct_focus)}</span>
       </li>
     `).join("");
     div.innerHTML = `

@@ -2760,7 +2760,7 @@ kbd {
 
 .reference-grid .reminder-example-item {
   display: grid;
-  grid-template-columns: auto fit-content(48%) auto minmax(0, 1fr);
+  grid-template-columns: fit-content(46%) auto minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 8px;
   min-width: 0;
@@ -2779,27 +2779,27 @@ kbd {
 }
 
 .reference-grid .reminder-example-delete {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
   padding: 0;
   border-radius: 999px;
   align-self: start;
-  justify-self: start;
-  background: rgba(38, 29, 17, 0.08);
-  border: 1px solid rgba(38, 29, 17, 0.12);
+  justify-self: end;
+  background: rgba(38, 29, 17, 0.05);
+  border: 1px solid rgba(38, 29, 17, 0.08);
   box-shadow: none;
-  color: rgba(38, 29, 17, 0.64);
+  color: rgba(38, 29, 17, 0.5);
   font-family: "Manrope", sans-serif !important;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.62rem;
+  font-weight: 600;
   line-height: 1;
   transform: none !important;
 }
 
 .reference-grid .reminder-example-delete:hover {
-  background: rgba(38, 29, 17, 0.12);
-  color: rgba(38, 29, 17, 0.86);
+  background: rgba(38, 29, 17, 0.08);
+  color: rgba(38, 29, 17, 0.7);
   box-shadow: none;
   transform: none !important;
 }
