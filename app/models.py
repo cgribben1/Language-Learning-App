@@ -143,13 +143,6 @@ class ReminderResponse(BaseModel):
     items: list[ReminderItem]
 
 
-class DeleteReminderExampleRequest(BaseModel):
-    language: LanguageCode = "french"
-    key: str
-    wrong: str
-    correct: str
-
-
 class StoryMemoryEntry(BaseModel):
     lesson_id: str
     language: LanguageCode = "french"

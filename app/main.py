@@ -12,8 +12,8 @@ from fastapi.staticfiles import StaticFiles
 
 from .adventure_service import AdventureService
 from .ai_service import AIService, build_reminder_example, detect_reminder_triggers, normalize_french
-from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, DeleteReminderExampleRequest, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest, StorySuggestionRequest, StorySuggestionResponse
-from .storage import delete_reminder_example, load_reminders, load_story_brain, load_vocab, record_completed_story, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
+from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest, StorySuggestionRequest, StorySuggestionResponse
+from .storage import load_reminders, load_story_brain, load_vocab, record_completed_story, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -226,18 +226,6 @@ def add_vocab(request: SaveVocabRequest) -> SavedVocabResponse:
 @app.get("/api/reminders", response_model=ReminderResponse)
 def get_reminders(language: str = Query(default="french")) -> ReminderResponse:
     return ReminderResponse(items=load_reminders(language))
-
-
-@app.post("/api/reminders/delete", response_model=ReminderResponse)
-def remove_reminder_example(request: DeleteReminderExampleRequest) -> ReminderResponse:
-    return ReminderResponse(
-        items=delete_reminder_example(
-            language=request.language,
-            key=request.key,
-            wrong=request.wrong,
-            correct=request.correct,
-        )
-    )
 
 
 @app.get("/api/story-brain", response_model=StoryBrainResponse)

@@ -255,46 +255,6 @@ def record_reminder_hit(
     return [item for item in items if item.language == language]
 
 
-def delete_reminder_example(
-    *,
-    language: LanguageCode = "french",
-    key: str,
-    wrong: str,
-    correct: str,
-) -> list[ReminderItem]:
-    _ensure_data_dir()
-    if not REMINDERS_PATH.exists():
-        return []
-
-    existing_raw = _read_json(REMINDERS_PATH)
-    items = [ReminderItem(**item) for item in existing_raw]
-    target_wrong = str(wrong or "").strip().lower()
-    target_correct = str(correct or "").strip().lower()
-
-    updated_items: list[ReminderItem] = []
-    for item in items:
-        if item.language == language and item.key == key:
-            filtered_examples = [
-                example for example in item.examples
-                if not (
-                    example.wrong.strip().lower() == target_wrong
-                    and example.correct.strip().lower() == target_correct
-                )
-            ]
-            if len(filtered_examples) != len(item.examples):
-                item.examples = filtered_examples
-                item.count = max(0, item.count - 1)
-            if item.count <= 0 or not item.examples:
-                continue
-        updated_items.append(item)
-
-    REMINDERS_PATH.write_text(
-        json.dumps([item.model_dump() for item in updated_items], ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    return [item for item in updated_items if item.language == language]
-
-
 def save_adventure_brain(session_id: str, markdown: str) -> Path:
     _ensure_data_dir()
     target = ADVENTURE_BRAIN_DIR / f"{session_id}.md"

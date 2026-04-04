@@ -2760,7 +2760,7 @@ kbd {
 
 .reference-grid .reminder-example-item {
   display: grid;
-  grid-template-columns: fit-content(46%) auto minmax(0, 1fr) auto;
+  grid-template-columns: fit-content(48%) auto minmax(0, 1fr);
   align-items: center;
   column-gap: 8px;
   min-width: 0;
@@ -2776,36 +2776,6 @@ kbd {
   color: var(--ink);
   font-family: "Manrope", sans-serif !important;
   font-weight: 400 !important;
-}
-
-.reference-grid .reminder-example-delete {
-  width: 15px;
-  height: 15px;
-  min-width: 15px;
-  padding: 0;
-  border-radius: 999px;
-  align-self: start;
-  justify-self: end;
-  background: rgba(38, 29, 17, 0.05);
-  border: 1px solid rgba(38, 29, 17, 0.08);
-  box-shadow: none;
-  color: rgba(38, 29, 17, 0.5);
-  font-family: "Manrope", sans-serif !important;
-  font-size: 0.62rem;
-  font-weight: 600;
-  line-height: 1;
-  transform: none !important;
-}
-
-.reference-grid .reminder-example-delete:hover {
-  background: rgba(38, 29, 17, 0.08);
-  color: rgba(38, 29, 17, 0.7);
-  box-shadow: none;
-  transform: none !important;
-}
-
-.reference-grid .reminder-example-delete:disabled {
-  opacity: 0.5;
 }
 
 .reference-grid .reminder-example-wrong,

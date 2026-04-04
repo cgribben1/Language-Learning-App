@@ -2764,19 +2764,12 @@ function renderReminders(items) {
         <span class="reminder-example-wrong">${renderPatternExampleSide(example.wrong, example.wrong_focus)}</span>
         <span class="reminder-example-arrow">&rarr;</span>
         <span class="reminder-example-correct">${renderPatternExampleSide(example.correct, example.correct_focus)}</span>
-        <button
-          class="reminder-example-delete"
-          type="button"
-          aria-label="Delete pattern example"
-          data-reminder-key="${escapeHtml(item.key)}"
-          data-reminder-wrong="${escapeHtml(example.wrong)}"
-          data-reminder-correct="${escapeHtml(example.correct)}"
-        >x</button>
       </li>
     `).join("");
     div.innerHTML = `
       <div class="reminder-row">
         <strong class="reminder-item-title">${item.label}</strong>
+        <span class="reminder-count">${item.count}x</span>
       </div>
       <ul class="reminder-examples-list">${examplesMarkup}</ul>
     `;
@@ -2808,32 +2801,6 @@ function renderPatternExampleSide(text, focus) {
 async function loadReminders() {
   const data = await api(`/api/reminders?language=${encodeURIComponent(currentLanguage())}`);
   renderReminders(data.items);
-}
-
-async function deleteReminderExample(button) {
-  const key = button?.dataset?.reminderKey;
-  const wrong = button?.dataset?.reminderWrong;
-  const correct = button?.dataset?.reminderCorrect;
-  if (!key || !wrong || !correct) {
-    return;
-  }
-
-  button.disabled = true;
-  try {
-    const data = await api("/api/reminders/delete", {
-      method: "POST",
-      body: JSON.stringify({
-        language: currentLanguage(),
-        key,
-        wrong,
-        correct,
-      }),
-    });
-    renderReminders(data.items);
-  } catch (error) {
-    button.disabled = false;
-    alert(`Could not delete pattern: ${error.message}`);
-  }
 }
 
 function makeReminderExplanationConcise(text) {
@@ -3212,12 +3179,6 @@ el.appMasthead.addEventListener("keydown", (event) => {
   }
 });
 document.addEventListener("click", (event) => {
-  const deletePatternBtn = event.target.closest(".reminder-example-delete");
-  if (deletePatternBtn) {
-    event.preventDefault();
-    deleteReminderExample(deletePatternBtn);
-    return;
-  }
   if (!el.vocabHints.classList.contains("hidden")) {
     if (!event.target.closest("#toggle-hints-btn") && !el.vocabHints.contains(event.target)) {
       state.hintsVisible = false;
