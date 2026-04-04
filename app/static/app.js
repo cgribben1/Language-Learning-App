@@ -968,6 +968,62 @@ function getMatchedLearnerIndexes(answer, targetSentence) {
   return matchedLearnerIndexes;
 }
 
+function getOmittedTargetInsertions(answer, targetSentence) {
+  const learnerParts = tokenizeWithSpaces(answer);
+  const targetParts = tokenizeWithSpaces(targetSentence);
+
+  const learnerWords = learnerParts
+    .map((part, index) => ({ part, index, normalized: normalizeToken(part) }))
+    .filter((item) => item.normalized);
+  const targetWords = targetParts
+    .map((part, index) => ({ part, index, normalized: normalizeToken(part) }))
+    .filter((item) => item.normalized);
+
+  const dp = Array.from({ length: learnerWords.length + 1 }, () =>
+    Array(targetWords.length + 1).fill(0),
+  );
+
+  for (let i = learnerWords.length - 1; i >= 0; i -= 1) {
+    for (let j = targetWords.length - 1; j >= 0; j -= 1) {
+      if (learnerWords[i].normalized === targetWords[j].normalized) {
+        dp[i][j] = dp[i + 1][j + 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+  }
+
+  const insertions = new Map();
+  const append = [];
+  let i = 0;
+  let j = 0;
+
+  while (i < learnerWords.length && j < targetWords.length) {
+    if (learnerWords[i].normalized === targetWords[j].normalized) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+
+    if (dp[i][j + 1] > dp[i + 1][j]) {
+      const learnerIndex = learnerWords[i].index;
+      const existing = insertions.get(learnerIndex) || [];
+      existing.push(targetWords[j].part);
+      insertions.set(learnerIndex, existing);
+      j += 1;
+    } else {
+      i += 1;
+    }
+  }
+
+  while (j < targetWords.length) {
+    append.push(targetWords[j].part);
+    j += 1;
+  }
+
+  return { insertions, append };
+}
+
 function promoteAcceptableDifferenceLabels(answer, targetSentence, learnerTokenLabels = [], isCorrect = false) {
   const cleanedLabels = Array.isArray(learnerTokenLabels) ? [...learnerTokenLabels] : [];
   const learnerParts = tokenizeWithSpaces(answer);
@@ -1001,17 +1057,29 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
   const learnerParts = tokenizeWithSpaces(answer);
   const cleanedLabels = Array.isArray(learnerTokenLabels) ? learnerTokenLabels : [];
   const learnerWordCount = learnerParts.filter((part) => normalizeToken(part)).length;
+  const omitted = getOmittedTargetInsertions(answer, correctSentence);
+
+  const renderMissingTokens = (tokens) => {
+    if (!tokens.length) {
+      return "";
+    }
+    return tokens
+      .map((token) => `<span class="answer-word answer-word-missing">${escapeHtml(token)}</span>`)
+      .join('<span class="answer-word-missing-space"> </span>');
+  };
 
   if (cleanedLabels.length === learnerWordCount) {
     let labelIndex = 0;
-    return learnerParts
-      .map((part) => {
+    let markup = learnerParts
+      .map((part, partIndex) => {
+        const insertionMarkup = renderMissingTokens(omitted.insertions.get(partIndex) || []);
         if (!part.trim()) {
-          return part;
+          return insertionMarkup ? `${insertionMarkup}${part}` : part;
         }
         const normalized = normalizeToken(part);
         if (!normalized) {
-          return `<span class="answer-word answer-word-neutral">${part}</span>`;
+          const tokenMarkup = `<span class="answer-word answer-word-neutral">${part}</span>`;
+          return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
         }
         const label = cleanedLabels[labelIndex] || "wrong";
         labelIndex += 1;
@@ -1020,26 +1088,38 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
           : label === "acceptable"
             ? "answer-word-acceptable"
             : "answer-word-wrong";
-        return `<span class="answer-word ${cssClass}">${part}</span>`;
+        const tokenMarkup = `<span class="answer-word ${cssClass}">${part}</span>`;
+        return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
       })
       .join("");
+    if (omitted.append.length) {
+      markup += `${markup ? " " : ""}${renderMissingTokens(omitted.append)}`;
+    }
+    return markup;
   }
 
   const matchedLearnerIndices = getMatchedLearnerIndexes(answer, correctSentence);
 
-  return learnerParts
+  let markup = learnerParts
     .map((part, index) => {
+      const insertionMarkup = renderMissingTokens(omitted.insertions.get(index) || []);
       if (!part.trim()) {
-        return part;
+        return insertionMarkup ? `${insertionMarkup}${part}` : part;
       }
       const normalized = normalizeToken(part);
       if (!normalized) {
-        return `<span class="answer-word answer-word-neutral">${part}</span>`;
+        const tokenMarkup = `<span class="answer-word answer-word-neutral">${part}</span>`;
+        return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
       }
       const cssClass = matchedLearnerIndices.has(index) ? "answer-word-correct" : "answer-word-wrong";
-      return `<span class="answer-word ${cssClass}">${part}</span>`;
+      const tokenMarkup = `<span class="answer-word ${cssClass}">${part}</span>`;
+      return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
     })
     .join("");
+  if (omitted.append.length) {
+    markup += `${markup ? " " : ""}${renderMissingTokens(omitted.append)}`;
+  }
+  return markup;
 }
 
 function formatLearnerAnswerDisplay(answer) {
