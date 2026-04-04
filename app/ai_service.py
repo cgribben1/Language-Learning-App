@@ -2217,6 +2217,8 @@ class AIService:
             "For other parts of speech, keep the note short and useful only if it helps the learner. "
             "If the requested lesson type is dialogue, every line must visibly remain dialogue. "
             "If the requested lesson type is story, every line must visibly remain narration. "
+            "If the requested lesson type is story, the lesson must have a real narrative arc with a beginning, development, and a meaningful ending. "
+            "Do not produce stories that are just a list of related actions; something should happen, change, be revealed, be solved, or reach a clear stopping point by the end. "
             "If the requested lesson type is film_scene, every line must feel cinematic and stay in the same scene. "
             "Do not ignore the theme. The theme must be obvious in the title and throughout the lesson."
         )
@@ -2247,6 +2249,9 @@ class AIService:
             "- Every sentence must connect logically to the one before it.\n"
             "- Avoid generic filler. Make the theme obvious in the wording, setting, and actions.\n"
             "- For story mode, if the theme points to a known existing narrative world or tradition, adapt a recognizable existing story or episode instead of inventing a bland generic plot.\n"
+            "- For story mode, the lesson must tell a story with a setup, a development, and a clear ending or payoff.\n"
+            "- For story mode, the final sentence must feel like a genuine ending: it should resolve something, reveal something important, complete an action, or leave the story at a meaningful stopping point.\n"
+            "- For story mode, avoid flat sequences where characters simply do one thing after another with no consequence, twist, goal, or resolution.\n"
             "- If story memory is supplied, the new lesson must feel like a genuinely fresh story compared with those entries, not a renamed variation of one of them.\n"
             "- If using dialogue, keep speaker labels consistent in both languages.\n"
             "- If using a film scene, keep the same setting and dramatic situation throughout.\n"
