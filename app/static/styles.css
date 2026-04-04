@@ -2752,8 +2752,8 @@ kbd {
 .reference-grid .reminder-count {
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(166, 41, 13, 0.08);
-  color: var(--accent);
+  background: rgba(62, 41, 28, 0.08);
+  color: rgba(38, 29, 17, 0.72);
   font-size: 0.76rem;
   line-height: 1;
 }
