@@ -306,6 +306,9 @@ function animateStorySuggesterSparkles(button, previousSparkles) {
     }
     const dx = previousRect.left - nextRect.left;
     const dy = previousRect.top - nextRect.top;
+    if (Math.abs(dx) > 120 || Math.abs(dy) > 120) {
+      return;
+    }
     node.style.transition = "none";
     node.style.transform = `translate(${dx}px, ${dy}px)`;
   });

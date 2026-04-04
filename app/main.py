@@ -92,6 +92,7 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     triggered = detect_reminder_triggers(request, feedback)
+    saved_labels: list[str] = []
     for item in triggered:
         example_wrong, example_correct = build_reminder_example(
             request.learner_answer,
@@ -109,11 +110,7 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             example_wrong_focus = example_wrong
         if not example_correct_focus:
             example_correct_focus = example_correct
-        feedback.reminder_wrong_pattern = example_wrong
-        feedback.reminder_correct_pattern = example_correct
-        feedback.reminder_wrong_focus = example_wrong_focus
-        feedback.reminder_correct_focus = example_correct_focus
-        record_reminder_hit(
+        saved_items = record_reminder_hit(
             language=request.language,
             key=item["key"],
             label=item["label"],
@@ -125,7 +122,13 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             example_wrong_focus=example_wrong_focus,
             example_correct_focus=example_correct_focus,
         )
-    feedback.reminders_triggered = [item["label"] for item in triggered]
+        if any(saved_item.key == item["key"] for saved_item in saved_items):
+            feedback.reminder_wrong_pattern = example_wrong
+            feedback.reminder_correct_pattern = example_correct
+            feedback.reminder_wrong_focus = example_wrong_focus
+            feedback.reminder_correct_focus = example_correct_focus
+            saved_labels.append(item["label"])
+    feedback.reminders_triggered = saved_labels
     return feedback
 
 
