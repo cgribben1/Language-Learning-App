@@ -26,6 +26,7 @@ const state = {
   lastFunFactIndexByLanguage: {},
   funFactQueueByLanguage: {},
   savedVocabItems: [],
+  reminderItems: [],
   completedStoryMemoryLessonIds: [],
   storySuggestResetTimer: null,
 };
@@ -2763,6 +2764,7 @@ async function loadVocab() {
 }
 
 function renderReminders(items) {
+  state.reminderItems = Array.isArray(items) ? items.map((item) => JSON.parse(JSON.stringify(item))) : [];
   el.remindersList.innerHTML = "";
   if (el.sidebarReminderCount) {
     el.sidebarReminderCount.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
@@ -2800,6 +2802,61 @@ function renderReminders(items) {
     `;
     el.remindersList.appendChild(div);
   });
+}
+
+function mergeSavedPatternIntoReminders(feedback) {
+  if (!feedback?.reminders_triggered?.length) {
+    return;
+  }
+  const label = String(feedback.reminder_label || feedback.reminders_triggered[0] || "").trim();
+  const key = String(feedback.reminder_key || label).trim();
+  const wrong = String(feedback.reminder_wrong_pattern || "").trim();
+  const correct = String(feedback.reminder_correct_pattern || "").trim();
+  if (!label || !key || !wrong || !correct) {
+    return;
+  }
+
+  const items = Array.isArray(state.reminderItems)
+    ? state.reminderItems.map((item) => JSON.parse(JSON.stringify(item)))
+    : [];
+
+  const normalizedWrong = wrong.toLowerCase();
+  const normalizedCorrect = correct.toLowerCase();
+  const existing = items.find((item) => String(item.key || "").trim() === key);
+
+  if (existing) {
+    existing.label = label;
+    existing.count = Math.max(Number(existing.count) || 0, 1);
+    existing.examples = Array.isArray(existing.examples) ? existing.examples : [];
+    existing.examples = existing.examples.filter((example) => !(
+      String(example.wrong || "").trim().toLowerCase() === normalizedWrong &&
+      String(example.correct || "").trim().toLowerCase() === normalizedCorrect
+    ));
+    existing.examples.unshift({
+      wrong,
+      correct,
+      wrong_focus: String(feedback.reminder_wrong_focus || "").trim(),
+      correct_focus: String(feedback.reminder_correct_focus || "").trim(),
+    });
+    existing.examples = existing.examples.slice(0, 3);
+  } else {
+    items.unshift({
+      key,
+      label,
+      explanation: String(feedback.reminder_explanation || "").trim(),
+      count: 1,
+      last_target: "",
+      last_answer: "",
+      examples: [{
+        wrong,
+        correct,
+        wrong_focus: String(feedback.reminder_wrong_focus || "").trim(),
+        correct_focus: String(feedback.reminder_correct_focus || "").trim(),
+      }],
+    });
+  }
+
+  renderReminders(items);
 }
 
 function renderPatternExampleSide(text, focus) {
@@ -3046,6 +3103,7 @@ async function evaluateCurrentAnswer() {
     });
     renderFeedback(feedback);
     await loadReminders();
+    mergeSavedPatternIntoReminders(feedback);
   } catch (error) {
     alert(`Could not evaluate answer: ${error.message}`);
     renderLesson();
