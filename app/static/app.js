@@ -1129,6 +1129,10 @@ function promoteAcceptableDifferenceLabels(answer, targetSentence, learnerTokenL
 }
 
 function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = []) {
+  if (!(answer || "").trim() || /^No answer entered\.?$/i.test((answer || "").trim())) {
+    return '<span class="answer-word answer-word-neutral">No answer entered.</span>';
+  }
+
   const learnerParts = tokenizeWithSpaces(answer);
   const cleanedLabels = Array.isArray(learnerTokenLabels) ? learnerTokenLabels : [];
   const learnerWordCount = learnerParts.filter((part) => normalizeToken(part)).length;
