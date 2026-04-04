@@ -2582,12 +2582,17 @@ kbd {
 }
 
 .reference-grid .vocab-header > div {
-  display: flex;
-  align-items: flex-end;
+  display: block;
 }
 
 .reference-grid .vocab-header .card-label {
-  margin: 0 0 1px;
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-transform: none;
 }
 
 .reference-grid .vocab-card .saved-vocab-list,
