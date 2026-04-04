@@ -366,8 +366,10 @@ def build_story_memory_guidance(language: LanguageCode) -> str:
     older = entries[RECENT_STORY_DETAIL_COUNT:RECENT_STORY_DETAIL_COUNT + OLDER_STORY_SUMMARY_COUNT]
     lines = [
         "Story memory to keep this lesson fresh:",
-        "- Avoid recycling the same core plot, setting, character dynamic, or vocabulary domain from these completed stories.",
-        "- Prefer a clearly different setting, conflict, and lexical field when possible.",
+        "- You must actively avoid reusing the same core plot, setting, character dynamic, conflict shape, or vocabulary domain from these completed stories.",
+        "- Treat the recent stories below as strong anti-examples: the new story should feel clearly different, not just cosmetically renamed.",
+        "- Before writing, compare your plan against these stories and deliberately choose a different setting, conflict, tone, and lexical field.",
+        "- If a new idea overlaps too closely with a recent story, discard it and choose a fresher one instead.",
         "",
         "Recent completed stories to avoid overlapping with too closely:",
     ]
@@ -382,6 +384,7 @@ def build_story_memory_guidance(language: LanguageCode) -> str:
             f"  Plot beats: {plot_bits}",
             f"  Vocab domains: {vocab_bits}",
             f"  Grammar focus: {grammar_bits}",
+            f"  Freshness note: {item.freshness_note or 'No freshness note recorded.'}",
         ])
 
     if older:
