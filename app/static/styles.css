@@ -1576,8 +1576,38 @@ kbd {
   font-family: "Manrope", sans-serif;
 }
 
+.final-brain-status {
+  margin: 2px 0 12px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.84rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: rgba(38, 29, 17, 0.72);
+}
+
+.final-brain-status-loading {
+  color: rgba(38, 29, 17, 0.78);
+  animation: finalBrainPulse 760ms ease-in-out infinite;
+}
+
+.final-brain-status-done {
+  color: rgba(31, 122, 70, 0.9);
+}
+
 .final-story-text {
   font-family: "Fraunces", serif;
+}
+
+@keyframes finalBrainPulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
 }
 
 #feedback-question-text,

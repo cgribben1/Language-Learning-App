@@ -63,6 +63,7 @@ const el = {
   feedbackCard: document.querySelector("#feedback-card"),
   finalPanel: document.querySelector("#final-panel"),
   finalTitle: document.querySelector("#final-title"),
+  finalBrainStatus: document.querySelector("#final-brain-status"),
   finalEnglishStory: document.querySelector("#final-english-story"),
   finalFrenchStory: document.querySelector("#final-french-story"),
   verdictText: document.querySelector("#verdict-text"),
@@ -2572,6 +2573,7 @@ function renderFinalPanel() {
     setSidebarNavState(null);
   el.emptyState.classList.add("hidden");
   el.finalTitle.textContent = state.lesson.title;
+  startFinalBrainStatusAnimation();
   const finalEnglishText = state.lesson.sentences.map((sentence) => sentence.english).join(" ");
   const finalFrenchText = state.lesson.sentences.map((sentence) => formatCorrectSentence(sentence.french)).join(" ");
   reserveTextBlockHeight(el.finalEnglishStory, finalEnglishText);
@@ -2582,6 +2584,44 @@ function renderFinalPanel() {
   animatePanelIn(el.finalPanel);
   launchCelebrationBurst();
   scrollWindowToTop();
+}
+
+function startFinalBrainStatusAnimation() {
+  if (!el.finalBrainStatus) {
+    return;
+  }
+  el.finalBrainStatus.textContent = "Updating brain";
+  el.finalBrainStatus.classList.remove("final-brain-status-done");
+  el.finalBrainStatus.classList.add("final-brain-status-loading");
+
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) {
+    state.contentAnimationTimers.push(setTimeout(() => {
+      el.finalBrainStatus.textContent = "Brain updated";
+      el.finalBrainStatus.classList.remove("final-brain-status-loading");
+      el.finalBrainStatus.classList.add("final-brain-status-done");
+    }, 2000));
+    return;
+  }
+
+  const frames = ["", ".", "..", "..."];
+  let index = 0;
+  const tick = () => {
+    if (!el.finalBrainStatus?.classList.contains("final-brain-status-loading")) {
+      return;
+    }
+    el.finalBrainStatus.textContent = `Updating brain${frames[index]}`;
+    index = (index + 1) % frames.length;
+    const delay = index === 0 ? 520 : 220;
+    state.contentAnimationTimers.push(setTimeout(tick, delay));
+  };
+
+  tick();
+  state.contentAnimationTimers.push(setTimeout(() => {
+    el.finalBrainStatus.textContent = "Brain updated";
+    el.finalBrainStatus.classList.remove("final-brain-status-loading");
+    el.finalBrainStatus.classList.add("final-brain-status-done");
+  }, 2000));
 }
 
 async function persistCompletedStoryMemory() {
