@@ -461,14 +461,16 @@ label span {
   gap: 10px;
   padding-inline: 16px;
   border-radius: 22px;
-  background: var(--brand-gradient);
-  border: 1px solid rgba(38, 29, 17, 0.12);
-  color: var(--brand-cream) !important;
+  background: linear-gradient(135deg, rgba(255, 251, 246, 0.98), rgba(245, 237, 225, 0.96));
+  border: 1px solid rgba(121, 92, 63, 0.18);
+  color: rgba(38, 29, 17, 0.92) !important;
   font-family: "Manrope", sans-serif;
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1;
-  box-shadow: var(--brand-shadow-soft);
+  box-shadow:
+    0 10px 22px rgba(89, 61, 36, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .story-suggester-btn span {
@@ -493,15 +495,26 @@ label span {
   height: 0.92rem;
   font-size: 0.86rem;
   line-height: 1;
-  color: rgba(255, 247, 237, 0.94);
+  color: rgba(127, 46, 99, 0.82);
   pointer-events: none;
   transform-origin: center;
 }
 
+.story-suggester-sparkle-left {
+  color: rgba(4, 119, 191, 0.86);
+}
+
+.story-suggester-sparkle-right {
+  color: rgba(140, 46, 99, 0.82);
+}
+
 .story-suggester-btn:hover {
   opacity: 1;
-  background: var(--brand-gradient-hover);
-  box-shadow: var(--brand-shadow-strong);
+  background: linear-gradient(135deg, rgba(255, 252, 248, 1), rgba(248, 241, 231, 0.98));
+  border-color: rgba(121, 92, 63, 0.24);
+  box-shadow:
+    0 14px 26px rgba(89, 61, 36, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
   transform: none !important;
 }
 
@@ -3214,19 +3227,24 @@ body.landing-bauhaus-colors #generate-btn:hover::before {
 }
 
 body.landing-bauhaus-colors #story-suggester-btn {
-  background: var(--brand-gradient) !important;
-  color: var(--brand-cream) !important;
-  border-color: rgba(38, 29, 17, 0.14) !important;
-  box-shadow: var(--brand-shadow-soft) !important;
+  background: linear-gradient(135deg, rgba(255, 251, 246, 0.98), rgba(245, 237, 225, 0.96)) !important;
+  color: rgba(38, 29, 17, 0.92) !important;
+  border-color: rgba(121, 92, 63, 0.18) !important;
+  box-shadow:
+    0 10px 22px rgba(89, 61, 36, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
 }
 
 body.landing-bauhaus-colors #story-suggester-btn span {
-  color: var(--brand-cream) !important;
+  color: inherit !important;
 }
 
 body.landing-bauhaus-colors #story-suggester-btn:hover {
-  background: var(--brand-gradient-hover) !important;
-  box-shadow: var(--brand-shadow-strong) !important;
+  background: linear-gradient(135deg, rgba(255, 252, 248, 1), rgba(248, 241, 231, 0.98)) !important;
+  border-color: rgba(121, 92, 63, 0.24) !important;
+  box-shadow:
+    0 14px 26px rgba(89, 61, 36, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
   transform: none !important;
 }
 
