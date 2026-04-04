@@ -335,14 +335,27 @@ def detect_reminder_triggers(request: EvaluationRequest, feedback: EvaluationRes
         feedback.reminder_key or feedback.reminder_label,
         feedback.reminder_label,
         feedback.reminder_explanation,
+        feedback.reminder_wrong_pattern,
+        feedback.reminder_correct_pattern,
+        feedback.reminder_wrong_focus,
+        feedback.reminder_correct_focus,
         request.language,
     )
-    dynamic_explanation = (feedback.reminder_explanation or "").strip()
+    default_explanations = {
+        "prepositions": "Watch the preposition or linking phrase here; short grammar words often change the meaning.",
+        "articles": "Watch the article or determiner here; small noun markers carry important grammar.",
+        "pronouns": "Watch which pronoun is used here; the reference or pronoun form changes the sentence.",
+        "word_order": "Watch the order of the words here; the French structure is arranged differently.",
+        "verbs": "Watch the verb form here; the conjugation or verb choice changes with the subject or context.",
+        "agreement": "Watch the agreement here; gender, number, or matching forms need to line up.",
+        "negation": "Watch the negation here; the sentence needs the right negative structure.",
+        "small_words": "Watch the small grammar words here; they are easy to miss but change the structure.",
+    }
+    dynamic_explanation = (feedback.reminder_explanation or "").strip() or default_explanations.get(dynamic_key, "")
     if (
         not feedback.is_correct
         and dynamic_key
         and dynamic_label
-        and dynamic_explanation
     ):
         unique[dynamic_key] = {
             "key": dynamic_key,
@@ -412,21 +425,33 @@ def canonicalize_reminder_category(
     key_or_label: str,
     label: str = "",
     explanation: str = "",
+    wrong_pattern: str = "",
+    correct_pattern: str = "",
+    wrong_focus: str = "",
+    correct_focus: str = "",
     language: str = "french",
 ) -> tuple[str, str]:
     combined = " ".join(
-        part for part in (normalize_reminder_key(key_or_label), normalize_french(label), normalize_french(explanation))
+        part for part in (
+            normalize_reminder_key(key_or_label),
+            normalize_french(label),
+            normalize_french(explanation),
+            normalize_french(wrong_pattern),
+            normalize_french(correct_pattern),
+            normalize_french(wrong_focus),
+            normalize_french(correct_focus),
+        )
         if part
     )
 
     category_rules = [
-        (("preposition", "dans", "de ", " de_", " en ", " a ", " al ", "del", "entrer", "entrar"), ("prepositions", "Prepositions")),
-        (("article", "determiner", "determiners", "noun"), ("articles", "Articles")),
-        (("pronoun", "object_pronoun", "clitic"), ("pronouns", "Pronouns")),
+        (("preposition", "dans", " en ", "entrer", "entrar", "vers ", "chez ", "pour ", "con ", "sin ", "para ", "sobre "), ("prepositions", "Prepositions")),
+        (("article", "determiner", "determiners", "un ", "une ", " le ", " la ", " les ", " du ", " una ", " el ", " los ", " las "), ("articles", "Articles")),
+        (("pronoun", "object_pronoun", "clitic", " lui ", " leur ", " lo ", " le ", " la ", " les ", " y ", " en "), ("pronouns", "Pronouns")),
         (("word_order", "literal", "order"), ("word_order", "Word order")),
         (("verb", "conjug", "tense", "etre", "ser", "estar", "va", "vais"), ("verbs", "Verbs")),
         (("agreement", "gender", "number", "plural", "singular", "masculine", "feminine"), ("agreement", "Agreement")),
-        (("negation", "ne_pas", "no "), ("negation", "Negation")),
+        (("negation", "ne_pas", "no ", " ne ", " pas ", " nunca ", " jamás ", " jamas "), ("negation", "Negation")),
         (("linking", "small_link_word", "function_word"), ("small_words", "Small words")),
     ]
 
