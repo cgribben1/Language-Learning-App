@@ -665,6 +665,49 @@ function normalizeToken(token) {
     .replace(/[^\p{L}\p{N}]/gu, "");
 }
 
+function levenshteinDistance(a, b) {
+  const left = String(a || "");
+  const right = String(b || "");
+  if (!left) return right.length;
+  if (!right) return left.length;
+
+  const dp = Array.from({ length: left.length + 1 }, () => Array(right.length + 1).fill(0));
+  for (let i = 0; i <= left.length; i += 1) dp[i][0] = i;
+  for (let j = 0; j <= right.length; j += 1) dp[0][j] = j;
+
+  for (let i = 1; i <= left.length; i += 1) {
+    for (let j = 1; j <= right.length; j += 1) {
+      const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      );
+    }
+  }
+
+  return dp[left.length][right.length];
+}
+
+function isLikelyAttemptVariant(learnerToken, targetToken) {
+  const learner = normalizeToken(learnerToken);
+  const target = normalizeToken(targetToken);
+  if (!learner || !target || learner === target) {
+    return false;
+  }
+
+  if (learner.startsWith(target) || target.startsWith(learner)) {
+    return Math.min(learner.length, target.length) >= 2;
+  }
+
+  const distance = levenshteinDistance(learner, target);
+  const longest = Math.max(learner.length, target.length);
+  if (longest <= 4) {
+    return distance <= 1;
+  }
+  return distance <= 2 && distance / longest <= 0.4;
+}
+
 function tokenizeWithSpaces(text) {
   return text.split(/(\s+)/);
 }
@@ -1015,6 +1058,12 @@ function getOmittedTargetInsertions(answer, targetSentence) {
       j + 1 < targetWords.length && learnerWords[i].normalized === targetWords[j + 1].normalized;
     const learnerHasCurrentTargetLater = learnerHasLaterMatch(i, targetWords[j].normalized);
     const targetHasCurrentLearnerLater = targetHasLaterMatch(j, learnerWords[i].normalized);
+    const currentLooksLikeAttempt = isLikelyAttemptVariant(learnerWords[i].part, targetWords[j].part);
+
+    if (currentLooksLikeAttempt) {
+      i += 1;
+      continue;
+    }
 
     if ((learnerNextMatchesCurrentTarget || learnerHasCurrentTargetLater) && !currentLearnerMatchesNextTarget) {
       i += 1;

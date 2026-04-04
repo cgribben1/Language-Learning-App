@@ -2891,6 +2891,8 @@ class AIService:
                             "If the learner response is mostly unusable or unrelated, prefer no reminder pattern over a bad one. "
                             "Also return learner_token_labels for the learner answer tokens split by spaces. "
                             "Return exactly one label per learner token, in order. "
+                            "If the learner clearly attempts a target word with the wrong inflection, spelling, or agreement, treat it as an attempted wrong token, not as an omitted word. "
+                            "For example, a close attempt like 'vais' for 'va' is not an omission of 'va'. "
                             "Use 'correct' for tokens that are right as written. "
                             "Use 'acceptable' sparingly, only when a token is clearly acceptable but noticeably not the target phrasing. "
                             "Use 'wrong' for incorrect tokens. "
