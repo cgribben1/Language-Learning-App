@@ -2600,7 +2600,7 @@ function startFinalBrainStatusAnimation() {
       el.finalBrainStatus.textContent = "Brain updated";
       el.finalBrainStatus.classList.remove("final-brain-status-loading");
       el.finalBrainStatus.classList.add("final-brain-status-done");
-    }, 2000));
+    }, 2500));
     return;
   }
 
@@ -2621,7 +2621,7 @@ function startFinalBrainStatusAnimation() {
     el.finalBrainStatus.textContent = "Brain updated";
     el.finalBrainStatus.classList.remove("final-brain-status-loading");
     el.finalBrainStatus.classList.add("final-brain-status-done");
-  }, 2000));
+  }, 2500));
 }
 
 async function persistCompletedStoryMemory() {
