@@ -877,7 +877,7 @@ function buildSentenceSegments(originalSentence, displaySentence) {
 
 function buildCorrectSentenceMarkup(sentence) {
   const current = currentSentence();
-  const displaySentence = formatCorrectSentence(sentence);
+  const displaySentence = sentence;
   const segments = buildSentenceSegments(sentence, displaySentence);
   const tokenSegmentIndexes = segments
     .map((segment, index) => ({ segment, index }))
