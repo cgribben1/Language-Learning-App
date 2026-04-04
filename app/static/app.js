@@ -2777,7 +2777,6 @@ function renderReminders(items) {
     div.innerHTML = `
       <div class="reminder-row">
         <strong class="reminder-item-title">${item.label}</strong>
-        <span class="reminder-count">${item.count}x</span>
       </div>
       <ul class="reminder-examples-list">${examplesMarkup}</ul>
     `;
