@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from difflib import SequenceMatcher
 
 from .models import LanguageCode, ReminderExample, ReminderItem, SaveVocabRequest, SavedVocabItem, StoryMemoryEntry
 
@@ -103,6 +104,25 @@ def _sanitize_reminder_item(item: ReminderItem) -> tuple[ReminderItem, bool]:
     return item, changed
 
 
+def _looks_like_spelling_example(example: ReminderExample) -> bool:
+    wrong_tokens = [token for token in re.split(r"\s+", example.wrong.strip()) if token]
+    correct_tokens = [token for token in re.split(r"\s+", example.correct.strip()) if token]
+    if len(wrong_tokens) != len(correct_tokens) or not wrong_tokens:
+        return False
+
+    mismatches = [
+        (wrong_token, correct_token)
+        for wrong_token, correct_token in zip(wrong_tokens, correct_tokens)
+        if wrong_token.strip().lower() != correct_token.strip().lower()
+    ]
+    if len(mismatches) != 1:
+        return False
+
+    wrong_token, correct_token = mismatches[0]
+    ratio = SequenceMatcher(None, wrong_token.lower(), correct_token.lower()).ratio()
+    return ratio >= 0.65
+
+
 def load_vocab(language: LanguageCode = "french") -> list[SavedVocabItem]:
     _ensure_data_dir()
     if not VOCAB_PATH.exists():
@@ -166,9 +186,48 @@ def load_reminders(language: LanguageCode = "french") -> list[ReminderItem]:
     raw = _read_json(REMINDERS_PATH)
     items = [ReminderItem(**item) for item in raw]
     changed = False
+    seen_examples_by_language: dict[str, set[tuple[str, str]]] = {}
     for item in items:
         _, item_changed = _sanitize_reminder_item(item)
         changed = changed or item_changed
+        explanation_lower = item.explanation.lower()
+        if (
+            item.key != "spelling"
+            and (
+                "spelling" in explanation_lower
+                or "orthograph" in explanation_lower
+            )
+        ):
+            item.key = "spelling"
+            item.label = "Spelling"
+            changed = True
+        elif (
+            item.key == "spelling"
+            and (
+                "subject" in explanation_lower
+                or "verb" in explanation_lower
+                or "conjug" in explanation_lower
+                or "agreement" in explanation_lower
+            )
+        ):
+            item.key = "verbs"
+            item.label = "Verbs"
+            changed = True
+        language_key = item.language
+        seen_pairs = seen_examples_by_language.setdefault(language_key, set())
+        filtered_examples: list[ReminderExample] = []
+        for example in item.examples:
+            pair_key = (
+                example.wrong.strip().lower(),
+                example.correct.strip().lower(),
+            )
+            if pair_key in seen_pairs:
+                changed = True
+                continue
+            seen_pairs.add(pair_key)
+            filtered_examples.append(example)
+        if len(filtered_examples) != len(item.examples):
+            item.examples = filtered_examples[:3]
     if changed:
         REMINDERS_PATH.write_text(
             json.dumps([item.model_dump() for item in items], ensure_ascii=False, indent=2),
