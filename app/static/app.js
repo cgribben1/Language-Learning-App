@@ -2404,7 +2404,7 @@ function renderFeedback(feedback) {
 
   const finalNotes = buildConciseNotes(feedback);
   const reminderBannerText = feedback.reminders_triggered?.length
-    ? `Added detected pattern to "${feedback.reminders_triggered.join(", ")}"`
+    ? `"${feedback.reminders_triggered.join(", ")}" added to "Patterns"`
     : "";
   showFeedbackReminderBanner(reminderBannerText, correctSentenceEndDelay + 120);
   const notes = [...finalNotes];
