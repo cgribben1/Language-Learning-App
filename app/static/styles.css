@@ -2228,15 +2228,18 @@ kbd {
   border-bottom: none;
 }
 
+.sidebar-wordmark + .side-panel-section {
+  border-top: 1px solid rgba(62, 41, 28, 0.12);
+  padding-top: 10px;
+}
+
 .nav-section {
   gap: 4px;
 }
 
-.side-panel-divider {
-  height: 1px;
-  width: 100%;
-  background: rgba(62, 41, 28, 0.12);
-  margin: -2px 0 2px;
+.side-panel-section + .side-panel-section {
+  border-top: 1px solid rgba(62, 41, 28, 0.12);
+  padding-top: 10px;
 }
 
 .profile-section {
