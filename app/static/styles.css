@@ -2581,6 +2581,15 @@ kbd {
   border-bottom: 1.5px solid rgba(62, 41, 28, 0.14);
 }
 
+.reference-grid .vocab-header > div {
+  display: flex;
+  align-items: flex-end;
+}
+
+.reference-grid .vocab-header .card-label {
+  margin: 0 0 1px;
+}
+
 .reference-grid .vocab-card .saved-vocab-list,
 .reference-grid .vocab-card .saved-vocab-item,
 .reference-grid .vocab-card .reminder-item,
@@ -2615,7 +2624,7 @@ kbd {
 #export-btn {
   background: rgba(244, 235, 221, 0.92);
   border-color: rgba(62, 41, 28, 0.12);
-  color: var(--ink);
+  color: rgba(38, 29, 17, 0.74);
   padding: 7px 11px;
   min-height: 34px;
   font-size: 0.9rem;
