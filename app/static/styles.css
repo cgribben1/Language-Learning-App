@@ -3024,7 +3024,10 @@ body.bauhaus-colors .score-bar-fill {
   background: #ffffff !important;
 }
 
-body.bauhaus-colors .reminder-count,
+body.bauhaus-colors .reminder-count {
+  color: rgba(38, 29, 17, 0.72);
+}
+
 body.bauhaus-colors .inline-phrase-btn {
   color: #a6290d;
 }
