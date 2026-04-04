@@ -2936,12 +2936,12 @@ body.bauhaus-colors .feedback-card {
 }
 
 body.bauhaus-colors .sidebar-wordmark {
-  background: var(--brand-surface-gradient);
-  border-color: var(--brand-border);
-  color: rgba(20, 20, 20, 0.94);
+  background: var(--brand-gradient);
+  border-color: rgba(73, 41, 79, 0.24);
+  color: var(--brand-cream);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    var(--brand-shadow-soft);
+    0 16px 30px rgba(49, 41, 79, 0.26),
+    0 0 0 1px rgba(255, 248, 236, 0.18);
 }
 
 body.bauhaus-colors .feedback-comparison-stack {
@@ -3219,16 +3219,21 @@ body.landing-bauhaus-colors #setup-panel input {
 }
 
 body.landing-bauhaus-colors #generate-btn {
-  background: var(--brand-gradient) !important;
-  color: var(--brand-cream) !important;
+  background: var(--brand-surface-gradient) !important;
+  border: 1px solid var(--brand-border) !important;
+  color: rgba(20, 20, 20, 0.94) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    var(--brand-shadow-soft) !important;
 }
 
 body.landing-bauhaus-colors #generate-btn:hover {
-  background: var(--brand-gradient-hover) !important;
+  background: var(--brand-surface-gradient) !important;
   box-shadow:
-    0 16px 30px rgba(49, 41, 79, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 14px 28px rgba(84, 56, 34, 0.14),
     0 0 0 1px rgba(255, 248, 236, 0.18) !important;
-  filter: saturate(1.14) brightness(1.06);
+  filter: saturate(1.06) brightness(1.02);
 }
 
 body.landing-bauhaus-colors #generate-btn:hover::before {
