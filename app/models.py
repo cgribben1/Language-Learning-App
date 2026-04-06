@@ -66,7 +66,6 @@ class LearnerDisplayToken(BaseModel):
 class EvaluationResponse(BaseModel):
     is_correct: bool
     correctness_score: int = Field(ge=0, le=100)
-    naturalness_score: int = Field(ge=0, le=100)
     verdict: str
     learner_normalized: str
     target_normalized: str

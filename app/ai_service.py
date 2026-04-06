@@ -1443,31 +1443,6 @@ class AIService:
     def _is_orthography_equivalent(self, learner_answer: str, target_sentence: str) -> bool:
         return normalize_french(learner_answer) == normalize_french(target_sentence)
 
-    def _apply_naturalness_adjustment(
-        self,
-        request: EvaluationRequest,
-        correctness_score: int,
-        is_correct: bool,
-        naturalness_score: int,
-    ) -> tuple[int, bool]:
-        learner_normalized = normalize_french(request.learner_answer)
-        target_normalized = normalize_french(request.target_sentence)
-
-        if not is_correct or learner_normalized == target_normalized:
-            return correctness_score, is_correct
-
-        penalty = 0
-        if naturalness_score < 68:
-            penalty += 2
-        if naturalness_score < 58:
-            penalty += 2
-        if naturalness_score < 48:
-            penalty += 2
-
-        adjusted_score = max(0, correctness_score - penalty)
-        adjusted_is_correct = learner_normalized == target_normalized or adjusted_score >= 85
-        return adjusted_score, adjusted_is_correct
-
     def _sanitize_feedback_payload(self, payload: dict[str, Any], language: str = "french") -> dict[str, Any]:
         cleaned = dict(payload)
         cleaned["reminder_key"] = normalize_reminder_key(cleaned.get("reminder_key", ""))
@@ -2856,7 +2831,6 @@ class AIService:
                     "reminder_correct_focus": {"type": "string"},
                     "model_is_correct": {"type": "boolean"},
                     "model_correctness_score": {"type": "integer", "minimum": 0, "maximum": 100},
-                    "naturalness_score": {"type": "integer", "minimum": 0, "maximum": 100},
                     "verdict": {"type": "string"},
                     "accepted_learner_sentence": {"type": "string"},
                     "suggested_sentence": {"type": "string"},
@@ -2897,7 +2871,6 @@ class AIService:
                     "reminder_correct_focus",
                     "model_is_correct",
                     "model_correctness_score",
-                    "naturalness_score",
                     "verdict",
                     "accepted_learner_sentence",
                     "suggested_sentence",
@@ -3095,7 +3068,6 @@ class AIService:
             payload = {
                 **payload,
                 "meaning_equivalent": True,
-                "naturalness_score": max(90, int(payload.get("naturalness_score", 90))),
                 "verdict": "Correct and natural.",
                 "accepted_learner_sentence": polish_learner_french(request.learner_answer),
                 "suggested_sentence": request.target_sentence,
@@ -3541,7 +3513,6 @@ class AIService:
             EvaluationResponse(
                 is_correct=False,
                 correctness_score=0,
-                naturalness_score=0,
                 verdict="",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -3560,7 +3531,6 @@ class AIService:
             return EvaluationResponse(
                 is_correct=True,
                 correctness_score=100,
-                naturalness_score=90,
                 verdict="Correct and natural.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -3582,7 +3552,6 @@ class AIService:
             return EvaluationResponse(
                 is_correct=False,
                 correctness_score=max(60, similarity - 10),
-                naturalness_score=max(55, similarity - 15),
                 verdict="Close, but an important grammar word is missing.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -3607,7 +3576,6 @@ class AIService:
             return EvaluationResponse(
                 is_correct=True,
                 correctness_score=88,
-                naturalness_score=78,
                 verdict="Probably correct, but the wording could be smoother.",
                 learner_normalized=learner_normalized,
                 target_normalized=target_normalized,
@@ -3631,7 +3599,6 @@ class AIService:
         return EvaluationResponse(
             is_correct=False,
             correctness_score=max(35, similarity),
-            naturalness_score=max(30, similarity - 10),
             verdict="Not quite right yet.",
             learner_normalized=learner_normalized,
             target_normalized=target_normalized,
