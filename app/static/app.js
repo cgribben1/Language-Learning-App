@@ -1276,6 +1276,25 @@ function getDisplayedCorrectSentence(feedback) {
 }
 
 function buildNoteDedupKey(note) {
+  const notNaturalMatch = note.match(/^['"]([^'"]+)['"] is not natural\.$/i);
+  if (notNaturalMatch) {
+    const tokens = normalizeFrenchText(notNaturalMatch[1]).split(/\s+/).filter(Boolean);
+    const tail = tokens[tokens.length - 1] || normalizeFrenchText(notNaturalMatch[1]);
+    return `phrase-choice:${tail}`;
+  }
+
+  const useToSayMatch = note.match(/^Use ['"]([^'"]+)['"] to say .*$/i);
+  if (useToSayMatch) {
+    const tokens = normalizeFrenchText(useToSayMatch[1]).split(/\s+/).filter(Boolean);
+    const tail = tokens[tokens.length - 1] || normalizeFrenchText(useToSayMatch[1]);
+    return `phrase-choice:${tail}`;
+  }
+
+  const doNotUseBeforeMatch = note.match(/^Do not use ['"]([^'"]+)['"] before ['"]?([^'".]+)['"]?\.$/i);
+  if (doNotUseBeforeMatch) {
+    return `phrase-choice:${normalizeFrenchText(doNotUseBeforeMatch[2])}`;
+  }
+
   const omittedWordMatch = note.match(/^You omitted ['"]([^'"]+)['"][^.]*$/i);
   if (omittedWordMatch) {
     return `missing-word:${normalizeFrenchText(omittedWordMatch[1])}`;
