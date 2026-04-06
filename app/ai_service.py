@@ -3006,6 +3006,8 @@ class AIService:
                             "For example, a close attempt like 'vais' for 'va' is not an omission of 'va'. "
                             "Never treat a target word as omitted when the learner has already made a recognizable attempt at that same word nearby. "
                             "Do not mark a word as omitted if the learner used a valid synonym or alternate phrasing instead. "
+                            "But if a meaning-bearing word is genuinely absent and there was no attempt at it, you should insert it into learner_display_tokens with status 'missing' at the exact place where it belongs. "
+                            "For example, if the learner writes 'un homme veut voler a une ile lointaine' and the intended correction is 'un jeune homme veut voler vers une île lointaine', then learner_display_tokens should include a missing token for 'jeune' before 'homme', while the submitted token 'a' should remain as a wrong attempted token rather than causing the rest of the sentence tail to be marked wrong. "
                             "Use 'correct' for tokens that are right as written. "
                             "Use 'acceptable' sparingly, only when a token is clearly acceptable but noticeably not the target phrasing. "
                             "Use 'wrong' for incorrect tokens. "
