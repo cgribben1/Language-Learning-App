@@ -2937,6 +2937,9 @@ body.bauhaus-colors #check-btn:active {
   background: var(--brand-gradient) !important;
   color: var(--brand-cream) !important;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  box-shadow:
+    0 10px 22px rgba(49, 41, 79, 0.18),
+    0 2px 6px rgba(38, 29, 17, 0.1) !important;
 }
 
 body.bauhaus-colors input,
@@ -3252,6 +3255,9 @@ body.landing-bauhaus-colors #setup-panel input {
 body.landing-bauhaus-colors #generate-btn {
   background: var(--brand-gradient) !important;
   color: var(--brand-cream) !important;
+  box-shadow:
+    0 10px 22px rgba(49, 41, 79, 0.18),
+    0 2px 6px rgba(38, 29, 17, 0.1) !important;
 }
 
 body.landing-bauhaus-colors #generate-btn:hover {
@@ -3296,6 +3302,9 @@ body.landing-bauhaus-colors #story-suggester-btn .story-suggester-arrow {
 body.bauhaus-colors #restart-btn {
   background: var(--brand-gradient) !important;
   color: var(--brand-cream) !important;
+  box-shadow:
+    0 10px 22px rgba(49, 41, 79, 0.18),
+    0 2px 6px rgba(38, 29, 17, 0.1) !important;
 }
 
 @media (max-width: 980px) {
