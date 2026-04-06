@@ -1645,9 +1645,15 @@ class AIService:
 
             if tag in {"replace", "delete"}:
                 for index in range(i1, i2):
+                    status = submitted_statuses[index] if index < len(submitted_statuses) else "wrong"
+                    if tag == "replace":
+                        corrected_index = j1 + (index - i1)
+                        corrected_token = corrected_tokens[corrected_index] if corrected_index < j2 else ""
+                        if corrected_token and normalize_french(learner_tokens[index]) != normalize_french(corrected_token):
+                            status = "wrong"
                     rebuilt.append({
                         "text": learner_tokens[index],
-                        "status": submitted_statuses[index] if index < len(submitted_statuses) else "wrong",
+                        "status": status,
                     })
 
             if tag == "insert" and j2 > j1:
