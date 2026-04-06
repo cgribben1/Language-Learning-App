@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from .adventure_service import AdventureService
-from .ai_service import AIService, build_reminder_example, detect_reminder_triggers, normalize_french
+from .ai_service import AIService, canonicalize_reminder_category, normalize_french
 from .models import AdventureActionRequest, AdventureStartRequest, AdventureStateResponse, EvaluationRequest, EvaluationResponse, LessonRequest, LessonResponse, PhraseExplainRequest, PhraseExplainResponse, ReminderResponse, SaveVocabRequest, SavedVocabResponse, StoryBrainResponse, StoryCompleteRequest, StorySuggestionRequest, StorySuggestionResponse
 from .storage import load_reminders, load_story_brain, load_vocab, record_completed_story, record_reminder_hit, save_vocab_item, vocab_to_anki_csv
 
@@ -140,39 +140,42 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
         feedback = ai_service.evaluate_answer(request)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    triggered = detect_reminder_triggers(request, feedback)
     saved_labels: list[str] = []
-    for item in triggered:
-        model_wrong = (feedback.reminder_wrong_pattern or "").strip()
-        model_correct = (feedback.reminder_correct_pattern or "").strip()
-        if _pattern_has_sufficient_context(model_wrong, model_correct, item["key"], request.language):
-            example_wrong, example_correct = model_wrong, model_correct
-        else:
-            example_wrong, example_correct = build_reminder_example(
-                request.learner_answer,
-                request.target_sentence,
-                item["key"],
-                request.language,
-            )
-
-        if not _pattern_has_sufficient_context(example_wrong, example_correct, item["key"], request.language):
-            continue
-
+    reminder_key, reminder_label = canonicalize_reminder_category(
+        feedback.reminder_key or feedback.reminder_label,
+        feedback.reminder_label,
+        feedback.reminder_explanation,
+        feedback.reminder_wrong_pattern,
+        feedback.reminder_correct_pattern,
+        feedback.reminder_wrong_focus,
+        feedback.reminder_correct_focus,
+        request.language,
+    )
+    example_wrong = (feedback.reminder_wrong_pattern or "").strip()
+    example_correct = (feedback.reminder_correct_pattern or "").strip()
+    if reminder_key and reminder_label and _pattern_has_sufficient_context(example_wrong, example_correct, reminder_key, request.language):
+        default_explanations = {
+            "prepositions": "Watch the preposition or linking phrase here; short grammar words often change the meaning.",
+            "articles": "Watch the article or determiner here; small noun markers carry important grammar.",
+            "pronouns": "Watch which pronoun is used here; the reference or pronoun form changes the sentence.",
+            "word_order": "Watch the order of the words here; the structure is arranged differently.",
+            "verbs": "Watch the verb form here; the conjugation or verb choice changes with the subject or context.",
+            "agreement": "Watch the agreement here; gender, number, or matching forms need to line up.",
+            "negation": "Watch the negation here; the sentence needs the right negative structure.",
+            "small_words": "Watch the small grammar words here; they are easy to miss but change the structure.",
+            "spelling": "Watch the spelling here; this is a recurring orthography pattern worth noticing.",
+        }
         example_wrong_focus = (feedback.reminder_wrong_focus or "").strip()
         example_correct_focus = (feedback.reminder_correct_focus or "").strip()
         if example_wrong_focus and example_wrong_focus.lower() not in example_wrong.lower():
             example_wrong_focus = ""
         if example_correct_focus and example_correct_focus.lower() not in example_correct.lower():
             example_correct_focus = ""
-        if not example_wrong_focus:
-            example_wrong_focus = example_wrong
-        if not example_correct_focus:
-            example_correct_focus = example_correct
         saved_items = record_reminder_hit(
             language=request.language,
-            key=item["key"],
-            label=item["label"],
-            explanation=item["explanation"],
+            key=reminder_key,
+            label=reminder_label,
+            explanation=(feedback.reminder_explanation or "").strip() or default_explanations.get(reminder_key, ""),
             target=request.target_sentence,
             answer=request.learner_answer,
             example_wrong=example_wrong,
@@ -180,12 +183,22 @@ def evaluate_answer(request: EvaluationRequest) -> EvaluationResponse:
             example_wrong_focus=example_wrong_focus,
             example_correct_focus=example_correct_focus,
         )
-        if any(saved_item.key == item["key"] for saved_item in saved_items):
+        if any(saved_item.key == reminder_key for saved_item in saved_items):
+            feedback.reminder_key = reminder_key
+            feedback.reminder_label = reminder_label
             feedback.reminder_wrong_pattern = example_wrong
             feedback.reminder_correct_pattern = example_correct
             feedback.reminder_wrong_focus = example_wrong_focus
             feedback.reminder_correct_focus = example_correct_focus
-            saved_labels.append(item["label"])
+            saved_labels.append(reminder_label)
+    else:
+        feedback.reminder_key = ""
+        feedback.reminder_label = ""
+        feedback.reminder_explanation = ""
+        feedback.reminder_wrong_pattern = ""
+        feedback.reminder_correct_pattern = ""
+        feedback.reminder_wrong_focus = ""
+        feedback.reminder_correct_focus = ""
     feedback.reminders_triggered = saved_labels
     return feedback
 

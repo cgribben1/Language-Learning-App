@@ -1509,11 +1509,7 @@ class AIService:
         ):
             cleaned["encouraging_note"] = ""
 
-        if (
-            not cleaned["reminder_key"]
-            or not cleaned["reminder_label"]
-            or not cleaned["reminder_explanation"]
-        ):
+        if not cleaned["reminder_key"] or not cleaned["reminder_label"]:
             cleaned["reminder_key"] = ""
             cleaned["reminder_label"] = ""
             cleaned["reminder_explanation"] = ""
@@ -1555,40 +1551,6 @@ class AIService:
                 if submitted_tokens[index]["text"] != learner_token:
                     return []
 
-        if learner_token_labels and len(learner_token_labels) == len(learner_tokens):
-            label_index = 0
-            for token in cleaned:
-                if token["status"] == "missing":
-                    continue
-                token["status"] = learner_token_labels[label_index]
-                label_index += 1
-
-        target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
-        if len(target_tokens) == len(learner_tokens):
-            submitted_index = 0
-            for token in cleaned:
-                if token["status"] == "missing":
-                    continue
-                if normalize_french(token["text"]) == normalize_french(target_tokens[submitted_index]):
-                    token["status"] = "correct"
-                submitted_index += 1
-
-            single_swap = find_single_aligned_token_swap(learner_answer, target_sentence)
-            if single_swap:
-                learner_raw, _, _, _ = single_swap
-                submitted_index = 0
-                for token in cleaned:
-                    if token["status"] == "missing":
-                        continue
-                    if (
-                        token["text"] == learner_raw
-                        and submitted_index < len(target_tokens)
-                        and normalize_french(token["text"]) != normalize_french(target_tokens[submitted_index])
-                    ):
-                        token["status"] = "wrong"
-                        break
-                    submitted_index += 1
-
         return cleaned
 
     def _sanitize_token_labels(self, labels: Any, learner_answer: str, target_sentence: str = "") -> list[str]:
@@ -1599,18 +1561,6 @@ class AIService:
             if label in {"correct", "acceptable", "wrong"}
         ]
         if len(cleaned_labels) == len(learner_tokens):
-            target_tokens = [part for part in re.split(r"\s+", target_sentence.strip()) if part]
-            if len(target_tokens) == len(learner_tokens):
-                for index, (learner_token, target_token) in enumerate(zip(learner_tokens, target_tokens)):
-                    if normalize_french(learner_token) == normalize_french(target_token):
-                        cleaned_labels[index] = "correct"
-                single_swap = find_single_aligned_token_swap(learner_answer, target_sentence)
-                if single_swap:
-                    learner_raw, _, _, _ = single_swap
-                    for index, learner_token in enumerate(learner_tokens):
-                        if learner_token == learner_raw and normalize_french(learner_token) != normalize_french(target_tokens[index]):
-                            cleaned_labels[index] = "wrong"
-                            break
             return cleaned_labels
         return []
 
@@ -2904,6 +2854,8 @@ class AIService:
                     "reminder_correct_pattern": {"type": "string"},
                     "reminder_wrong_focus": {"type": "string"},
                     "reminder_correct_focus": {"type": "string"},
+                    "model_is_correct": {"type": "boolean"},
+                    "model_correctness_score": {"type": "integer", "minimum": 0, "maximum": 100},
                     "naturalness_score": {"type": "integer", "minimum": 0, "maximum": 100},
                     "verdict": {"type": "string"},
                     "accepted_learner_sentence": {"type": "string"},
@@ -2943,6 +2895,8 @@ class AIService:
                     "reminder_correct_pattern",
                     "reminder_wrong_focus",
                     "reminder_correct_focus",
+                    "model_is_correct",
+                    "model_correctness_score",
                     "naturalness_score",
                     "verdict",
                     "accepted_learner_sentence",
@@ -2972,6 +2926,9 @@ class AIService:
                         "content": (
                             f"You are a precise but encouraging {self._language_name(request.language)} tutor. "
                             f"Evaluate a learner's {self._language_name(request.language)} translation of an English sentence. "
+                            f"Do not treat the supplied target {self._language_name(request.language)} sentence as the only acceptable wording. "
+                            "Use it as a meaning-and-lesson reference, not as a mandatory token sequence. "
+                            "First decide what the learner was trying to say and whether that wording is acceptable. "
                             "Treat missing accents as fully acceptable if the sentence is otherwise correct, and do not mention missing accents in the feedback. "
                             "This includes cedillas such as 'c' versus 'ç'. "
                             "Treat capitalization differences in the learner's input as fully acceptable and do not mention capitalization in the feedback. "
@@ -2988,19 +2945,26 @@ class AIService:
                             "Accept valid paraphrases. "
                             "The learner does not need to use the exact same vocabulary as the target or the vocab hints. "
                             "If the learner uses a different but valid synonym or paraphrase that preserves the same meaning, treat it as correct in meaning. "
+                            "If the learner uses a less common but still natural wording, accept it and preserve it. "
                             "Do not criticize a learner just for choosing a different valid word than the vocab hint suggested. "
                             "However, if the target uses a required French construction, contraction, or fixed phrase and the learner breaks it, do not mark the answer as meaning-equivalent. "
                             "Examples include mandatory contractions like au, aux, du, and fixed constructions like en espèces. "
                             "When that happens, set has_required_construction_issue to true and write one short English note in required_construction_note explaining the needed target construction. "
                             "When there is no such issue, set has_required_construction_issue to false and required_construction_note to an empty string. "
-                            f"If the learner uses a different but fully acceptable {self._language_name(request.language)} wording, set accepted_learner_sentence to a polished version of the learner's wording with proper accents and punctuation. "
-                            "If the learner's wording is not acceptable as the displayed target sentence, set accepted_learner_sentence to an empty string. "
+                            f"If the learner uses a different but fully acceptable {self._language_name(request.language)} wording, set accepted_learner_sentence to a polished version of the learner's own wording with proper accents and punctuation. "
+                            "If the learner's wording is not acceptable as the displayed answer, set accepted_learner_sentence to an empty string. "
+                            "Set suggested_sentence to the minimally corrected version of the learner's answer. "
+                            "Preserve as much of the learner's valid wording and phrasing as possible in suggested_sentence; only change what truly needs correcting. "
+                            "Do not simply copy the canonical target sentence into suggested_sentence unless that really is the minimal natural correction. "
+                            "Set more_common_sentence only when there is a distinctly more standard or lesson-aligned wording that is still worth showing; otherwise repeat suggested_sentence. "
+                            "All visible outputs must be internally consistent: learner_display_tokens, mistakes/tips, suggested_sentence, more_common_sentence, and any reminder pattern must all describe the same actual correction. "
                             "If the learner made a repeatable kind of mistake that would be useful to track over time, return a reminder_key, reminder_label, reminder_explanation, reminder_wrong_pattern, reminder_correct_pattern, reminder_wrong_focus, and reminder_correct_focus. "
-                            "Only do this for broad recurring patterns, not one-off lexical choices tied to a specific sentence. "
+                            "Only do this for broad recurring patterns, not one-off lexical choices tied to a specific sentence. Return at most one reminder pattern. "
                             "Be conservative. If there is any real doubt about whether the learner produced a genuine repeatable grammar or usage pattern, return no reminder pattern at all. "
                             "Prefer broad category buckets rather than narrow micro-categories. "
-                            "Good reminder buckets include Prepositions, Articles, Pronouns, Word order, Verbs, Agreement, Negation, and Small words. "
-                            "Make reminder_key short, stable, and snake_case, like prepositions, verbs, or word_order. "
+                            "Good reminder buckets include Prepositions, Articles, Pronouns, Word order, Verbs, Agreement, Negation, Small words, and Spelling. "
+                            "Choose the single best category. Distinguish carefully between spelling, conjugation, agreement, article choice, and preposition choice. "
+                            "Make reminder_key short, stable, and snake_case, like prepositions, verbs, word_order, or spelling. "
                             "Make reminder_label broad and learner-friendly, ideally matching one of those bucket-style categories. "
                             "Do not make reminder_label too narrow or sentence-specific. "
                             "Use reminder_explanation only as a short internal summary of the pattern; the app may choose not to display it directly. "
@@ -3057,6 +3021,7 @@ class AIService:
                             "If the learner clearly attempts a target word with the wrong inflection, spelling, or agreement, treat it as an attempted wrong token, not as an omitted word. "
                             "For example, a close attempt like 'vais' for 'va' is not an omission of 'va'. "
                             "Never treat a target word as omitted when the learner has already made a recognizable attempt at that same word nearby. "
+                            "Do not mark a word as omitted if the learner used a valid synonym or alternate phrasing instead. "
                             "Use 'correct' for tokens that are right as written. "
                             "Use 'acceptable' sparingly, only when a token is clearly acceptable but noticeably not the target phrasing. "
                             "Use 'wrong' for incorrect tokens. "
@@ -3064,9 +3029,11 @@ class AIService:
                             "Do not overuse 'acceptable' for ordinary synonyms or simple valid rephrasings. "
                             "For example, if a simpler verb still preserves the meaning naturally, prefer 'correct' rather than 'acceptable'. "
                             "Do not mark genuinely wrong tokens as acceptable. "
+                            "Return model_is_correct as your overall pass/fail judgment for the learner answer. "
+                            "Return model_correctness_score as your own 0-100 overall accuracy judgment, taking meaning, grammar, and omissions into account. "
                             "Keep the encouraging note very short, or leave it empty if unnecessary. "
                             "Keep tips concise and practical. "
-                            "Do not try to assign a correctness score; a local rubric will handle that."
+                            "The backend will lightly sanity-check your structure, but you own the actual marking decisions."
                         ),
                     },
                     {
@@ -3105,17 +3072,15 @@ class AIService:
         payload = self._sanitize_feedback_payload(payload, request.language)
         learner_normalized = normalize_french(request.learner_answer)
         target_normalized = normalize_french(request.target_sentence)
+        model_is_correct = bool(payload.pop("model_is_correct", False))
+        model_correctness_score = int(payload.pop("model_correctness_score", 0) or 0)
+        model_correctness_score = max(0, min(100, model_correctness_score))
         orthography_equivalent = self._is_orthography_equivalent(
             request.learner_answer,
             request.target_sentence,
         )
-        correctness_score, is_correct = self._score_answer_locally(request)
-        correctness_score, is_correct = self._apply_naturalness_adjustment(
-            request,
-            correctness_score,
-            is_correct,
-            int(payload.get("naturalness_score", 0)),
-        )
+        correctness_score = model_correctness_score
+        is_correct = model_is_correct
         if orthography_equivalent:
             payload = {
                 **payload,
@@ -3134,17 +3099,15 @@ class AIService:
                 ],
                 "encouraging_note": "",
             }
-            correctness_score = max(correctness_score, 100)
+            correctness_score = 100
             is_correct = True
-        payload, correctness_score, is_correct = self._apply_required_construction_guard(
-            payload,
-            request,
-            correctness_score=correctness_score,
-            is_correct=is_correct,
-        )
-        if payload.get("meaning_equivalent"):
-            correctness_score = max(correctness_score, 90)
-            is_correct = True
+        elif payload.get("has_required_construction_issue"):
+            payload["accepted_learner_sentence"] = ""
+            is_correct = False
+            correctness_score = min(correctness_score, 84)
+
+        if payload.get("meaning_equivalent") and not payload.get("has_required_construction_issue"):
+            correctness_score = max(correctness_score, 90 if is_correct else correctness_score)
         if is_correct and not (payload.get("accepted_learner_sentence") or "").strip():
             payload["accepted_learner_sentence"] = polish_learner_french(request.learner_answer)
         accepted_learner_normalized = normalize_french(payload.get("accepted_learner_sentence", ""))
@@ -3162,21 +3125,10 @@ class AIService:
                 ],
                 "encouraging_note": "",
             }
-            correctness_score = max(correctness_score, 100)
+            correctness_score = max(correctness_score, 96)
             is_correct = True
         if not payload.get("meaning_equivalent") and not is_correct:
             payload["accepted_learner_sentence"] = ""
-        payload = self._remove_fussy_style_feedback(
-            payload,
-            correctness_score=correctness_score,
-            is_correct=is_correct,
-        )
-        payload = self._remove_canonical_vocab_contradictions(payload, request)
-        payload = self._ensure_minimal_specific_feedback(
-            payload,
-            request,
-            is_correct=is_correct,
-        )
         payload["learner_token_labels"] = self._sanitize_token_labels(
             payload.get("learner_token_labels"),
             request.learner_answer,

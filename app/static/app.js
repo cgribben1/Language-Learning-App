@@ -1160,29 +1160,17 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
   const learnerParts = tokenizeWithSpaces(answer);
   const cleanedLabels = Array.isArray(learnerTokenLabels) ? learnerTokenLabels : [];
   const learnerWordCount = learnerParts.filter((part) => normalizeToken(part)).length;
-  const omitted = getOmittedTargetInsertions(answer, correctSentence);
-
-  const renderMissingTokens = (tokens) => {
-    if (!tokens.length) {
-      return "";
-    }
-    return tokens
-      .map((token) => `<span class="answer-word answer-word-missing">${escapeHtml(token)}</span>`)
-      .join('<span class="answer-word-missing-space"> </span>');
-  };
 
   if (cleanedLabels.length === learnerWordCount) {
     let labelIndex = 0;
-    let markup = learnerParts
-      .map((part, partIndex) => {
-        const insertionMarkup = renderMissingTokens(omitted.insertions.get(partIndex) || []);
+    return learnerParts
+      .map((part) => {
         if (!part.trim()) {
-          return insertionMarkup ? `${insertionMarkup}${part}` : part;
+          return part;
         }
         const normalized = normalizeToken(part);
         if (!normalized) {
-          const tokenMarkup = `<span class="answer-word answer-word-neutral">${part}</span>`;
-          return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
+          return `<span class="answer-word answer-word-neutral">${part}</span>`;
         }
         const label = cleanedLabels[labelIndex] || "wrong";
         labelIndex += 1;
@@ -1191,38 +1179,23 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
           : label === "acceptable"
             ? "answer-word-acceptable"
             : "answer-word-wrong";
-        const tokenMarkup = `<span class="answer-word ${cssClass}">${part}</span>`;
-        return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
+        return `<span class="answer-word ${cssClass}">${part}</span>`;
       })
       .join("");
-    if (omitted.append.length) {
-      markup += `${markup ? " " : ""}${renderMissingTokens(omitted.append)}`;
-    }
-    return markup;
   }
 
-  const matchedLearnerIndices = getMatchedLearnerIndexes(answer, correctSentence);
-
-  let markup = learnerParts
-    .map((part, index) => {
-      const insertionMarkup = renderMissingTokens(omitted.insertions.get(index) || []);
+  return learnerParts
+    .map((part) => {
       if (!part.trim()) {
-        return insertionMarkup ? `${insertionMarkup}${part}` : part;
+        return part;
       }
       const normalized = normalizeToken(part);
       if (!normalized) {
-        const tokenMarkup = `<span class="answer-word answer-word-neutral">${part}</span>`;
-        return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
+        return `<span class="answer-word answer-word-neutral">${part}</span>`;
       }
-      const cssClass = matchedLearnerIndices.has(index) ? "answer-word-correct" : "answer-word-wrong";
-      const tokenMarkup = `<span class="answer-word ${cssClass}">${part}</span>`;
-      return insertionMarkup ? `${insertionMarkup} ${tokenMarkup}` : tokenMarkup;
+      return `<span class="answer-word answer-word-neutral">${part}</span>`;
     })
     .join("");
-  if (omitted.append.length) {
-    markup += `${markup ? " " : ""}${renderMissingTokens(omitted.append)}`;
-  }
-  return markup;
 }
 
 function formatLearnerAnswerDisplay(answer) {
@@ -2489,12 +2462,9 @@ function renderFeedback(feedback) {
   const canonicalTargetSentence = formatCorrectSentenceDisplay(
     pickSingleFrenchSentence(feedback.suggested_sentence) || feedbackSentence?.french || displayedCorrectSentence,
   );
-  const learnerTokenLabels = promoteAcceptableDifferenceLabels(
-    learnerAnswerDisplay,
-    canonicalTargetSentence,
-      feedback.learner_token_labels || [],
-      Boolean(feedback.is_correct),
-    );
+  const learnerTokenLabels = Array.isArray(feedback.learner_token_labels)
+    ? feedback.learner_token_labels
+    : [];
   const learnerAnswerMarkup = buildLearnerAnswerMarkup(
     learnerAnswerDisplay,
     canonicalTargetSentence,
