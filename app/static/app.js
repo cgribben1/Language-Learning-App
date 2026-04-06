@@ -1268,35 +1268,11 @@ function getDisplayedCorrectSentence(feedback) {
   const current = currentSentence();
   const acceptedLearner = pickSingleFrenchSentence(feedback.accepted_learner_sentence);
   const suggested = pickSingleFrenchSentence(feedback.suggested_sentence);
-  const moreCommon = pickSingleFrenchSentence(feedback.more_common_sentence);
   const fallbackTarget = pickSingleFrenchSentence(current?.french || "");
   if (acceptedLearner) {
     return acceptedLearner;
   }
-  if (!suggested && !moreCommon) {
-    return fallbackTarget;
-  }
-  if (!moreCommon) {
-    return suggested || fallbackTarget;
-  }
-  if (!suggested) {
-    return moreCommon || fallbackTarget;
-  }
-  if (normalizeFrenchText(moreCommon) === normalizeFrenchText(suggested)) {
-    return suggested || fallbackTarget;
-  }
-  const hints = current?.vocab_hints || [];
-  const breaksHintAlignment = hints.some((hint) => {
-    const hinted = normalizeFrenchText(hint.french);
-    if (!hinted) {
-      return false;
-    }
-    return normalizeFrenchText(suggested).includes(hinted) && !normalizeFrenchText(moreCommon).includes(hinted);
-  });
-  if (breaksHintAlignment) {
-    return suggested || fallbackTarget;
-  }
-  return moreCommon || suggested || fallbackTarget;
+  return suggested || fallbackTarget;
 }
 
 function buildNoteDedupKey(note) {
