@@ -1591,6 +1591,74 @@ class AIService:
             for token, label in zip(learner_tokens, labels)
         ]
 
+    def _enforce_learner_display_tokens(
+        self,
+        payload: dict[str, Any],
+        request: EvaluationRequest,
+    ) -> list[dict[str, str]]:
+        learner_tokens = [part for part in re.split(r"\s+", request.learner_answer.strip()) if part]
+        if not learner_tokens:
+            return payload.get("learner_display_tokens", [])
+
+        corrected_sentence = (
+            str(payload.get("suggested_sentence", "") or "").strip()
+            or request.target_sentence
+        )
+        corrected_tokens = [part for part in re.split(r"\s+", corrected_sentence.strip()) if part]
+        if not corrected_tokens:
+            return payload.get("learner_display_tokens", [])
+
+        learner_norm = [normalize_french(token) for token in learner_tokens]
+        corrected_norm = [normalize_french(token) for token in corrected_tokens]
+
+        existing_display = payload.get("learner_display_tokens")
+        submitted_display = [
+            token for token in existing_display
+            if isinstance(token, dict) and str(token.get("status", "")).lower() != "missing"
+        ] if isinstance(existing_display, list) else []
+
+        submitted_statuses: list[str] = []
+        if len(submitted_display) == len(learner_tokens):
+            for token in submitted_display:
+                status = str(token.get("status", "neutral") or "neutral").lower()
+                submitted_statuses.append(status if status in {"correct", "acceptable", "wrong", "neutral"} else "neutral")
+        else:
+            raw_labels = payload.get("learner_token_labels")
+            if isinstance(raw_labels, list) and len(raw_labels) == len(learner_tokens):
+                submitted_statuses = [
+                    label if label in {"correct", "acceptable", "wrong"} else "neutral"
+                    for label in raw_labels
+                ]
+            else:
+                submitted_statuses = ["neutral" for _ in learner_tokens]
+
+        rebuilt: list[dict[str, str]] = []
+        matcher = SequenceMatcher(None, learner_norm, corrected_norm)
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == "equal":
+                for offset in range(i2 - i1):
+                    rebuilt.append({
+                        "text": learner_tokens[i1 + offset],
+                        "status": "correct",
+                    })
+                continue
+
+            if tag in {"replace", "delete"}:
+                for index in range(i1, i2):
+                    rebuilt.append({
+                        "text": learner_tokens[index],
+                        "status": submitted_statuses[index] if index < len(submitted_statuses) else "wrong",
+                    })
+
+            if tag in {"replace", "insert"} and j2 > j1:
+                for index in range(j1, j2):
+                    rebuilt.append({
+                        "text": corrected_tokens[index],
+                        "status": "missing",
+                    })
+
+        return rebuilt or payload.get("learner_display_tokens", [])
+
     def _ensure_minimal_specific_feedback(
         self,
         payload: dict[str, Any],
@@ -3141,6 +3209,7 @@ class AIService:
             request.learner_answer,
             payload.get("learner_token_labels"),
         )
+        payload["learner_display_tokens"] = self._enforce_learner_display_tokens(payload, request)
         return EvaluationResponse(
             is_correct=is_correct,
             correctness_score=correctness_score,
