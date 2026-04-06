@@ -776,6 +776,16 @@ function pickSingleFrenchSentence(text) {
   return trimmed;
 }
 
+function decodeHtmlEntities(text) {
+  const raw = String(text || "");
+  if (!raw || !/[&][#a-zA-Z0-9]+;/.test(raw)) {
+    return raw;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = raw;
+  return textarea.value;
+}
+
 function getKnownPhrasePatterns(current) {
   const hintPatterns = (current?.vocab_hints || [])
     .map((hint) => hint.french)
@@ -1199,7 +1209,7 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
 }
 
 function formatLearnerAnswerDisplay(answer) {
-  const trimmed = (answer || "").trim();
+  const trimmed = decodeHtmlEntities(answer).trim();
   if (!trimmed) {
     return "No answer entered.";
   }
