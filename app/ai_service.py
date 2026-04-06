@@ -1650,7 +1650,7 @@ class AIService:
                         "status": submitted_statuses[index] if index < len(submitted_statuses) else "wrong",
                     })
 
-            if tag in {"replace", "insert"} and j2 > j1:
+            if tag == "insert" and j2 > j1:
                 for index in range(j1, j2):
                     rebuilt.append({
                         "text": corrected_tokens[index],
