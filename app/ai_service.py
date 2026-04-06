@@ -1645,15 +1645,9 @@ class AIService:
 
             if tag in {"replace", "delete"}:
                 for index in range(i1, i2):
-                    status = submitted_statuses[index] if index < len(submitted_statuses) else "wrong"
-                    if tag == "replace":
-                        corrected_index = j1 + (index - i1)
-                        corrected_token = corrected_tokens[corrected_index] if corrected_index < j2 else ""
-                        if corrected_token and normalize_french(learner_tokens[index]) != normalize_french(corrected_token):
-                            status = "wrong"
                     rebuilt.append({
                         "text": learner_tokens[index],
-                        "status": status,
+                        "status": submitted_statuses[index] if index < len(submitted_statuses) else "wrong",
                     })
 
             if tag == "insert" and j2 > j1:
@@ -3014,6 +3008,9 @@ class AIService:
                             "All visible outputs must be internally consistent: learner_display_tokens, mistakes/tips, suggested_sentence, more_common_sentence, and any reminder pattern must all describe the same actual correction. "
                             "Token-level colouring must stay consistent with the corrected sentence you return. "
                             "If a learner token is still acceptable and survives unchanged into suggested_sentence, do not mark that token as wrong. "
+                            "If a learner token is replaced by a different corrected token in suggested_sentence, do not mark the learner token as correct. "
+                            "A genuine spelling mistake or wrong word that changes to a different corrected token must be marked wrong or, if truly borderline, acceptable, but never correct. "
+                            "For example, if the learner writes 'citte' and the corrected sentence uses 'cité', then 'citte' must not be green. "
                             "Only mark the actual changed token or phrase as wrong. "
                             "For example, if the learner writes 'un wagon vide avec une lumiere single' and your correction is 'un wagon vide avec une seule lumière', then 'wagon' and 'vide' should stay correct; only the bad local phrase around 'single' should be wrong. "
                             "Do not spread the wrong marking leftward or rightward onto neighboring words that remain valid in the correction. "
