@@ -2972,7 +2972,7 @@ body.bauhaus-colors .feedback-card {
 body.bauhaus-colors .sidebar-wordmark {
   background: var(--brand-surface-gradient);
   border-color: var(--brand-border);
-  color: rgba(20, 20, 20, 0.94);
+  color: rgba(20, 20, 20, 0.78);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     var(--brand-shadow-soft);
