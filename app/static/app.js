@@ -2495,6 +2495,7 @@ function renderFeedback(feedback) {
   clearFeedbackTyping();
   clearContentAnimations();
   clearStoryFlight();
+  state.lastAnswer = String(state.lastAnswer || "").replace(/&#39;/g, "'");
   el.lessonCard.classList.remove("hidden");
   el.lessonCard.classList.remove("lesson-card-checking");
   el.lessonHeader.classList.add("hidden");
