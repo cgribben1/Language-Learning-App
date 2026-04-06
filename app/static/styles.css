@@ -1668,11 +1668,16 @@ kbd {
 }
 
 .answer-word-missing {
-  color: #b24a2d;
-  background: rgba(178, 74, 45, 0.06);
+  color: #9f3824;
+  background: rgba(178, 74, 45, 0.12);
   text-decoration: underline;
   text-decoration-style: dashed;
+  text-decoration-thickness: 1.6px;
   text-underline-offset: 0.14em;
+  text-decoration-color: currentColor;
+  box-shadow: inset 0 -0.38em 0 rgba(178, 74, 45, 0.08);
+  border-radius: 0.2em;
+  padding: 0 0.04em;
 }
 
 .answer-word-missing-space {

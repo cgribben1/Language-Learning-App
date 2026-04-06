@@ -1523,7 +1523,7 @@ class AIService:
 
         if learner_tokens:
             for index, learner_token in enumerate(learner_tokens):
-                if submitted_tokens[index]["text"] != learner_token:
+                if normalize_french(submitted_tokens[index]["text"]) != normalize_french(learner_token):
                     return []
 
         return cleaned
