@@ -2996,6 +2996,7 @@ class AIService:
                             "If only one word or short phrase is wrong, mark only that word or phrase as wrong, and keep the surrounding correct continuation tokens as correct. "
                             "Do not let a local error cause the whole remaining tail of the sentence to become wrong. "
                             "For example, if the learner wrote 'sur la mer' where 'au-dessus de la mer' is needed, mark the incorrect local span as wrong, but keep later tokens like 'et', 'le', 'heros', 'est', and 'content' as correct if they are otherwise fine. "
+                            "Likewise, if the learner wrote 'ils appliquent le cire sur les ailes' and your correction is 'ils appliquent de la cire sur les ailes', the wrong marking should stay on the local article phrase around 'le cire'; later tokens like 'sur', 'les', and 'ailes' should remain correct if they still fit the corrected sentence. "
                             "Use 'wrong' only for the actual incorrect token or phrase, not for nearby words that are acceptable on their own. "
                             "Only insert a token with status 'missing' when a target word was truly omitted and there was no recognizable learner attempt at it nearby. "
                             "If the learner attempted the word but got it wrong, keep the learner's attempted token with status 'wrong' instead of inserting a missing token. "
