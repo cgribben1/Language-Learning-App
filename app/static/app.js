@@ -777,13 +777,23 @@ function pickSingleFrenchSentence(text) {
 }
 
 function decodeHtmlEntities(text) {
-  const raw = String(text || "");
+  let raw = String(text || "");
   if (!raw || !/[&][#a-zA-Z0-9]+;/.test(raw)) {
     return raw;
   }
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = raw;
-  return textarea.value;
+  for (let index = 0; index < 3; index += 1) {
+    if (!/[&][#a-zA-Z0-9]+;/.test(raw)) {
+      break;
+    }
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = raw;
+    const decoded = textarea.value;
+    if (decoded === raw) {
+      break;
+    }
+    raw = decoded;
+  }
+  return raw;
 }
 
 function getKnownPhrasePatterns(current) {
