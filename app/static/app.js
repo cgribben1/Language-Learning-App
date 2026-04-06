@@ -1214,7 +1214,7 @@ function formatLearnerDisplayTokens(tokens) {
   }
 
   const formatted = tokens.map((token) => ({
-    text: String(token?.text || ""),
+    text: decodeHtmlEntities(String(token?.text || "")),
     status: String(token?.status || "neutral"),
   }));
 
