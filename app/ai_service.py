@@ -906,7 +906,7 @@ class AIService:
         self.lesson_reasoning_effort = os.getenv("OPENAI_LESSON_REASONING_EFFORT", "minimal")
         self.eval_reasoning_effort = os.getenv("OPENAI_EVAL_REASONING_EFFORT", "minimal")
         self.lesson_max_output_tokens = int(os.getenv("OPENAI_LESSON_MAX_OUTPUT_TOKENS", "1200"))
-        self.eval_max_output_tokens = int(os.getenv("OPENAI_EVAL_MAX_OUTPUT_TOKENS", "320"))
+        self.eval_max_output_tokens = int(os.getenv("OPENAI_EVAL_MAX_OUTPUT_TOKENS", "520"))
         self.explain_max_output_tokens = int(os.getenv("OPENAI_EXPLAIN_MAX_OUTPUT_TOKENS", "220"))
         self.lesson_jobs: dict[str, dict[str, Any]] = {}
         self.lesson_jobs_lock = Lock()
@@ -2917,7 +2917,7 @@ class AIService:
             response = self._responses_create_with_retry(
                 **self._response_create_options(
                     model=self.eval_model,
-                    max_output_tokens=self.eval_max_output_tokens + (80 if attempt else 0),
+                    max_output_tokens=max(520, min(self.eval_max_output_tokens + (120 if attempt else 0), 760)),
                     reasoning_effort=self.eval_reasoning_effort,
                 ),
                 input=[
