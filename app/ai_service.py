@@ -1026,6 +1026,9 @@ class AIService:
         return self._build_lesson_response(job)
 
     def evaluate_answer(self, request: EvaluationRequest) -> EvaluationResponse:
+        request = request.model_copy(
+            update={"learner_answer": unescape(request.learner_answer or "")}
+        )
         self._require_enabled()
         try:
             return self._evaluate_answer_openai(request)
@@ -1688,6 +1691,18 @@ class AIService:
             if normalized in noun_candidates:
                 insert_at = index
                 break
+
+        if insert_at is None:
+            article_candidates = (
+                {"un", "une", "le", "la", "les", "des", "du", "de"}
+                if request.language == "french"
+                else {"un", "una", "el", "la", "los", "las", "unos", "unas"}
+            )
+            for index, token in enumerate(display_tokens):
+                normalized = normalize_french(str(token.get("text", "")))
+                if normalized in article_candidates:
+                    insert_at = index + 1
+                    break
 
         if insert_at is None:
             return display_tokens
