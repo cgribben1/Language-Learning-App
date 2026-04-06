@@ -1149,7 +1149,7 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
   }
 
   if (Array.isArray(learnerDisplayTokens) && learnerDisplayTokens.length) {
-    return learnerDisplayTokens
+    return formatLearnerDisplayTokens(learnerDisplayTokens)
       .map((token) => {
         const text = String(token?.text || "");
         const status = String(token?.status || "neutral");
@@ -1206,6 +1206,36 @@ function buildLearnerAnswerMarkup(answer, correctSentence, learnerTokenLabels = 
       return `<span class="answer-word answer-word-neutral">${part}</span>`;
     })
     .join("");
+}
+
+function formatLearnerDisplayTokens(tokens) {
+  if (!Array.isArray(tokens) || !tokens.length) {
+    return [];
+  }
+
+  const formatted = tokens.map((token) => ({
+    text: String(token?.text || ""),
+    status: String(token?.status || "neutral"),
+  }));
+
+  const firstWordIndex = formatted.findIndex((token) => /\S/.test(token.text));
+  if (firstWordIndex >= 0) {
+    const firstText = formatted[firstWordIndex].text;
+    formatted[firstWordIndex].text = firstText.charAt(0).toUpperCase() + firstText.slice(1);
+  }
+
+  let lastWordIndex = -1;
+  for (let index = formatted.length - 1; index >= 0; index -= 1) {
+    if (/\S/.test(formatted[index].text)) {
+      lastWordIndex = index;
+      break;
+    }
+  }
+  if (lastWordIndex >= 0 && !/[.!?…]$/.test(formatted[lastWordIndex].text)) {
+    formatted[lastWordIndex].text += ".";
+  }
+
+  return formatted;
 }
 
 function formatLearnerAnswerDisplay(answer) {
