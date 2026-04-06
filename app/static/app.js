@@ -1276,6 +1276,21 @@ function getDisplayedCorrectSentence(feedback) {
 }
 
 function buildNoteDedupKey(note) {
+  const omittedWordMatch = note.match(/^You omitted ['"]([^'"]+)['"][^.]*$/i);
+  if (omittedWordMatch) {
+    return `missing-word:${normalizeFrenchText(omittedWordMatch[1])}`;
+  }
+
+  const includeWordMatch = note.match(/^Include (?:the adjective |the word )?['"]([^'"]+)['"][^.]*$/i);
+  if (includeWordMatch) {
+    return `missing-word:${normalizeFrenchText(includeWordMatch[1])}`;
+  }
+
+  const adjectivePlacementMatch = note.match(/^Put the adjective ['"]([^'"]+)['"][^.]*$/i);
+  if (adjectivePlacementMatch) {
+    return `missing-word:${normalizeFrenchText(adjectivePlacementMatch[1])}`;
+  }
+
   const wrongWordMatch = note.match(/^['"]([^'"]+)['"] is the wrong word; use ['"]([^'"]+)['"]\.$/i);
   if (wrongWordMatch) {
     return `replacement:${normalizeFrenchText(wrongWordMatch[1])}->${normalizeFrenchText(wrongWordMatch[2])}`;
